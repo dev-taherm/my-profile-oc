@@ -11,11 +11,12 @@ model User {
   id            String    @id @default(cuid())
   email         String    @unique
   name          String?
-  password      String
-  role          String    @default("ADMIN")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  blogPosts     BlogPost[]
+  password         String
+  role             String    @default("ADMIN")
+  passwordChanged  Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  blogPosts        BlogPost[]
 }
 
 model Project {

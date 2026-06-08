@@ -71,6 +71,7 @@ Every page is optimized for search engines:
 
 A built-in admin panel lets you manage all content without writing code:
 
+- **Forced Credential Change** -- On first login, you are required to set your own email and password before accessing the dashboard. This ensures default credentials are never left unchanged in production
 - **Dashboard** -- Overview with project, blog post, and message counts
 - **Project Management** -- Create, edit, and delete projects with bilingual translation tabs (EN/AR), GitHub/live URLs, featured flag, and publish status (Draft/Published/Archived)
 - **Blog Management** -- Create, edit, and delete blog posts with Markdown content, reading time, featured flag, and publish status. Publication date is auto-set when you publish
@@ -203,8 +204,8 @@ Your `.env` should look like this:
 DATABASE_URL="file:./dev.db"
 NEXTAUTH_SECRET="your-generated-secret-here"
 NEXTAUTH_URL="http://localhost:3000"
-ADMIN_EMAIL="your-email@example.com"
-ADMIN_PASSWORD="your-secure-password"
+ADMIN_EMAIL="admin"
+ADMIN_PASSWORD="123456"
 ```
 
 ### 4. Initialize the database
@@ -275,8 +276,8 @@ Your `.env` should look like this:
 DATABASE_URL="postgresql://portfolio:portfolio_secret@localhost:5432/portfolio"
 NEXTAUTH_SECRET="your-generated-secret-here"
 NEXTAUTH_URL="http://localhost:3000"
-ADMIN_EMAIL="your-email@example.com"
-ADMIN_PASSWORD="your-secure-password"
+ADMIN_EMAIL="admin"
+ADMIN_PASSWORD="123456"
 ```
 
 ### 4. Start PostgreSQL
@@ -320,8 +321,14 @@ Access the admin panel at http://localhost:3000/admin/login
 
 | Field | Value |
 |---|---|
-| Email | Set in `ADMIN_EMAIL` env var |
-| Password | Set in `ADMIN_PASSWORD` env var |
+| Email | `admin` |
+| Password | `123456` |
+
+> **Security Note:** On first login, you will be redirected to a page where you must set your own email and password. The default credentials cannot be used to access the admin dashboard.
+
+### Forced Credential Change
+
+When you log in with the default credentials (`admin` / `123456`), you are automatically redirected to a credential change page. You must set your own name, email, and password before you can access the admin dashboard. This security feature ensures that default credentials are never left unchanged.
 
 ### Dashboard
 
@@ -393,6 +400,12 @@ All API routes are under `/api/`. Authentication is required for write operation
 |---|---|---|---|
 | `/api/upload` | POST | Yes | Upload an image file to `public/images/`. Returns `{ url: "/images/{filename}" }` |
 
+### User Profile
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/user/profile` | PUT | Yes | Update user name, email, and password. Sets `passwordChanged: true` after first update |
+
 ---
 
 ## Project Structure
@@ -421,6 +434,7 @@ All API routes are under `/api/`. Authentication is required for write operation
 │   │   ├── admin/                 # Admin dashboard
 │   │   │   ├── page.tsx           # Dashboard overview
 │   │   │   ├── login/page.tsx     # Login page
+│   │   │   ├── change-password/   # Forced credential change page
 │   │   │   ├── projects/          # Project CRUD
 │   │   │   ├── blog/              # Blog post CRUD
 │   │   │   ├── categories/        # Category management
@@ -431,7 +445,8 @@ All API routes are under `/api/`. Authentication is required for write operation
 │   │   │   ├── projects/          # Projects CRUD
 │   │   │   ├── blog/              # Blog posts CRUD
 │   │   │   ├── contact/           # Contact form submission
-│   │   │   └── upload/            # File upload
+│   │   │   ├── upload/            # File upload
+│   │   │   └── user/profile/      # Update user credentials
 │   │   │
 │   │   ├── sitemap.ts             # Dynamic sitemap.xml generation
 │   │   ├── robots.ts              # robots.txt generation
@@ -539,8 +554,8 @@ This starts both the PostgreSQL database and the Next.js app. The Dockerfile use
 | `DATABASE_URL` | Yes | Database connection string: `file:./dev.db` (SQLite) or `postgresql://user:pass@host:5432/db` (PostgreSQL) |
 | `NEXTAUTH_SECRET` | Yes | Random secret for JWT signing. Generate with `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | Yes | Your site URL (e.g., `http://localhost:3000` for dev, `https://yourdomain.com` for production) |
-| `ADMIN_EMAIL` | Yes | Email address for admin login |
-| `ADMIN_PASSWORD` | Yes | Password for admin login |
+| `ADMIN_EMAIL` | Yes | Default admin email for initial login (default: `admin`) |
+| `ADMIN_PASSWORD` | Yes | Default admin password for initial login (default: `123456`) |
 
 ---
 

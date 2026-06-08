@@ -1,10 +1,12 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { SessionProvider } from "next-auth/react";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+
+const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/change-password"];
 
 export default function AdminLayout({
   children,
@@ -19,14 +21,21 @@ export default function AdminLayout({
 }
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (status === "unauthenticated" && !PUBLIC_ADMIN_ROUTES.includes(pathname)) {
       router.push("/admin/login");
     }
-  }, [status, router]);
+  }, [status, router, pathname]);
+
+  useEffect(() => {
+    if (status === "authenticated" && !session.user.passwordChanged && !PUBLIC_ADMIN_ROUTES.includes(pathname)) {
+      router.push("/admin/change-password");
+    }
+  }, [status, session, router, pathname]);
 
   if (status === "loading") {
     return (
@@ -36,7 +45,13 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     );
   }
 
+  if (PUBLIC_ADMIN_ROUTES.includes(pathname)) {
+    return <>{children}</>;
+  }
+
   if (!session) return null;
+
+  if (!session.user.passwordChanged) return null;
 
   return (
     <div className="min-h-screen flex">

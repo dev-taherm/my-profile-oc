@@ -1,0 +1,171 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "projects": "Projects",
+    "blog": "Blog",
+    "resume": "Resume",
+    "contact": "Contact"
+  },
+  "hero": {
+    "greeting": "Hello, I'm",
+    "name": "Your Name",
+    "title": "Software Engineer — Backend & AI Systems",
+    "subtitle": "Building scalable architectures and integrating LLMs into production workflows.",
+    "cta_projects": "View Projects",
+    "cta_contact": "Get in Touch",
+    "cta_resume": "Download CV"
+  },
+  "stats": {
+    "experience": "Years Experience",
+    "projects": "Projects Delivered",
+    "technologies": "Technologies",
+    "certifications": "Certifications"
+  },
+  "featuredTech": {
+    "title": "Technologies I Work With"
+  },
+  "about": {
+    "title": "About Me",
+    "subtitle": "A passionate software engineer building systems that make a difference.",
+    "summary": "Software Engineer specializing in backend and AI systems, with experience designing scalable, microservices-oriented architectures and integrating LLMs into production workflows. Strong background in Django-based platforms, multi-tenant systems, and audit-safe business processes. Experienced with Agile delivery, cloud-native concepts, and building systems that serve real users with measurable impact.",
+    "mission": "My mission is to leverage technology to solve real-world problems, building systems that are not only technically sound but also deliver measurable business value.",
+    "experience": "Work Experience",
+    "education": "Education",
+    "certifications": "Certifications & Languages"
+  },
+  "experience": {
+    "neoPlatrix": {
+      "company": "Neo Platrix (Hopofy)",
+      "role": "Software Engineer",
+      "period": "Jan 2024 – Present",
+      "highlights": [
+        "Led the design of the core product backend, building scalable REST APIs (Django/PostgreSQL) that serve 100+ active users with backward-compatible versioning.",
+        "Modeled complex business workflows with strict audit trails and Role-Based Access Control (RBAC), reducing manual processing time by 40%.",
+        "Implemented Django Channels and WebSockets to handle thousands of monthly events and real-time notifications.",
+        "Championed AI-assisted pipelines, including prompt templates, validation guardrails for AI-generated code, and automated suggestion features.",
+        "Introduced structured logging, rate limiting, and standard error-handling patterns to improve system observability and stability under load."
+      ]
+    },
+    "pixova": {
+      "company": "Pixova Agency",
+      "role": "Founder & Software Engineer",
+      "period": "Nov 2022 – Dec 2023",
+      "highlights": [
+        "Led end-to-end architecture and delivery for client-facing web products, managing the lifecycle from UI/UX mockups to deployment.",
+        "Delivered custom WordPress solutions and full-stack web applications, owning hosting configurations and SEO optimizations.",
+        "Implemented developer-friendly Git workflows, testing protocols, and CI practices to reduce delivery friction and improve code quality."
+      ]
+    },
+    "khebrat": {
+      "company": "Khebrat Technology",
+      "role": "Web Application Developer Intern",
+      "period": "Mar 2022 – Aug 2022",
+      "highlights": [
+        "Built workflow management applications to automate internal processes, utilizing Node.js and Firebase for the backend.",
+        "Developed responsive frontends using HTML, CSS, and Bootstrap, ensuring cross-device compatibility."
+      ]
+    }
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "A selection of my work showcasing system design and AI engineering.",
+    "featured": "Featured",
+    "viewProject": "View Project",
+    "viewLive": "Live Demo",
+    "viewGithub": "Source Code",
+    "backToProjects": "Back to Projects",
+    "search": "Search projects...",
+    "all": "All"
+  },
+  "projectDetail": {
+    "aiAssistant": {
+      "title": "AI Business Assistant — RAG Prototype",
+      "description": "Architected a Retrieval-Augmented Generation (RAG) system using Django and LangChain to enable semantic search over business documents.",
+      "content": "## Overview\n\nThis project involved building a production-grade RAG (Retrieval-Augmented Generation) system that enables semantic search over business documents using natural language queries.\n\n## Key Features\n\n- **Semantic Search**: Leveraged LangChain chains and retrievers for intelligent document retrieval\n- **Vector Storage**: Implemented Chroma vector store for efficient similarity search\n- **Human-in-the-Loop**: Designed approval workflows for AI-generated actions\n- **Safety First**: Implemented output validation, confidence scoring, and prompt versioning to mitigate hallucinations\n\n## Tech Stack\n\n- Django / Python\n- LangChain (Chains, Retrievers)\n- Chroma Vector Database\n- OpenAI API\n- Prompt Engineering & Guardrails"
+    },
+    "multiTenant": {
+      "title": "Multi-tenant Sales & Sample Distribution",
+      "description": "Designed a multi-tenant system to calculate sample quotas based on historical sales data and product rules.",
+      "content": "## Overview\n\nDesigned and implemented a multi-tenant system for calculating sample quotas based on historical sales data and product-specific rules.\n\n## Key Features\n\n- **Tenant Isolation**: Complete data isolation between tenants with shared infrastructure\n- **Quota Calculation**: Algorithm-driven sample quota computation based on historical data\n- **Proposal APIs**: RESTful APIs for managing distribution proposals\n- **Audit Compliance**: Comprehensive audit logs for data integrity and compliance\n\n## Tech Stack\n\n- Django / Python\n- PostgreSQL\n- REST API Design\n- Domain-Driven Design (DDD)\n- Multi-tenancy Architecture"
+    }
+  },
+  "blog": {
+    "title": "Blog",
+    "subtitle": "Thoughts on software engineering, AI systems, and building products.",
+    "readMore": "Read More",
+    "backToBlog": "Back to Blog",
+    "search": "Search posts...",
+    "all": "All",
+    "minRead": "min read",
+    "publishedOn": "Published on",
+    "by": "by"
+  },
+  "resume": {
+    "title": "Resume",
+    "subtitle": "My professional journey and qualifications.",
+    "downloadPdf": "Download PDF",
+    "summary": "Professional Summary",
+    "skills": "Core Skills",
+    "experience": "Experience",
+    "education": "Education",
+    "certifications": "Certifications",
+    "languages": "Languages"
+  },
+  "contact": {
+    "title": "Get in Touch",
+    "subtitle": "Have a project in mind or want to discuss opportunities? I'd love to hear from you.",
+    "form": {
+    "name": "Taher Mahram",
+      "email": "Your Email",
+      "subject": "Subject",
+      "message": "Your Message",
+      "send": "Send Message",
+      "sending": "Sending...",
+      "success": "Message sent successfully! I'll get back to you soon.",
+      "error": "Failed to send message. Please try again."
+    },
+    "info": {
+      "email": "Email",
+      "phone": "Phone",
+      "location": "Location",
+      "availability": "Available for remote opportunities"
+    }
+  },
+  "footer": {
+    "copyright": "All rights reserved.",
+    "builtWith": "Built with Next.js"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "blog": "Blog Posts",
+    "categories": "Categories",
+    "tags": "Tags",
+    "messages": "Messages",
+    "settings": "Settings",
+    "logout": "Logout",
+    "login": "Login",
+    "email": "Email",
+    "password": "Password",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "title": "Admin Dashboard",
+    "welcome": "Welcome to the admin dashboard.",
+    "totalProjects": "Total Projects",
+    "totalPosts": "Total Posts",
+    "totalMessages": "Total Messages",
+    "recentMessages": "Recent Messages"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "notFound": "Page not found",
+    "backToHome": "Back to Home",
+    "readMore": "Read more",
+    "viewAll": "View All"
+  }
+}

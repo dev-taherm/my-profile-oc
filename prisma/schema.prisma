@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          Role      @default(ADMIN)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  blogPosts     BlogPost[]
+}
+
+enum Role {
+  ADMIN
+  VIEWER
+}
+
+model Project {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  image         String?
+  githubUrl     String?
+  liveUrl       String?
+  featured      Boolean   @default(false)
+  status        Status    @default(DRAFT)
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  categories    Category[]
+  tags          Tag[]
+  translations  ProjectTranslation[]
+}
+
+model ProjectTranslation {
+  id            String    @id @default(cuid())
+  locale        String
+  title         String
+  description   String
+  content       String?
+  projectId     String
+  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, locale])
+}
+
+model BlogPost {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  coverImage    String?
+  readingTime   Int       @default(5)
+  featured      Boolean   @default(false)
+  status        Status    @default(DRAFT)
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  authorId      String
+  author        User      @relation(fields: [authorId], references: [id])
+  categories    Category[]
+  tags          Tag[]
+  translations  BlogPostTranslation[]
+}
+
+model BlogPostTranslation {
+  id            String    @id @default(cuid())
+  locale        String
+  title         String
+  excerpt       String
+  content       String
+  blogPostId    String
+  blogPost      BlogPost  @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+
+  @@unique([blogPostId, locale])
+}
+
+model Category {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  name          String
+
+  projects      Project[]
+  blogPosts     BlogPost[]
+}
+
+model Tag {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  name          String
+
+  projects      Project[]
+  blogPosts     BlogPost[]
+}
+
+model ContactMessage {
+  id            String    @id @default(cuid())
+  name          String
+  email         String
+  subject       String?
+  message       String
+  read          Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+}
+
+enum Status {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}

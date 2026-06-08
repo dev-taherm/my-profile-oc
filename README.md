@@ -17,7 +17,7 @@ A modern, multilingual (English/Arabic) personal portfolio and career website bu
 - **Admin Dashboard** — Create/edit/delete projects, blog posts, categories, and tags
 - **Responsive** — Mobile-first design, works on all devices
 - **Framer Motion** — Smooth animations and transitions
-- **Database-driven** — Projects and blog posts stored in PostgreSQL via Prisma
+- **Database-driven** — Projects and blog posts stored via Prisma ORM
 
 ## Tech Stack
 
@@ -27,22 +27,92 @@ A modern, multilingual (English/Arabic) personal portfolio and career website bu
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS v4 + shadcn/ui |
 | Animation | Framer Motion |
-| Database | PostgreSQL + Prisma ORM |
+| Database | SQLite / PostgreSQL + Prisma ORM |
 | Auth | NextAuth.js (Credentials provider) |
 | Icons | Lucide React |
 
-## Prerequisites
+## Installation Options
 
-- **Node.js** 18+ (recommended: 20)
-- **pnpm** (package manager)
-- **Docker** (for PostgreSQL, or use an external database)
+This project supports two database backends. Choose the one that fits your setup:
 
-## Quick Start
+| | SQLite (`main-sqlite` branch) | Docker/PostgreSQL (`main` branch) |
+|---|---|---|
+| **Docker required** | No | Yes |
+| **Database** | SQLite (file-based) | PostgreSQL 16 |
+| **Best for** | Local development, quick setup | Production, full-featured setup |
+
+---
+
+## Quick Start (SQLite — This Branch)
+
+> **No Docker required.** This is the simplest way to run the project locally.
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/dev-taherm/my-profile-oc.git
+git clone -b main-sqlite https://github.com/dev-taherm/my-profile-oc.git
+cd my-profile-oc
+```
+
+### 2. Install dependencies
+
+```bash
+pnpm install
+```
+
+### 3. Set up environment variables
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your values:
+
+```env
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET="your-random-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+ADMIN_EMAIL="your-email@example.com"
+ADMIN_PASSWORD="your-secure-password"
+```
+
+Generate a secret:
+```bash
+openssl rand -base64 32
+```
+
+### 4. Initialize the database
+
+```bash
+pnpm db:generate
+pnpm db:push
+pnpm db:seed
+```
+
+### 5. Add your profile photo
+
+Save your profile photo as `public/images/profile.jpg`.
+
+### 6. Start the development server
+
+```bash
+pnpm dev
+```
+
+Open in your browser:
+- **English**: http://localhost:3000/en
+- **Arabic**: http://localhost:3000/ar
+
+---
+
+## Quick Start (Docker/PostgreSQL)
+
+> **Requires Docker.** Uses PostgreSQL for a production-like setup.
+
+### 1. Clone the repository
+
+```bash
+git clone -b main https://github.com/dev-taherm/my-profile-oc.git
 cd my-profile-oc
 ```
 
@@ -103,6 +173,8 @@ Open in your browser:
 - **English**: http://localhost:3000/en
 - **Arabic**: http://localhost:3000/ar
 
+---
+
 ## Admin Dashboard
 
 Access the admin panel at http://localhost:3000/admin/login
@@ -124,7 +196,7 @@ Access the admin panel at http://localhost:3000/admin/login
 
 ```
 ├── prisma/
-│   ├── schema.prisma          # Database schema
+│   ├── schema.prisma          # Database schema (SQLite or PostgreSQL)
 │   └── seed.ts                # Seed script (populates DB with sample data)
 ├── public/images/             # Static images (profile photo)
 ├── src/
@@ -146,7 +218,7 @@ Access the admin panel at http://localhost:3000/admin/login
 │   ├── lib/                   # Utilities, Prisma client, constants
 │   ├── types/                 # TypeScript types
 │   └── middleware.ts          # Locale detection & routing
-├── docker-compose.yml         # PostgreSQL + app services
+├── docker-compose.yml         # PostgreSQL + app services (main branch)
 ├── Dockerfile                 # Multi-stage production build
 └── .env.example               # Environment variable template
 ```
@@ -202,7 +274,7 @@ This starts both the PostgreSQL database and the Next.js app.
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `DATABASE_URL` | Yes | Database connection string (`file:./dev.db` for SQLite, `postgresql://...` for PostgreSQL) |
 | `NEXTAUTH_SECRET` | Yes | Random secret for NextAuth.js |
 | `NEXTAUTH_URL` | Yes | Your site URL (e.g., `https://yourdomain.com`) |
 | `ADMIN_EMAIL` | Yes | Admin login email |

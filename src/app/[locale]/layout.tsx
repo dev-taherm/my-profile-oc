@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { locales, type Locale } from "@/lib/constants";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -74,7 +75,7 @@ export default async function RootLayout({
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   return (
-    <html lang={locale} dir={dir} className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang={locale} dir={dir} className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {locales
           .filter((l) => l !== locale)
@@ -89,7 +90,9 @@ export default async function RootLayout({
         <link rel="alternate" hrefLang="x-default" href={`${process.env.NEXTAUTH_URL || "http://localhost:3000"}/en`} />
       </head>
       <body className="min-h-full flex flex-col">
-        <TooltipProvider>{children}</TooltipProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <TooltipProvider>{children}</TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

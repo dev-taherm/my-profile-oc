@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,26 +10,41 @@ interface Tag {
   id: string;
   slug: string;
   name: string;
+  _count: { projects: number; blogPosts: number };
 }
 
-const initialTags: Tag[] = [
-  { id: "1", slug: "python", name: "Python" },
-  { id: "2", slug: "django", name: "Django" },
-  { id: "3", slug: "fastapi", name: "FastAPI" },
-  { id: "4", slug: "postgresql", name: "PostgreSQL" },
-  { id: "5", slug: "docker", name: "Docker" },
-  { id: "6", slug: "aws", name: "AWS" },
-  { id: "7", slug: "react", name: "React" },
-  { id: "8", slug: "nextjs", name: "Next.js" },
-  { id: "9", slug: "langchain", name: "LangChain" },
-  { id: "10", slug: "rag", name: "RAG" },
-  { id: "11", slug: "microservices", name: "Microservices" },
-  { id: "12", slug: "typescript", name: "TypeScript" },
-];
-
 export default function AdminTagsPage() {
-  const [tags, setTags] = useState<Tag[]>(initialTags);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const fetchTags = () => {
+    fetch("/api/tags")
+      .then((r) => r.json())
+      .then(setTags);
+  };
+
+  useEffect(() => { fetchTags(); }, []);
+
+  const handleAdd = async () => {
+    if (!name.trim() || loading) return;
+    setLoading(true);
+    const res = await fetch("/api/tags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (res.ok) {
+      setName("");
+      fetchTags();
+    }
+    setLoading(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/tags?id=${id}`, { method: "DELETE" });
+    fetchTags();
+  };
 
   return (
     <div>
@@ -40,9 +55,10 @@ export default function AdminTagsPage() {
           placeholder="Tag name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           className="max-w-sm"
         />
-        <Button onClick={() => { if (name) { setTags([...tags, { id: Date.now().toString(), slug: name.toLowerCase().replace(/\s+/g, "-"), name }]); setName(""); } }}>
+        <Button onClick={handleAdd} disabled={loading}>
           <Plus className="me-2 h-4 w-4" />
           Add
         </Button>
@@ -54,6 +70,8 @@ export default function AdminTagsPage() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
+              <TableHead className="text-center">Projects</TableHead>
+              <TableHead className="text-center">Blog Posts</TableHead>
               <TableHead className="text-end">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -62,13 +80,20 @@ export default function AdminTagsPage() {
               <TableRow key={tag.id}>
                 <TableCell className="font-medium">{tag.name}</TableCell>
                 <TableCell>{tag.slug}</TableCell>
+                <TableCell className="text-center">{tag._count.projects}</TableCell>
+                <TableCell className="text-center">{tag._count.blogPosts}</TableCell>
                 <TableCell className="text-end">
-                  <Button variant="ghost" size="icon" onClick={() => setTags(tags.filter((t) => t.id !== tag.id))}>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(tag.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
+            {tags.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground">No tags yet</TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

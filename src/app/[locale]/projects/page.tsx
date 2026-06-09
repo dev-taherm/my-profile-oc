@@ -25,6 +25,7 @@ export default async function ProjectsPage({
         translations: true,
         categories: true,
         tags: true,
+        projectImages: { orderBy: { order: "asc" as const } },
       },
       orderBy: { order: "asc" },
     });

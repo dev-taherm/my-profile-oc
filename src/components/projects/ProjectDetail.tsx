@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { GithubIcon } from "@/components/shared/Icons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ interface ProjectDetailProps {
     featured: boolean;
     categories: { slug: string; name: string }[];
     tags: { slug: string; name: string }[];
+    projectImages: { url: string; order: number }[];
     translation: {
       locale: string;
       title: string;
@@ -34,6 +36,8 @@ interface ProjectDetailProps {
 
 export function ProjectDetail({ project, locale, dict }: ProjectDetailProps) {
   const t = project.translation;
+  const sortedImages = project.projectImages?.sort((a, b) => a.order - b.order) || [];
+  const [currentImage, setCurrentImage] = useState(0);
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -45,6 +49,47 @@ export function ProjectDetail({ project, locale, dict }: ProjectDetailProps) {
         <ArrowLeft className={`${locale === "ar" ? "rtl:rotate-180" : ""} h-4 w-4 me-2`} />
         {dict.projects.backToProjects}
       </Button>
+
+      {sortedImages.length > 0 && (
+        <div className="mb-8">
+          <div className="relative">
+            <img
+              src={sortedImages[currentImage].url}
+              alt={t.title}
+              className="w-full h-80 object-cover rounded-xl"
+            />
+            {sortedImages.length > 1 && (
+              <>
+                <button
+                  onClick={() => setCurrentImage((prev) => (prev === 0 ? sortedImages.length - 1 : prev - 1))}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background rounded-full p-2 backdrop-blur-sm"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={() => setCurrentImage((prev) => (prev === sortedImages.length - 1 ? 0 : prev + 1))}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-background/80 hover:bg-background rounded-full p-2 backdrop-blur-sm"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </>
+            )}
+          </div>
+          {sortedImages.length > 1 && (
+            <div className="flex gap-2 mt-3 justify-center">
+              {sortedImages.map((img, i) => (
+                <button
+                  key={img.url}
+                  onClick={() => setCurrentImage(i)}
+                  className={`rounded-md overflow-hidden border-2 transition-colors ${i === currentImage ? "border-primary" : "border-transparent"}`}
+                >
+                  <img src={img.url} alt="" className="h-14 w-20 object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mb-6">
         <div className="flex flex-wrap items-center gap-3 mb-4">

@@ -2,16 +2,23 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, X } from "lucide-react";
+import { Reorder } from "framer-motion";
+import { Upload, X, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 
 interface TaxonomyItem {
   id: string;
   name: string;
+}
+
+interface ProjectImage {
+  url: string;
+  order: number;
 }
 
 export default function AdminProjectEditorPage({
@@ -22,7 +29,7 @@ export default function AdminProjectEditorPage({
   const [id, setId] = useState<string>("");
   const [isNew, setIsNew] = useState(false);
   const [slug, setSlug] = useState("");
-  const [image, setImage] = useState("");
+  const [images, setImages] = useState<ProjectImage[]>([]);
   const [githubUrl, setGithubUrl] = useState("");
   const [liveUrl, setLiveUrl] = useState("");
   const [featured, setFeatured] = useState(false);
@@ -61,7 +68,7 @@ export default function AdminProjectEditorPage({
           const p = projects.find((pr: { id: string }) => pr.id === projectId);
           if (p) {
             setSlug(p.slug);
-            setImage(p.image || "");
+            setImages(p.projectImages?.map((img: { url: string; order: number }) => ({ url: img.url, order: img.order })).sort((a: ProjectImage, b: ProjectImage) => a.order - b.order) || []);
             setGithubUrl(p.githubUrl || "");
             setLiveUrl(p.liveUrl || "");
             setFeatured(p.featured);
@@ -104,7 +111,7 @@ export default function AdminProjectEditorPage({
       }
 
       const { url } = await res.json();
-      setImage(url);
+      setImages((prev) => [...prev, { url, order: prev.length }]);
     } catch {
       setError("Upload failed. Please try again.");
     } finally {
@@ -113,13 +120,21 @@ export default function AdminProjectEditorPage({
     }
   };
 
+  const removeImage = (index: number) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleReorder = (newOrder: ProjectImage[]) => {
+    setImages(newOrder.map((img, i) => ({ ...img, order: i })));
+  };
+
   const handleSave = async () => {
     setError("");
     setSaving(true);
 
     const data = {
       slug,
-      image: image || null,
+      images: images.map((img, i) => ({ url: img.url, order: i })),
       githubUrl: githubUrl || null,
       liveUrl: liveUrl || null,
       featured,
@@ -168,7 +183,7 @@ export default function AdminProjectEditorPage({
           <Input placeholder="Slug (e.g. my-project)" value={slug} onChange={(e) => setSlug(e.target.value)} />
 
           <div>
-            <p className="text-sm font-medium mb-2">Project Image</p>
+            <p className="text-sm font-medium mb-2">Project Images</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -176,25 +191,56 @@ export default function AdminProjectEditorPage({
               onChange={handleImageUpload}
               className="hidden"
             />
-            {image ? (
-              <div className="relative inline-block">
-                <img src={image} alt="Project" className="h-32 w-48 object-cover rounded-md border" />
-                <button
-                  onClick={() => setImage("")}
-                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
+
+            {images.length > 0 && (
+              <Reorder.Group
+                axis="x"
+                values={images}
+                onReorder={handleReorder}
+                className="flex gap-3 flex-wrap mb-3"
               >
-                <Upload className="me-2 h-4 w-4" />
-                {uploading ? "Uploading..." : "Upload Image"}
-              </Button>
+                {images.map((img) => (
+                  <Reorder.Item
+                    key={img.url}
+                    value={img}
+                    className="relative group cursor-grab active:cursor-grabbing"
+                  >
+                    <div className="relative">
+                      <img
+                        src={img.url}
+                        alt={`Project image`}
+                        className="h-28 w-40 object-cover rounded-md border"
+                      />
+                      <div className="absolute top-1 left-1">
+                        <GripVertical className="h-4 w-4 text-white drop-shadow-md" />
+                      </div>
+                      {img.order === 0 && (
+                        <div className="absolute top-1 right-8">
+                          <Badge variant="default" className="text-[10px] px-1.5 py-0">Cover</Badge>
+                        </div>
+                      )}
+                      <button
+                        onClick={() => removeImage(img.order)}
+                        className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </Reorder.Item>
+                ))}
+              </Reorder.Group>
+            )}
+
+            <Button
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+            >
+              <Upload className="me-2 h-4 w-4" />
+              {uploading ? "Uploading..." : "Add Image"}
+            </Button>
+            {images.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">Drag to reorder. First image is the cover.</p>
             )}
           </div>
 

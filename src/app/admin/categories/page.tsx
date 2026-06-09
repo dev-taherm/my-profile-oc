@@ -17,6 +17,7 @@ export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const fetchCategories = () => {
     fetch("/api/categories")
@@ -29,6 +30,7 @@ export default function AdminCategoriesPage() {
   const handleAdd = async () => {
     if (!name.trim() || loading) return;
     setLoading(true);
+    setError("");
     const res = await fetch("/api/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -37,20 +39,28 @@ export default function AdminCategoriesPage() {
     if (res.ok) {
       setName("");
       fetchCategories();
+    } else {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error || "Failed to create");
     }
     setLoading(false);
   };
 
   const handleDelete = async (id: string) => {
-    await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
-    fetchCategories();
+    const res = await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
+    if (res.ok) {
+      fetchCategories();
+    } else {
+      const body = await res.json().catch(() => ({}));
+      setError(body.error || "Failed to delete");
+    }
   };
 
   return (
     <div>
       <h1 className="text-2xl font-bold mb-6">Categories</h1>
 
-      <div className="flex gap-3 mb-6">
+      <div className="flex gap-3 mb-4">
         <Input
           placeholder="Category name"
           value={name}
@@ -63,6 +73,7 @@ export default function AdminCategoriesPage() {
           Add
         </Button>
       </div>
+      {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
       <div className="border rounded-lg">
         <Table>

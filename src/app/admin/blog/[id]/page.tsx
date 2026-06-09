@@ -34,6 +34,8 @@ export default function AdminBlogEditorPage({
   const [allTags, setAllTags] = useState<TaxonomyItem[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -73,6 +75,9 @@ export default function AdminBlogEditorPage({
   };
 
   const handleSave = async () => {
+    setError("");
+    setSaving(true);
+
     const data = {
       slug,
       readingTime,
@@ -90,13 +95,25 @@ export default function AdminBlogEditorPage({
     const url = isNew ? "/api/blog" : `/api/blog?id=${id}`;
     const method = isNew ? "POST" : "PUT";
 
-    await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    router.push("/admin/blog");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || "Failed to save");
+        setSaving(false);
+        return;
+      }
+
+      router.push("/admin/blog");
+    } catch {
+      setError("Network error. Please try again.");
+      setSaving(false);
+    }
   };
 
   return (
@@ -179,9 +196,12 @@ export default function AdminBlogEditorPage({
         </TabsContent>
       </Tabs>
 
-      <div className="flex gap-3">
-        <Button onClick={handleSave}>Save</Button>
+      <div className="flex gap-3 items-center">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : "Save"}
+        </Button>
         <Button variant="outline" onClick={() => router.push("/admin/blog")}>Cancel</Button>
+        {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
     </div>
   );

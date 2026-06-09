@@ -23,83 +23,101 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  const { slug, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
+    const body = await request.json();
+    const { slug, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
 
-  const post = await prisma.blogPost.create({
-    data: {
-      slug,
-      readingTime,
-      featured,
-      status,
-      publishedAt,
-      authorId: (session.user as { id: string }).id,
-      translations: {
-        create: translations.map((t: { locale: string; title: string; excerpt: string; content: string }) => ({
-          locale: t.locale,
-          title: t.title,
-          excerpt: t.excerpt,
-          content: t.content,
-        })),
+    if (!slug) return NextResponse.json({ error: "Slug is required" }, { status: 400 });
+    if (!translations?.length) return NextResponse.json({ error: "At least one translation is required" }, { status: 400 });
+
+    const post = await prisma.blogPost.create({
+      data: {
+        slug,
+        readingTime,
+        featured,
+        status,
+        publishedAt,
+        authorId: (session.user as { id: string }).id,
+        translations: {
+          create: translations.map((t: { locale: string; title: string; excerpt: string; content: string }) => ({
+            locale: t.locale,
+            title: t.title,
+            excerpt: t.excerpt,
+            content: t.content,
+          })),
+        },
+        categories: categoryIds?.length ? { connect: categoryIds.map((id: string) => ({ id })) } : undefined,
+        tags: tagIds?.length ? { connect: tagIds.map((id: string) => ({ id })) } : undefined,
       },
-      categories: categoryIds?.length ? { connect: categoryIds.map((id: string) => ({ id })) } : undefined,
-      tags: tagIds?.length ? { connect: tagIds.map((id: string) => ({ id })) } : undefined,
-    },
-    include: { translations: true, categories: true, tags: true },
-  });
+      include: { translations: true, categories: true, tags: true },
+    });
 
-  return NextResponse.json(post);
+    return NextResponse.json(post);
+  } catch (error) {
+    console.error("POST /api/blog error:", error);
+    return NextResponse.json({ error: "Failed to create blog post" }, { status: 500 });
+  }
 }
 
 export async function PUT(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-  const body = await request.json();
-  const { slug, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
+    const body = await request.json();
+    const { slug, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
 
-  await prisma.blogPostTranslation.deleteMany({ where: { blogPostId: id } });
+    await prisma.blogPostTranslation.deleteMany({ where: { blogPostId: id } });
 
-  const post = await prisma.blogPost.update({
-    where: { id },
-    data: {
-      slug,
-      readingTime,
-      featured,
-      status,
-      publishedAt,
-      translations: {
-        create: translations.map((t: { locale: string; title: string; excerpt: string; content: string }) => ({
-          locale: t.locale,
-          title: t.title,
-          excerpt: t.excerpt,
-          content: t.content,
-        })),
+    const post = await prisma.blogPost.update({
+      where: { id },
+      data: {
+        slug,
+        readingTime,
+        featured,
+        status,
+        publishedAt,
+        translations: {
+          create: translations.map((t: { locale: string; title: string; excerpt: string; content: string }) => ({
+            locale: t.locale,
+            title: t.title,
+            excerpt: t.excerpt,
+            content: t.content,
+          })),
+        },
+        categories: { set: categoryIds?.map((id: string) => ({ id })) || [] },
+        tags: { set: tagIds?.map((id: string) => ({ id })) || [] },
       },
-      categories: { set: categoryIds?.map((id: string) => ({ id })) || [] },
-      tags: { set: tagIds?.map((id: string) => ({ id })) || [] },
-    },
-    include: { translations: true, categories: true, tags: true },
-  });
+      include: { translations: true, categories: true, tags: true },
+    });
 
-  return NextResponse.json(post);
+    return NextResponse.json(post);
+  } catch (error) {
+    console.error("PUT /api/blog error:", error);
+    return NextResponse.json({ error: "Failed to update blog post" }, { status: 500 });
+  }
 }
 
 export async function DELETE(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { searchParams } = new URL(request.url);
-  const id = searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
-  await prisma.blogPost.delete({ where: { id } });
-  return NextResponse.json({ success: true });
+    await prisma.blogPost.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("DELETE /api/blog error:", error);
+    return NextResponse.json({ error: "Failed to delete blog post" }, { status: 500 });
+  }
 }

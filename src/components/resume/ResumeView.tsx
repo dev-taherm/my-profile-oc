@@ -52,10 +52,10 @@ export function ResumeView({ dict }: ResumeViewProps) {
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/user/profile")
+    fetch("/api/resume")
       .then((r) => r.json())
-      .then((user) => {
-        if (user?.resumeUrl) setResumeUrl(user.resumeUrl);
+      .then((data) => {
+        if (data?.resumeUrl) setResumeUrl(data.resumeUrl);
       })
       .catch(() => {});
   }, []);

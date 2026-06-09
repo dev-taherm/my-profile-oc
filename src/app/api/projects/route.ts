@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   const projects = await prisma.project.findMany({
-    include: { translations: true, categories: true, tags: true },
+    include: { translations: true, categories: true, tags: true, projectImages: { orderBy: { order: "asc" } } },
     orderBy: { order: "asc" },
   });
   return NextResponse.json(projects);
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { slug, image, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
+    const { slug, images, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
 
     if (!slug) return NextResponse.json({ error: "Slug is required" }, { status: 400 });
     if (!translations?.length) return NextResponse.json({ error: "At least one translation is required" }, { status: 400 });
@@ -25,7 +25,6 @@ export async function POST(request: NextRequest) {
     const project = await prisma.project.create({
       data: {
         slug,
-        image,
         githubUrl,
         liveUrl,
         featured,
@@ -38,10 +37,13 @@ export async function POST(request: NextRequest) {
             content: t.content,
           })),
         },
+        projectImages: images?.length
+          ? { create: images.map((img: { url: string }, i: number) => ({ url: img.url, order: i })) }
+          : undefined,
         categories: categoryIds?.length ? { connect: categoryIds.map((id: string) => ({ id })) } : undefined,
         tags: tagIds?.length ? { connect: tagIds.map((id: string) => ({ id })) } : undefined,
       },
-      include: { translations: true, categories: true, tags: true },
+      include: { translations: true, categories: true, tags: true, projectImages: { orderBy: { order: "asc" } } },
     });
 
     return NextResponse.json(project);
@@ -61,13 +63,12 @@ export async function PUT(request: NextRequest) {
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
     const body = await request.json();
-    const { slug, image, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
+    const { slug, images, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
 
     const project = await prisma.project.update({
       where: { id },
       data: {
         slug,
-        image,
         githubUrl,
         liveUrl,
         featured,
@@ -81,10 +82,14 @@ export async function PUT(request: NextRequest) {
             content: t.content,
           })),
         },
+        projectImages: {
+          deleteMany: {},
+          create: images?.map((img: { url: string }, i: number) => ({ url: img.url, order: i })) || [],
+        },
         categories: { set: categoryIds?.map((id: string) => ({ id })) || [] },
         tags: { set: tagIds?.map((id: string) => ({ id })) || [] },
       },
-      include: { translations: true, categories: true, tags: true },
+      include: { translations: true, categories: true, tags: true, projectImages: { orderBy: { order: "asc" } } },
     });
 
     return NextResponse.json(project);

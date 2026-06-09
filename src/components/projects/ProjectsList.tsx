@@ -20,7 +20,7 @@ import { type Locale } from "@/lib/constants";
 interface Project {
   id: string;
   slug: string;
-  image: string | null;
+  projectImages: { url: string; order: number }[];
   githubUrl: string | null;
   liveUrl: string | null;
   featured: boolean;
@@ -199,9 +199,9 @@ export function ProjectsList({ projects, locale, dict }: ProjectsListProps) {
                 href={`/${locale}/projects/${project.slug}`}
                 className="group block p-6 rounded-xl border bg-card hover:shadow-lg transition-all"
               >
-                {project.image && (
+                {project.projectImages?.length > 0 && (
                   <img
-                    src={project.image}
+                    src={project.projectImages[0].url}
                     alt={t.title}
                     className="w-full h-40 object-cover rounded-md mb-4"
                   />

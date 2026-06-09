@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 interface Project {
   id: string;
   slug: string;
-  image: string | null;
+  projectImages: { url: string; order: number }[];
   featured: boolean;
   status: string;
   translations: { locale: string; title: string }[];
@@ -56,8 +56,8 @@ export default function AdminProjectsPage() {
               return (
                 <TableRow key={project.id}>
                   <TableCell>
-                    {project.image ? (
-                      <img src={project.image} alt="" className="h-10 w-16 object-cover rounded" />
+                    {project.projectImages?.length > 0 ? (
+                      <img src={project.projectImages[0].url} alt="" className="h-10 w-16 object-cover rounded" />
                     ) : (
                       <span className="text-muted-foreground text-xs">—</span>
                     )}

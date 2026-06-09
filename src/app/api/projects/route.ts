@@ -62,8 +62,6 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { slug, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
 
-    await prisma.projectTranslation.deleteMany({ where: { projectId: id } });
-
     const project = await prisma.project.update({
       where: { id },
       data: {
@@ -73,6 +71,7 @@ export async function PUT(request: NextRequest) {
         featured,
         status,
         translations: {
+          deleteMany: {},
           create: translations.map((t: { locale: string; title: string; description: string; content?: string }) => ({
             locale: t.locale,
             title: t.title,

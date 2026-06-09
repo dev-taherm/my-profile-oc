@@ -74,8 +74,6 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { slug, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
 
-    await prisma.blogPostTranslation.deleteMany({ where: { blogPostId: id } });
-
     const post = await prisma.blogPost.update({
       where: { id },
       data: {
@@ -85,6 +83,7 @@ export async function PUT(request: NextRequest) {
         status,
         publishedAt,
         translations: {
+          deleteMany: {},
           create: translations.map((t: { locale: string; title: string; excerpt: string; content: string }) => ({
             locale: t.locale,
             title: t.title,

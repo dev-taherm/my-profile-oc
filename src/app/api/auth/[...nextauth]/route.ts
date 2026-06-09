@@ -33,7 +33,13 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.passwordChanged = (user as { passwordChanged?: boolean }).passwordChanged ?? false;
+      }
+      const dbUser = await prisma.user.findUnique({
+        where: { id: token.id as string },
+        select: { passwordChanged: true },
+      });
+      if (dbUser) {
+        token.passwordChanged = dbUser.passwordChanged;
       }
       return token;
     },

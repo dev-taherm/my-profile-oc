@@ -35,6 +35,8 @@ export default function AdminProjectEditorPage({
   const [allTags, setAllTags] = useState<TaxonomyItem[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -75,6 +77,9 @@ export default function AdminProjectEditorPage({
   };
 
   const handleSave = async () => {
+    setError("");
+    setSaving(true);
+
     const data = {
       slug,
       githubUrl: githubUrl || null,
@@ -92,13 +97,25 @@ export default function AdminProjectEditorPage({
     const url = isNew ? "/api/projects" : `/api/projects?id=${id}`;
     const method = isNew ? "POST" : "PUT";
 
-    await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    router.push("/admin/projects");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || "Failed to save");
+        setSaving(false);
+        return;
+      }
+
+      router.push("/admin/projects");
+    } catch {
+      setError("Network error. Please try again.");
+      setSaving(false);
+    }
   };
 
   return (
@@ -178,9 +195,12 @@ export default function AdminProjectEditorPage({
         </TabsContent>
       </Tabs>
 
-      <div className="flex gap-3">
-        <Button onClick={handleSave}>Save</Button>
+      <div className="flex gap-3 items-center">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? "Saving..." : "Save"}
+        </Button>
         <Button variant="outline" onClick={() => router.push("/admin/projects")}>Cancel</Button>
+        {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
     </div>
   );

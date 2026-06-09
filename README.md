@@ -75,8 +75,8 @@ A built-in admin panel lets you manage all content without writing code:
 - **Dashboard** -- Overview with project, blog post, and message counts
 - **Project Management** -- Create, edit, and delete projects with bilingual translation tabs (EN/AR), GitHub/live URLs, featured flag, and publish status (Draft/Published/Archived)
 - **Blog Management** -- Create, edit, and delete blog posts with Markdown content, reading time, featured flag, and publish status. Publication date is auto-set when you publish
-- **Category Management** -- Create and delete categories to organize projects and blog posts
-- **Tag Management** -- Create and delete tags for fine-grained content tagging
+- **Category Management** -- Create and delete categories (e.g., Backend, AI/LLM) to organize both projects and blog posts. Assign categories to projects and blog posts directly from the editor
+- **Tag Management** -- Create and delete tags (e.g., Python, Django, React) for fine-grained content tagging across projects and posts. Assign tags to projects and blog posts directly from the editor
 - **Contact Messages** -- View and manage messages submitted through the contact form
 - **Authentication** -- Secure login with email/password using NextAuth.js with JWT sessions
 
@@ -338,7 +338,7 @@ The dashboard displays a welcome message with your name and quick-action buttons
 
 - **List view** -- Table showing all projects with title, status badge, featured flag, and action buttons (Edit/Delete)
 - **Create/Edit** -- Full editor with:
-  - **Settings card** -- Slug, GitHub URL, Live URL, Featured checkbox, Status dropdown (Draft/Published/Archived)
+  - **Settings card** -- Slug, GitHub URL, Live URL, Featured checkbox, Status dropdown (Draft/Published/Archived), category checkboxes, tag checkboxes
   - **Translation tabs** -- Switch between English and Arabic editors, each with title, description, and Markdown content fields
   - **RTL support** -- Arabic content fields automatically switch to right-to-left text direction
 - **Delete** -- Confirmation dialog before permanent deletion
@@ -347,15 +347,15 @@ The dashboard displays a welcome message with your name and quick-action buttons
 
 - **List view** -- Table showing all posts with title, status badge, reading time, and action buttons (Edit/Delete)
 - **Create/Edit** -- Full editor with:
-  - **Settings card** -- Slug, Featured checkbox, Reading time, Status dropdown (Draft/Published/Archived)
+  - **Settings card** -- Slug, Featured checkbox, Reading time, Status dropdown (Draft/Published/Archived), category checkboxes, tag checkboxes
   - **Translation tabs** -- English and Arabic editors with title, excerpt, and Markdown content fields
   - **Auto-publish date** -- `publishedAt` is automatically set when status changes to Published
 - **Delete** -- Confirmation dialog before permanent deletion
 
 ### Categories & Tags
 
-- **Categories** -- Create and delete categories (e.g., Backend, AI/LLM, Full-Stack, DevOps) used to organize both projects and blog posts
-- **Tags** -- Create and delete tags (e.g., Python, Django, React, Docker) for fine-grained content tagging across projects and posts
+- **Categories** -- Create and delete categories (e.g., Backend, AI/LLM, Full-Stack, DevOps) used to organize both projects and blog posts. Assign categories to projects and blog posts from their editor pages using checkboxes
+- **Tags** -- Create and delete tags (e.g., Python, Django, React, Docker) for fine-grained content tagging across projects and posts. Assign tags to projects and blog posts from their editor pages using checkboxes
 
 ---
 
@@ -374,8 +374,8 @@ All API routes are under `/api/`. Authentication is required for write operation
 | Endpoint | Method | Auth | Description |
 |---|---|---|---|
 | `/api/projects` | GET | No | List all projects (ordered by `order`). Includes translations, categories, and tags |
-| `/api/projects` | POST | Yes | Create a new project with translations |
-| `/api/projects?id={id}` | PUT | Yes | Update an existing project. Replaces translations |
+| `/api/projects` | POST | Yes | Create a new project with translations. Accepts `categoryIds` and `tagIds` to assign categories/tags |
+| `/api/projects?id={id}` | PUT | Yes | Update an existing project. Replaces translations, categories, and tags |
 | `/api/projects?id={id}` | DELETE | Yes | Delete a project and its translations |
 
 ### Blog Posts
@@ -384,9 +384,25 @@ All API routes are under `/api/`. Authentication is required for write operation
 |---|---|---|---|
 | `/api/blog` | GET | No | List all blog posts. Includes translations, categories, tags, and author name |
 | `/api/blog?id={id}` | GET | No | Get a single blog post by ID |
-| `/api/blog` | POST | Yes | Create a new blog post with translations |
-| `/api/blog?id={id}` | PUT | Yes | Update an existing blog post. Replaces translations |
+| `/api/blog` | POST | Yes | Create a new blog post with translations. Accepts `categoryIds` and `tagIds` to assign categories/tags |
+| `/api/blog?id={id}` | PUT | Yes | Update an existing blog post. Replaces translations, categories, and tags |
 | `/api/blog?id={id}` | DELETE | Yes | Delete a blog post and its translations |
+
+### Categories
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/categories` | GET | No | List all categories with usage counts (projects and blog posts) |
+| `/api/categories` | POST | Yes | Create a new category. Body: `{ "name": "Category Name" }`. Slug is auto-generated |
+| `/api/categories?id={id}` | DELETE | Yes | Delete a category |
+
+### Tags
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/tags` | GET | No | List all tags with usage counts (projects and blog posts) |
+| `/api/tags` | POST | Yes | Create a new tag. Body: `{ "name": "Tag Name" }`. Slug is auto-generated |
+| `/api/tags?id={id}` | DELETE | Yes | Delete a tag |
 
 ### Contact
 
@@ -442,8 +458,10 @@ All API routes are under `/api/`. Authentication is required for write operation
 │   │   │
 │   │   ├── api/                   # REST API routes
 │   │   │   ├── auth/              # NextAuth.js authentication
-│   │   │   ├── projects/          # Projects CRUD
-│   │   │   ├── blog/              # Blog posts CRUD
+│   │   │   ├── projects/          # Projects CRUD (accepts categoryIds/tagIds)
+│   │   │   ├── blog/              # Blog posts CRUD (accepts categoryIds/tagIds)
+│   │   │   ├── categories/        # Categories CRUD
+│   │   │   ├── tags/              # Tags CRUD
 │   │   │   ├── contact/           # Contact form submission
 │   │   │   ├── upload/            # File upload
 │   │   │   └── user/profile/      # Update user credentials
@@ -480,7 +498,7 @@ All API routes are under `/api/`. Authentication is required for write operation
 │   ├── types/
 │   │   └── index.ts               # TypeScript type definitions
 │   │
-│   └── middleware.ts              # Locale detection, routing, redirects
+│   └── proxy.ts                 # Locale detection, routing, redirects (Next.js 16)
 │
 ├── docker-compose.yml             # PostgreSQL + app services (main branch)
 ├── Dockerfile                     # Multi-stage production build

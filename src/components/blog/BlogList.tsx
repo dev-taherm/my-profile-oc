@@ -3,9 +3,16 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Clock, Search } from "lucide-react";
+import { Clock, Search, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { type Locale } from "@/lib/constants";
 
 interface BlogPost {
@@ -42,8 +49,8 @@ interface BlogListProps {
 
 export function BlogList({ posts, locale, dict }: BlogListProps) {
   const [search, setSearch] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const allCategories = useMemo(() => {
     const map = new Map<string, string>();
@@ -57,14 +64,26 @@ export function BlogList({ posts, locale, dict }: BlogListProps) {
     return Array.from(map.entries()).map(([slug, name]) => ({ slug, name }));
   }, [posts]);
 
+  const toggleCategory = (slug: string) => {
+    setSelectedCategories((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
+  };
+
+  const toggleTag = (slug: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
+    );
+  };
+
   const filtered = posts.filter((p) => {
     const t = p.translations.find((tr) => tr.locale === locale)
       || p.translations.find((tr) => tr.locale === "en")
       || p.translations[0];
     if (!t) return false;
 
-    if (selectedCategory && !p.categories.some((c) => c.slug === selectedCategory)) return false;
-    if (selectedTag && !p.tags.some((tag) => tag.slug === selectedTag)) return false;
+    if (selectedCategories.length > 0 && !p.categories.some((c) => selectedCategories.includes(c.slug))) return false;
+    if (selectedTags.length > 0 && !p.tags.some((tag) => selectedTags.includes(tag.slug))) return false;
 
     const q = search.toLowerCase();
     return (
@@ -88,49 +107,71 @@ export function BlogList({ posts, locale, dict }: BlogListProps) {
         </div>
       </div>
 
-      {allCategories.length > 0 && (
-        <div className="mb-4">
-          <p className="text-sm font-medium text-muted-foreground mb-2">{dict.blog.categories}</p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCategory(null)}
-              className={`px-3 py-1 rounded-full text-sm border transition-colors ${selectedCategory === null ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent"}`}
-            >
-              {dict.blog.all}
-            </button>
-            {allCategories.map((cat) => (
-              <button
-                key={cat.slug}
-                onClick={() => setSelectedCategory(selectedCategory === cat.slug ? null : cat.slug)}
-                className={`px-3 py-1 rounded-full text-sm border transition-colors ${selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent"}`}
+      {(allCategories.length > 0 || allTags.length > 0) && (
+        <div className="mb-8 flex flex-wrap gap-3 justify-center">
+          {allCategories.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border bg-background hover:bg-accent transition-colors" />
+                }
               >
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+                {dict.blog.categories}
+                {selectedCategories.length > 0 && ` (${selectedCategories.length})`}
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="min-w-44">
+                <DropdownMenuCheckboxItem
+                  checked={selectedCategories.length === 0}
+                  onCheckedChange={() => setSelectedCategories([])}
+                >
+                  {dict.blog.all}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                {allCategories.map((cat) => (
+                  <DropdownMenuCheckboxItem
+                    key={cat.slug}
+                    checked={selectedCategories.includes(cat.slug)}
+                    onCheckedChange={() => toggleCategory(cat.slug)}
+                  >
+                    {cat.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
-      {allTags.length > 0 && (
-        <div className="mb-8">
-          <p className="text-sm font-medium text-muted-foreground mb-2">{dict.blog.tags}</p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedTag(null)}
-              className={`px-3 py-1 rounded-full text-sm border transition-colors ${selectedTag === null ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent"}`}
-            >
-              {dict.blog.all}
-            </button>
-            {allTags.map((tag) => (
-              <button
-                key={tag.slug}
-                onClick={() => setSelectedTag(selectedTag === tag.slug ? null : tag.slug)}
-                className={`px-3 py-1 rounded-full text-sm border transition-colors ${selectedTag === tag.slug ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent"}`}
+          {allTags.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <button className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm border bg-background hover:bg-accent transition-colors" />
+                }
               >
-                {tag.name}
-              </button>
-            ))}
-          </div>
+                {dict.blog.tags}
+                {selectedTags.length > 0 && ` (${selectedTags.length})`}
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="min-w-44">
+                <DropdownMenuCheckboxItem
+                  checked={selectedTags.length === 0}
+                  onCheckedChange={() => setSelectedTags([])}
+                >
+                  {dict.blog.all}
+                </DropdownMenuCheckboxItem>
+                <DropdownMenuSeparator />
+                {allTags.map((tag) => (
+                  <DropdownMenuCheckboxItem
+                    key={tag.slug}
+                    checked={selectedTags.includes(tag.slug)}
+                    onCheckedChange={() => toggleTag(tag.slug)}
+                  >
+                    {tag.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       )}
 

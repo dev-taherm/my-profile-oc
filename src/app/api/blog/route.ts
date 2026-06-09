@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { slug, readingTime, featured, status, publishedAt, translations } = body;
+  const { slug, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
 
   const post = await prisma.blogPost.create({
     data: {
@@ -45,8 +45,10 @@ export async function POST(request: NextRequest) {
           content: t.content,
         })),
       },
+      categories: categoryIds?.length ? { connect: categoryIds.map((id: string) => ({ id })) } : undefined,
+      tags: tagIds?.length ? { connect: tagIds.map((id: string) => ({ id })) } : undefined,
     },
-    include: { translations: true },
+    include: { translations: true, categories: true, tags: true },
   });
 
   return NextResponse.json(post);
@@ -61,7 +63,7 @@ export async function PUT(request: NextRequest) {
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
   const body = await request.json();
-  const { slug, readingTime, featured, status, publishedAt, translations } = body;
+  const { slug, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
 
   await prisma.blogPostTranslation.deleteMany({ where: { blogPostId: id } });
 
@@ -81,8 +83,10 @@ export async function PUT(request: NextRequest) {
           content: t.content,
         })),
       },
+      categories: { set: categoryIds?.map((id: string) => ({ id })) || [] },
+      tags: { set: tagIds?.map((id: string) => ({ id })) || [] },
     },
-    include: { translations: true },
+    include: { translations: true, categories: true, tags: true },
   });
 
   return NextResponse.json(post);

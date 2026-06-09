@@ -10,25 +10,41 @@ interface Category {
   id: string;
   slug: string;
   name: string;
+  _count: { projects: number; blogPosts: number };
 }
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [name, setName] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/projects")
+  const fetchCategories = () => {
+    fetch("/api/categories")
       .then((r) => r.json())
-      .then(() => {
-        // Categories are embedded in projects; for now use static
-        setCategories([
-          { id: "1", slug: "backend", name: "Backend" },
-          { id: "2", slug: "ai-llm", name: "AI / LLM" },
-          { id: "3", slug: "full-stack", name: "Full-Stack" },
-          { id: "4", slug: "devops", name: "DevOps" },
-        ]);
-      });
-  }, []);
+      .then(setCategories);
+  };
+
+  useEffect(() => { fetchCategories(); }, []);
+
+  const handleAdd = async () => {
+    if (!name.trim() || loading) return;
+    setLoading(true);
+    const res = await fetch("/api/categories", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+    if (res.ok) {
+      setName("");
+      fetchCategories();
+    }
+    setLoading(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    await fetch(`/api/categories?id=${id}`, { method: "DELETE" });
+    fetchCategories();
+  };
 
   return (
     <div>
@@ -39,9 +55,10 @@ export default function AdminCategoriesPage() {
           placeholder="Category name"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAdd()}
           className="max-w-sm"
         />
-        <Button onClick={() => { if (name) { setCategories([...categories, { id: Date.now().toString(), slug: name.toLowerCase().replace(/\s+/g, "-"), name }]); setName(""); } }}>
+        <Button onClick={handleAdd} disabled={loading}>
           <Plus className="me-2 h-4 w-4" />
           Add
         </Button>
@@ -53,6 +70,8 @@ export default function AdminCategoriesPage() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
+              <TableHead className="text-center">Projects</TableHead>
+              <TableHead className="text-center">Blog Posts</TableHead>
               <TableHead className="text-end">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -61,13 +80,20 @@ export default function AdminCategoriesPage() {
               <TableRow key={cat.id}>
                 <TableCell className="font-medium">{cat.name}</TableCell>
                 <TableCell>{cat.slug}</TableCell>
+                <TableCell className="text-center">{cat._count.projects}</TableCell>
+                <TableCell className="text-center">{cat._count.blogPosts}</TableCell>
                 <TableCell className="text-end">
-                  <Button variant="ghost" size="icon" onClick={() => setCategories(categories.filter((c) => c.id !== cat.id))}>
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(cat.id)}>
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
+            {categories.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground">No categories yet</TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

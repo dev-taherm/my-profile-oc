@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { slug, githubUrl, liveUrl, featured, status, translations } = body;
+  const { slug, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
 
   const project = await prisma.project.create({
     data: {
@@ -33,8 +33,10 @@ export async function POST(request: NextRequest) {
           content: t.content,
         })),
       },
+      categories: categoryIds?.length ? { connect: categoryIds.map((id: string) => ({ id })) } : undefined,
+      tags: tagIds?.length ? { connect: tagIds.map((id: string) => ({ id })) } : undefined,
     },
-    include: { translations: true },
+    include: { translations: true, categories: true, tags: true },
   });
 
   return NextResponse.json(project);
@@ -49,7 +51,7 @@ export async function PUT(request: NextRequest) {
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
   const body = await request.json();
-  const { slug, githubUrl, liveUrl, featured, status, translations } = body;
+  const { slug, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
 
   await prisma.projectTranslation.deleteMany({ where: { projectId: id } });
 
@@ -69,8 +71,10 @@ export async function PUT(request: NextRequest) {
           content: t.content,
         })),
       },
+      categories: { set: categoryIds?.map((id: string) => ({ id })) || [] },
+      tags: { set: tagIds?.map((id: string) => ({ id })) || [] },
     },
-    include: { translations: true },
+    include: { translations: true, categories: true, tags: true },
   });
 
   return NextResponse.json(project);

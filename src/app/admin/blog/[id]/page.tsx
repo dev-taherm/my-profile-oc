@@ -8,6 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+interface TaxonomyItem {
+  id: string;
+  name: string;
+}
+
 export default function AdminBlogEditorPage({
   params,
 }: {
@@ -25,7 +30,16 @@ export default function AdminBlogEditorPage({
   const [arTitle, setArTitle] = useState("");
   const [arExcerpt, setArExcerpt] = useState("");
   const [arContent, setArContent] = useState("");
+  const [allCategories, setAllCategories] = useState<TaxonomyItem[]>([]);
+  const [allTags, setAllTags] = useState<TaxonomyItem[]>([]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const router = useRouter();
+
+  useEffect(() => {
+    fetch("/api/categories").then((r) => r.json()).then(setAllCategories);
+    fetch("/api/tags").then((r) => r.json()).then(setAllTags);
+  }, []);
 
   useEffect(() => {
     params.then(({ id: blogId }) => {
@@ -43,6 +57,8 @@ export default function AdminBlogEditorPage({
             setReadingTime(p.readingTime);
             setFeatured(p.featured);
             setStatus(p.status);
+            setSelectedCategoryIds(p.categories?.map((c: TaxonomyItem) => c.id) || []);
+            setSelectedTagIds(p.tags?.map((t: TaxonomyItem) => t.id) || []);
             const en = p.translations?.find((t: { locale: string }) => t.locale === "en");
             const ar = p.translations?.find((t: { locale: string }) => t.locale === "ar");
             if (en) { setEnTitle(en.title); setEnExcerpt(en.excerpt); setEnContent(en.content); }
@@ -52,6 +68,10 @@ export default function AdminBlogEditorPage({
     });
   }, [params]);
 
+  const toggleId = (ids: string[], setIds: (v: string[]) => void, targetId: string) => {
+    setIds(ids.includes(targetId) ? ids.filter((i) => i !== targetId) : [...ids, targetId]);
+  };
+
   const handleSave = async () => {
     const data = {
       slug,
@@ -59,6 +79,8 @@ export default function AdminBlogEditorPage({
       featured,
       status,
       publishedAt: status === "PUBLISHED" ? new Date().toISOString() : null,
+      categoryIds: selectedCategoryIds,
+      tagIds: selectedTagIds,
       translations: [
         { locale: "en", title: enTitle, excerpt: enExcerpt, content: enContent },
         { locale: "ar", title: arTitle || enTitle, excerpt: arExcerpt || enExcerpt, content: arContent || enContent },
@@ -102,6 +124,40 @@ export default function AdminBlogEditorPage({
               <option value="PUBLISHED">Published</option>
               <option value="ARCHIVED">Archived</option>
             </select>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium mb-2">Categories</p>
+            <div className="flex flex-wrap gap-2">
+              {allCategories.map((cat) => (
+                <label key={cat.id} className="flex items-center gap-1.5 text-sm border rounded-md px-3 py-1.5 cursor-pointer hover:bg-accent">
+                  <input
+                    type="checkbox"
+                    checked={selectedCategoryIds.includes(cat.id)}
+                    onChange={() => toggleId(selectedCategoryIds, setSelectedCategoryIds, cat.id)}
+                  />
+                  {cat.name}
+                </label>
+              ))}
+              {allCategories.length === 0 && <p className="text-sm text-muted-foreground">No categories available</p>}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium mb-2">Tags</p>
+            <div className="flex flex-wrap gap-2">
+              {allTags.map((tag) => (
+                <label key={tag.id} className="flex items-center gap-1.5 text-sm border rounded-md px-3 py-1.5 cursor-pointer hover:bg-accent">
+                  <input
+                    type="checkbox"
+                    checked={selectedTagIds.includes(tag.id)}
+                    onChange={() => toggleId(selectedTagIds, setSelectedTagIds, tag.id)}
+                  />
+                  {tag.name}
+                </label>
+              ))}
+              {allTags.length === 0 && <p className="text-sm text-muted-foreground">No tags available</p>}
+            </div>
           </div>
         </CardContent>
       </Card>

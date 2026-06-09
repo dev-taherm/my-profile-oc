@@ -4,12 +4,34 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const userId = (session.user as { id: string }).id;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, name: true, email: true, resumeUrl: true },
+  });
+
+  return NextResponse.json(user);
+}
+
 export async function PUT(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const { name, email, password } = body;
+  const { name, email, password, resumeUrl } = body;
+
+  if (resumeUrl !== undefined) {
+    const userId = (session.user as { id: string }).id;
+    await prisma.user.update({
+      where: { id: userId },
+      data: { resumeUrl },
+    });
+    return NextResponse.json({ success: true });
+  }
 
   if (!name || !email || !password) {
     return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });

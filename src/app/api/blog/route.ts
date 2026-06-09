@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { slug, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
+    const { slug, coverImage, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
 
     if (!slug) return NextResponse.json({ error: "Slug is required" }, { status: 400 });
     if (!translations?.length) return NextResponse.json({ error: "At least one translation is required" }, { status: 400 });
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
     const post = await prisma.blogPost.create({
       data: {
         slug,
+        coverImage,
         readingTime,
         featured,
         status,
@@ -72,12 +73,13 @@ export async function PUT(request: NextRequest) {
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
     const body = await request.json();
-    const { slug, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
+    const { slug, coverImage, readingTime, featured, status, publishedAt, translations, categoryIds, tagIds } = body;
 
     const post = await prisma.blogPost.update({
       where: { id },
       data: {
         slug,
+        coverImage,
         readingTime,
         featured,
         status,

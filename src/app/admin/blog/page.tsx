@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 interface BlogPost {
   id: string;
   slug: string;
+  coverImage: string | null;
   status: string;
   featured: boolean;
   readingTime: number;
@@ -43,6 +44,7 @@ export default function AdminBlogPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Image</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Read Time</TableHead>
@@ -54,6 +56,13 @@ export default function AdminBlogPage() {
               const t = post.translations.find((tr) => tr.locale === "en") || post.translations[0];
               return (
                 <TableRow key={post.id}>
+                  <TableCell>
+                    {post.coverImage ? (
+                      <img src={post.coverImage} alt="" className="h-10 w-16 object-cover rounded" />
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">{t?.title || "—"}</TableCell>
                   <TableCell>
                     <Badge variant={post.status === "PUBLISHED" ? "default" : "secondary"}>

@@ -199,6 +199,13 @@ export function ProjectsList({ projects, locale, dict }: ProjectsListProps) {
                 href={`/${locale}/projects/${project.slug}`}
                 className="group block p-6 rounded-xl border bg-card hover:shadow-lg transition-all"
               >
+                {project.image && (
+                  <img
+                    src={project.image}
+                    alt={t.title}
+                    className="w-full h-40 object-cover rounded-md mb-4"
+                  />
+                )}
                 <div className="flex items-start justify-between mb-3">
                   <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
                     {t.title}

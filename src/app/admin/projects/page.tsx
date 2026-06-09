@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 interface Project {
   id: string;
   slug: string;
+  image: string | null;
   featured: boolean;
   status: string;
   translations: { locale: string; title: string }[];
@@ -42,6 +43,7 @@ export default function AdminProjectsPage() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Image</TableHead>
               <TableHead>Title</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Featured</TableHead>
@@ -53,6 +55,13 @@ export default function AdminProjectsPage() {
               const t = project.translations.find((tr) => tr.locale === "en") || project.translations[0];
               return (
                 <TableRow key={project.id}>
+                  <TableCell>
+                    {project.image ? (
+                      <img src={project.image} alt="" className="h-10 w-16 object-cover rounded" />
+                    ) : (
+                      <span className="text-muted-foreground text-xs">—</span>
+                    )}
+                  </TableCell>
                   <TableCell className="font-medium">{t?.title || "—"}</TableCell>
                   <TableCell>
                     <Badge variant={project.status === "PUBLISHED" ? "default" : "secondary"}>

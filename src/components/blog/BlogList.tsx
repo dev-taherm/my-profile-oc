@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Clock, Search } from "lucide-react";
@@ -14,6 +14,7 @@ interface BlogPost {
   coverImage: string | null;
   readingTime: number;
   publishedAt: string | null;
+  categories: { slug: string; name: string }[];
   tags: { slug: string; name: string }[];
   translations: {
     locale: string;
@@ -30,6 +31,9 @@ interface BlogListProps {
     blog: {
       readMore: string;
       search: string;
+      all: string;
+      categories: string;
+      tags: string;
       minRead: string;
       publishedOn: string;
     };
@@ -38,12 +42,30 @@ interface BlogListProps {
 
 export function BlogList({ posts, locale, dict }: BlogListProps) {
   const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  const allCategories = useMemo(() => {
+    const map = new Map<string, string>();
+    posts.forEach((p) => p.categories.forEach((c) => map.set(c.slug, c.name)));
+    return Array.from(map.entries()).map(([slug, name]) => ({ slug, name }));
+  }, [posts]);
+
+  const allTags = useMemo(() => {
+    const map = new Map<string, string>();
+    posts.forEach((p) => p.tags.forEach((t) => map.set(t.slug, t.name)));
+    return Array.from(map.entries()).map(([slug, name]) => ({ slug, name }));
+  }, [posts]);
 
   const filtered = posts.filter((p) => {
     const t = p.translations.find((tr) => tr.locale === locale)
       || p.translations.find((tr) => tr.locale === "en")
       || p.translations[0];
     if (!t) return false;
+
+    if (selectedCategory && !p.categories.some((c) => c.slug === selectedCategory)) return false;
+    if (selectedTag && !p.tags.some((tag) => tag.slug === selectedTag)) return false;
+
     const q = search.toLowerCase();
     return (
       t.title.toLowerCase().includes(q) ||
@@ -65,6 +87,52 @@ export function BlogList({ posts, locale, dict }: BlogListProps) {
           />
         </div>
       </div>
+
+      {allCategories.length > 0 && (
+        <div className="mb-4">
+          <p className="text-sm font-medium text-muted-foreground mb-2">{dict.blog.categories}</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedCategory(null)}
+              className={`px-3 py-1 rounded-full text-sm border transition-colors ${selectedCategory === null ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent"}`}
+            >
+              {dict.blog.all}
+            </button>
+            {allCategories.map((cat) => (
+              <button
+                key={cat.slug}
+                onClick={() => setSelectedCategory(selectedCategory === cat.slug ? null : cat.slug)}
+                className={`px-3 py-1 rounded-full text-sm border transition-colors ${selectedCategory === cat.slug ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent"}`}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {allTags.length > 0 && (
+        <div className="mb-8">
+          <p className="text-sm font-medium text-muted-foreground mb-2">{dict.blog.tags}</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedTag(null)}
+              className={`px-3 py-1 rounded-full text-sm border transition-colors ${selectedTag === null ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent"}`}
+            >
+              {dict.blog.all}
+            </button>
+            {allTags.map((tag) => (
+              <button
+                key={tag.slug}
+                onClick={() => setSelectedTag(selectedTag === tag.slug ? null : tag.slug)}
+                className={`px-3 py-1 rounded-full text-sm border transition-colors ${selectedTag === tag.slug ? "bg-primary text-primary-foreground" : "bg-background hover:bg-accent"}`}
+              >
+                {tag.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid md:grid-cols-2 gap-6">
         {filtered.map((post, index) => {
@@ -103,6 +171,11 @@ export function BlogList({ posts, locale, dict }: BlogListProps) {
                   {t.excerpt}
                 </p>
                 <div className="flex flex-wrap gap-2">
+                  {post.categories.map((cat) => (
+                    <Badge key={cat.slug} variant="outline" className="text-xs">
+                      {cat.name}
+                    </Badge>
+                  ))}
                   {post.tags.map((tag) => (
                     <Badge key={tag.slug} variant="secondary" className="text-xs">
                       {tag.name}

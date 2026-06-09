@@ -76,7 +76,9 @@
     "viewGithub": "Source Code",
     "backToProjects": "Back to Projects",
     "search": "Search projects...",
-    "all": "All"
+    "all": "All",
+    "categories": "Categories",
+    "tags": "Tags"
   },
   "projectDetail": {
     "aiAssistant": {
@@ -97,6 +99,8 @@
     "backToBlog": "Back to Blog",
     "search": "Search posts...",
     "all": "All",
+    "categories": "Categories",
+    "tags": "Tags",
     "minRead": "min read",
     "publishedOn": "Published on",
     "by": "by"

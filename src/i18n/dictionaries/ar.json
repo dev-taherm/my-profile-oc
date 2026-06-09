@@ -76,7 +76,9 @@
     "viewGithub": "الكود المصدري",
     "backToProjects": "العودة للمشاريع",
     "search": "بحث في المشاريع...",
-    "all": "الكل"
+    "all": "الكل",
+    "categories": "التصنيفات",
+    "tags": "الوسوم"
   },
   "projectDetail": {
     "aiAssistant": {
@@ -97,6 +99,8 @@
     "backToBlog": "العودة للمدونة",
     "search": "بحث في المقالات...",
     "all": "الكل",
+    "categories": "التصنيفات",
+    "tags": "الوسوم",
     "minRead": "دقيقة قراءة",
     "publishedOn": "نُشر في",
     "by": "بواسطة"

@@ -18,47 +18,51 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = await request.json();
-  const { name, email, password, resumeUrl } = body;
+    const body = await request.json();
+    const { name, email, password, resumeUrl } = body;
 
-  if (resumeUrl !== undefined) {
     const userId = (session.user as { id: string }).id;
+
+    if (resumeUrl !== undefined || (body.hasOwnProperty("resumeUrl") && !name)) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { resumeUrl: resumeUrl ?? null },
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    if (!name || !email || !password) {
+      return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    }
+
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser && existingUser.id !== userId) {
+      return NextResponse.json({ error: "Email is already in use" }, { status: 400 });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
     await prisma.user.update({
       where: { id: userId },
-      data: { resumeUrl },
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        passwordChanged: true,
+      },
     });
+
     return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("PUT /api/user/profile error:", error);
+    return NextResponse.json({ error: "Failed to update profile" }, { status: 500 });
   }
-
-  if (!name || !email || !password) {
-    return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
-  }
-
-  if (password.length < 6) {
-    return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
-  }
-
-  const userId = (session.user as { id: string }).id;
-
-  const existingUser = await prisma.user.findUnique({ where: { email } });
-  if (existingUser && existingUser.id !== userId) {
-    return NextResponse.json({ error: "Email is already in use" }, { status: 400 });
-  }
-
-  const hashedPassword = await bcrypt.hash(password, 12);
-
-  await prisma.user.update({
-    where: { id: userId },
-    data: {
-      name,
-      email,
-      password: hashedPassword,
-      passwordChanged: true,
-    },
-  });
-
-  return NextResponse.json({ success: true });
 }

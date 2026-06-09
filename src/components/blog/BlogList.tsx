@@ -195,6 +195,13 @@ export function BlogList({ posts, locale, dict }: BlogListProps) {
                 href={`/${locale}/blog/${post.slug}`}
                 className="group block p-6 rounded-xl border bg-card hover:shadow-lg transition-all"
               >
+                {post.coverImage && (
+                  <img
+                    src={post.coverImage}
+                    alt={t.title}
+                    className="w-full h-40 object-cover rounded-md mb-4"
+                  />
+                )}
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                   <Clock className="h-4 w-4" />
                   <span>{post.readingTime} {dict.blog.minRead}</span>

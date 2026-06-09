@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,6 +22,7 @@ export default function AdminProjectEditorPage({
   const [id, setId] = useState<string>("");
   const [isNew, setIsNew] = useState(false);
   const [slug, setSlug] = useState("");
+  const [image, setImage] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
   const [liveUrl, setLiveUrl] = useState("");
   const [featured, setFeatured] = useState(false);
@@ -37,6 +39,8 @@ export default function AdminProjectEditorPage({
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -57,6 +61,7 @@ export default function AdminProjectEditorPage({
           const p = projects.find((pr: { id: string }) => pr.id === projectId);
           if (p) {
             setSlug(p.slug);
+            setImage(p.image || "");
             setGithubUrl(p.githubUrl || "");
             setLiveUrl(p.liveUrl || "");
             setFeatured(p.featured);
@@ -76,12 +81,45 @@ export default function AdminProjectEditorPage({
     setIds(ids.includes(targetId) ? ids.filter((i) => i !== targetId) : [...ids, targetId]);
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setError("");
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/upload?type=projects", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error || "Upload failed");
+        return;
+      }
+
+      const { url } = await res.json();
+      setImage(url);
+    } catch {
+      setError("Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const handleSave = async () => {
     setError("");
     setSaving(true);
 
     const data = {
       slug,
+      image: image || null,
       githubUrl: githubUrl || null,
       liveUrl: liveUrl || null,
       featured,
@@ -128,6 +166,38 @@ export default function AdminProjectEditorPage({
         </CardHeader>
         <CardContent className="space-y-4">
           <Input placeholder="Slug (e.g. my-project)" value={slug} onChange={(e) => setSlug(e.target.value)} />
+
+          <div>
+            <p className="text-sm font-medium mb-2">Project Image</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            {image ? (
+              <div className="relative inline-block">
+                <img src={image} alt="Project" className="h-32 w-48 object-cover rounded-md border" />
+                <button
+                  onClick={() => setImage("")}
+                  className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <Upload className="me-2 h-4 w-4" />
+                {uploading ? "Uploading..." : "Upload Image"}
+              </Button>
+            )}
+          </div>
+
           <Input placeholder="GitHub URL" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
           <Input placeholder="Live URL" value={liveUrl} onChange={(e) => setLiveUrl(e.target.value)} />
           <div className="flex gap-4 items-center">

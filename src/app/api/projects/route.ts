@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await request.json();
-    const { slug, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
+    const { slug, image, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
 
     if (!slug) return NextResponse.json({ error: "Slug is required" }, { status: 400 });
     if (!translations?.length) return NextResponse.json({ error: "At least one translation is required" }, { status: 400 });
@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
     const project = await prisma.project.create({
       data: {
         slug,
+        image,
         githubUrl,
         liveUrl,
         featured,
@@ -60,12 +61,13 @@ export async function PUT(request: NextRequest) {
     if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
     const body = await request.json();
-    const { slug, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
+    const { slug, image, githubUrl, liveUrl, featured, status, translations, categoryIds, tagIds } = body;
 
     const project = await prisma.project.update({
       where: { id },
       data: {
         slug,
+        image,
         githubUrl,
         liveUrl,
         featured,

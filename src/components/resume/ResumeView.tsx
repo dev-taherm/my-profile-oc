@@ -1,6 +1,6 @@
 "use client";
 
-
+import { useEffect, useState } from "react";
 import { Download, Briefcase, GraduationCap, Award, Languages, Code, Brain, Cloud, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,14 +49,27 @@ const skillCategories = [
 ];
 
 export function ResumeView({ dict }: ResumeViewProps) {
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/user/profile")
+      .then((r) => r.json())
+      .then((user) => {
+        if (user?.resumeUrl) setResumeUrl(user.resumeUrl);
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div className="flex justify-end">
-        <Button>
-          <Download className="me-2 h-4 w-4" />
-          {dict.resume.downloadPdf}
-        </Button>
-      </div>
+      {resumeUrl && (
+        <div className="flex justify-end">
+          <Button render={<a href={resumeUrl} download />}>
+            <Download className="me-2 h-4 w-4" />
+            {dict.resume.downloadPdf}
+          </Button>
+        </div>
+      )}
 
       <Card>
         <CardHeader>

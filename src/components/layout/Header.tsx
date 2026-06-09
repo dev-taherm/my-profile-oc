@@ -7,6 +7,7 @@ import { Menu, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type Locale, navItems, localeNames, locales } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -69,6 +70,8 @@ export function Header({ locale, dict }: HeaderProps) {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
+
           <DropdownMenu>
             <DropdownMenuTrigger
               render={
@@ -117,6 +120,9 @@ export function Header({ locale, dict }: HeaderProps) {
                     {dict.nav[item.key]}
                   </Link>
                 ))}
+                <div className="mt-4 border-t pt-4">
+                  <ThemeToggle />
+                </div>
               </div>
             </SheetContent>
           </Sheet>

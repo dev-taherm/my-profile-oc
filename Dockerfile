@@ -30,6 +30,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma/dev.db /app/data/dev.db
 COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+RUN ln -sf /app/node_modules/.pnpm/@img+sharp-libvips-linux-x64@1.2.4/node_modules/@img/sharp-libvips-linux-x64/lib/libvips-cpp.so.8.17.3 \
+    /app/node_modules/.pnpm/@img+sharp-libvips-linux-x64@1.2.4/node_modules/@img/sharp-libvips-linux-x64/lib/libvips-cpp.so.8.18.3
 RUN chown nextjs:nodejs /app/data/dev.db
 USER nextjs
 EXPOSE 3000

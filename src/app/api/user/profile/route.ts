@@ -35,11 +35,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
+    if (!name || !email) {
+      return NextResponse.json({ error: "Name and email are required" }, { status: 400 });
     }
 
-    if (password.length < 6) {
+    if (password && password.length < 6) {
       return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
     }
 
@@ -48,16 +48,16 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Email is already in use" }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const updateData: { name: string; email: string; password?: string; passwordChanged?: boolean } = { name, email };
+
+    if (password) {
+      updateData.password = await bcrypt.hash(password, 12);
+      updateData.passwordChanged = true;
+    }
 
     await prisma.user.update({
       where: { id: userId },
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        passwordChanged: true,
-      },
+      data: updateData,
     });
 
     return NextResponse.json({ success: true });

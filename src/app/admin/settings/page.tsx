@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Upload, FileText, Trash2 } from "lucide-react";
+import { Upload, FileText, Trash2, Save, User, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 export default function AdminSettingsPage() {
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
@@ -13,11 +14,22 @@ export default function AdminSettingsPage() {
   const [success, setSuccess] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState("");
+  const [profileSuccess, setProfileSuccess] = useState("");
+
   useEffect(() => {
     fetch("/api/user/profile")
       .then((r) => r.json())
       .then((user) => {
-        if (user?.resumeUrl) setResumeUrl(user.resumeUrl);
+        if (user) {
+          if (user.resumeUrl) setResumeUrl(user.resumeUrl);
+          if (user.name) setName(user.name);
+          if (user.email) setEmail(user.email);
+        }
       });
   }, []);
 
@@ -95,9 +107,101 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingProfile(true);
+    setProfileError("");
+    setProfileSuccess("");
+
+    try {
+      const body: { name: string; email: string; password?: string } = { name, email };
+      if (password) body.password = password;
+
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setProfileError(data.error || "Failed to update profile");
+        return;
+      }
+
+      setProfileSuccess("Profile updated successfully!");
+      setPassword("");
+    } catch {
+      setProfileError("Failed to update profile");
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Settings</h1>
+    <div className="max-w-2xl space-y-6">
+      <h1 className="text-2xl font-bold">Settings</h1>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Profile
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleProfileUpdate} className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <User className="h-4 w-4" />
+                Name
+              </label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Lock className="h-4 w-4" />
+                Password
+              </label>
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Leave blank to keep current"
+                minLength={6}
+              />
+              <p className="text-xs text-muted-foreground">Leave blank to keep your current password. Minimum 6 characters.</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button type="submit" disabled={savingProfile}>
+                <Save className="me-2 h-4 w-4" />
+                {savingProfile ? "Saving..." : "Save Profile"}
+              </Button>
+              {profileError && <p className="text-sm text-red-500">{profileError}</p>}
+              {profileSuccess && <p className="text-sm text-green-500">{profileSuccess}</p>}
+            </div>
+          </form>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

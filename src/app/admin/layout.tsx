@@ -32,7 +32,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   }, [status, router, pathname]);
 
   useEffect(() => {
-    if (status === "authenticated" && !session.user.passwordChanged && !PUBLIC_ADMIN_ROUTES.includes(pathname)) {
+    if (status === "authenticated" && session?.user && !session.user.passwordChanged && !PUBLIC_ADMIN_ROUTES.includes(pathname)) {
       router.push("/admin/change-password");
     }
   }, [status, session, router, pathname]);

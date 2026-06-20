@@ -16,14 +16,18 @@ export const siteConfig = {
   author: "Taher Mahram",
   email: "tahermahram0@gmail.com",
   phone: "+967 779991263",
+  whatsapp: "+967733918465",
   location: "Sana'a, Yemen",
   github: "https://github.com/dev-taherm",
-  linkedin: "https://linkedin.com/in/taher-mahram",
+  linkedin: "https://www.linkedin.com/in/taher-mahram/",
+  instagram: "https://instagram.com/dev_taher",
+  facebook: "https://www.facebook.com/taher.ali.moharam",
 };
 
 export const navItems = [
   { key: "home", href: "/" },
   { key: "about", href: "/about" },
+  { key: "services", href: "/services" },
   { key: "projects", href: "/projects" },
   { key: "blog", href: "/blog" },
   { key: "resume", href: "/resume" },

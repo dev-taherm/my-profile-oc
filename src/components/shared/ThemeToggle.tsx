@@ -11,14 +11,6 @@ export function ThemeToggle() {
 
   useEffect(() => setMounted(true), []);
 
-  if (!mounted) {
-    return (
-      <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
-        <span className="sr-only">Theme</span>
-      </Button>
-    );
-  }
-
   return (
     <Button
       variant="ghost"
@@ -26,10 +18,14 @@ export function ThemeToggle() {
       className="h-9 w-9"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
     >
-      {theme === "dark" ? (
-        <Sun className="h-4 w-4" />
+      {mounted ? (
+        theme === "dark" ? (
+          <Sun className="h-4 w-4" />
+        ) : (
+          <Moon className="h-4 w-4" />
+        )
       ) : (
-        <Moon className="h-4 w-4" />
+        <span className="h-4 w-4" />
       )}
       <span className="sr-only">Toggle theme</span>
     </Button>

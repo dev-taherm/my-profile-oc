@@ -29,15 +29,17 @@ Whether you're looking for a remote software engineering role or want to showcas
 
 ## Screenshots
 
-> Add your own screenshots here. Replace the placeholder paths with actual images.
-
-| Homepage | Admin Dashboard | Blog |
+| Homepage | About | Projects |
 |---|---|---|
-| ![Homepage](screenshots/homepage.png) | ![Admin](screenshots/admin.png) | ![Blog](screenshots/blog.png) |
+| ![Homepage](public/images/screenshots/home.png) | ![About](public/images/screenshots/about.png) | ![Projects](public/images/screenshots/projects.png) |
 
-| Projects | Contact | Dark Mode |
+| Blog | Resume | Contact |
 |---|---|---|
-| ![Projects](screenshots/projects.png) | ![Contact](screenshots/contact.png) | ![Dark Mode](screenshots/dark-mode.png) |
+| ![Blog](public/images/screenshots/blog.png) | ![Resume](public/images/screenshots/resume.png) | ![Contact](public/images/screenshots/contact.png) |
+
+| Admin Dashboard | Admin Project Editor | Admin Settings |
+|---|---|---|
+| ![Admin Dashboard](public/images/screenshots/adminDashboard.png) | ![Admin Project](public/images/screenshots/adminProject.png) | ![Admin Settings](public/images/screenshots/adminSettings.png) |
 
 ---
 
@@ -141,7 +143,7 @@ The homepage displays a grid of key technologies with color-coded indicators and
 | Styling | Tailwind CSS | 4.x |
 | Component Library | shadcn/ui (Base UI variant) | 4.11.0 |
 | Animation | Framer Motion | 12.40.0 |
-| Database | PostgreSQL / SQLite | -- |
+| Database | SQLite / PostgreSQL | -- |
 | ORM | Prisma | 5.22.0 |
 | Authentication | NextAuth.js (Credentials) | 4.24.14 |
 | Icons | Lucide React | 1.17.0 |
@@ -155,16 +157,87 @@ The homepage displays a grid of key technologies with color-coded indicators and
 
 This project supports two database backends. Choose the one that fits your needs:
 
-| | Docker/PostgreSQL (`main` branch) | SQLite (`main-sqlite` branch) |
+| | SQLite (`main-sqlite` branch) | Docker/PostgreSQL (`main` branch) |
 |---|---|---|
-| **Docker required** | Yes | No |
-| **Database** | PostgreSQL 16 | SQLite (file-based) |
-| **Best for** | Production, full-featured setup | Local development, quick setup |
-| **Performance** | Better for high-traffic sites | Suitable for small-medium traffic |
+| **Docker required** | No | Yes |
+| **Database** | SQLite (file-based) | PostgreSQL 16 |
+| **Best for** | Local development, quick setup | Production, full-featured setup |
+| **Performance** | Suitable for small-medium traffic | Better for high-traffic sites |
 
 ---
 
-## Quick Start (Docker/PostgreSQL -- This Branch)
+## Quick Start (SQLite -- This Branch)
+
+> No Docker required. This is the simplest way to run the project locally.
+
+### Prerequisites
+
+- **Node.js** 18+ (recommended: 20)
+- **pnpm** (package manager)
+
+### 1. Clone the repository
+
+```bash
+git clone -b main-sqlite https://github.com/dev-taherm/my-profile-oc.git
+cd my-profile-oc
+```
+
+### 2. Install dependencies
+
+```bash
+pnpm install
+```
+
+### 3. Set up environment variables
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and generate a secure secret:
+
+```bash
+openssl rand -base64 32
+```
+
+Your `.env` should look like this:
+
+```env
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET="your-generated-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+ADMIN_EMAIL="admin"
+ADMIN_PASSWORD="123456"
+```
+
+### 4. Initialize the database
+
+```bash
+pnpm db:generate
+pnpm db:push
+pnpm db:seed
+```
+
+This creates the SQLite database, pushes the schema, and populates it with sample data (admin user, 2 projects, 1 blog post, categories, and tags).
+
+### 5. Add your profile photo
+
+Save your profile photo as `public/images/profile.jpg`.
+
+### 6. Start the development server
+
+```bash
+pnpm dev
+```
+
+Open in your browser:
+- **English**: http://localhost:3000/en
+- **Arabic**: http://localhost:3000/ar
+- **Admin panel**: http://localhost:3000/admin/login
+
+---
+
+## Quick Start (Docker/PostgreSQL)
 
 > Requires Docker. Uses PostgreSQL for a production-like setup.
 
@@ -230,75 +303,6 @@ pnpm db:seed
 Save your profile photo as `public/images/profile.jpg`.
 
 ### 7. Start the development server
-
-```bash
-pnpm dev
-```
-
-Open in your browser:
-- **English**: http://localhost:3000/en
-- **Arabic**: http://localhost:3000/ar
-- **Admin panel**: http://localhost:3000/admin/login
-
----
-
-## Quick Start (SQLite -- No Docker)
-
-> No Docker required. Uses SQLite for a lightweight local setup.
-
-### Prerequisites
-
-- **Node.js** 18+ (recommended: 20)
-- **pnpm** (package manager)
-
-### 1. Clone the repository
-
-```bash
-git clone -b main-sqlite https://github.com/dev-taherm/my-profile-oc.git
-cd my-profile-oc
-```
-
-### 2. Install dependencies
-
-```bash
-pnpm install
-```
-
-### 3. Set up environment variables
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and generate a secure secret:
-
-```bash
-openssl rand -base64 32
-```
-
-Your `.env` should look like this:
-
-```env
-DATABASE_URL="file:./dev.db"
-NEXTAUTH_SECRET="your-generated-secret-here"
-NEXTAUTH_URL="http://localhost:3000"
-ADMIN_EMAIL="admin"
-ADMIN_PASSWORD="123456"
-```
-
-### 4. Initialize the database
-
-```bash
-pnpm db:generate
-pnpm db:push
-pnpm db:seed
-```
-
-### 5. Add your profile photo
-
-Save your profile photo as `public/images/profile.jpg`.
-
-### 6. Start the development server
 
 ```bash
 pnpm dev
@@ -426,7 +430,7 @@ All API routes are under `/api/`. Authentication is required for write operation
 
 ```
 ├── prisma/
-│   ├── schema.prisma              # Database schema (PostgreSQL or SQLite)
+│   ├── schema.prisma              # Database schema (SQLite or PostgreSQL)
 │   └── seed.ts                    # Seed script (populates DB with sample data)
 │
 ├── public/images/                 # Static images (profile photo)
@@ -498,9 +502,10 @@ All API routes are under `/api/`. Authentication is required for write operation
 │   │
 │   └── proxy.ts                 # Locale detection, routing, redirects (Next.js 16)
 │
-├── docker-compose.yml             # PostgreSQL + app services
+├── docker-compose.yml             # PostgreSQL + app services (main branch)
 ├── Dockerfile                     # Multi-stage production build
 ├── components.json                # shadcn/ui configuration
+├── tailwind.config.ts             # Tailwind CSS configuration
 ├── next.config.ts                 # Next.js configuration
 └── .env.example                   # Environment variable template
 ```
@@ -566,7 +571,7 @@ This starts both the PostgreSQL database and the Next.js app. The Dockerfile use
 
 | Variable | Required | Description |
 |---|---|---|
-| `DATABASE_URL` | Yes | Database connection string: `postgresql://user:pass@host:5432/db` (PostgreSQL) or `file:./dev.db` (SQLite) |
+| `DATABASE_URL` | Yes | Database connection string: `file:./dev.db` (SQLite) or `postgresql://user:pass@host:5432/db` (PostgreSQL) |
 | `NEXTAUTH_SECRET` | Yes | Random secret for JWT signing. Generate with `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | Yes | Your site URL (e.g., `http://localhost:3000` for dev, `https://yourdomain.com` for production) |
 | `ADMIN_EMAIL` | Yes | Default admin email for initial login (default: `admin`) |

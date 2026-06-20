@@ -46,13 +46,16 @@ function Button({
   variant = "default",
   size = "default",
   type = "button",
+  render,
   ...props
-}: Omit<React.ComponentProps<"button">, "color"> & VariantProps<typeof buttonVariants>) {
+}: Omit<React.ComponentProps<"button">, "color"> & VariantProps<typeof buttonVariants> & { render?: React.ComponentProps<typeof ButtonPrimitive>["render"] }) {
   return (
     <ButtonPrimitive
       data-slot="button"
       type={type}
+      nativeButton={render ? false : true}
       className={cn(buttonVariants({ variant, size, className }))}
+      render={render}
       {...props}
     />
   )

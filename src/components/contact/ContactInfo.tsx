@@ -1,7 +1,7 @@
 "use client";
 
-import { Mail, Phone, MapPin, CheckCircle } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "@/components/shared/Icons";
+import { Mail, MapPin, CheckCircle } from "lucide-react";
+import { GithubIcon, LinkedinIcon, InstagramIcon, FacebookIcon, WhatsappIcon } from "@/components/shared/Icons";
 import { Card, CardContent } from "@/components/ui/card";
 import { siteConfig } from "@/lib/constants";
 
@@ -37,12 +37,17 @@ export function ContactInfo({ dict }: ContactInfoProps) {
 
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-primary/10">
-              <Phone className="h-5 w-5 text-primary" />
+              <WhatsappIcon className="h-5 w-5 text-primary" />
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{dict.contact.info.phone}</p>
-              <a href={`tel:${siteConfig.phone}`} className="font-medium hover:text-primary transition-colors">
-                {siteConfig.phone}
+              <a
+                href={`https://wa.me/${siteConfig.whatsapp.replace(/[^0-9]/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium hover:text-primary transition-colors"
+              >
+                {siteConfig.whatsapp}
               </a>
             </div>
           </div>
@@ -81,6 +86,22 @@ export function ContactInfo({ dict }: ContactInfoProps) {
               className="p-2 rounded-lg border hover:bg-muted transition-colors"
             >
               <LinkedinIcon className="h-5 w-5" />
+            </a>
+            <a
+              href={siteConfig.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg border hover:bg-muted transition-colors"
+            >
+              <InstagramIcon className="h-5 w-5" />
+            </a>
+            <a
+              href={siteConfig.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-2 rounded-lg border hover:bg-muted transition-colors"
+            >
+              <FacebookIcon className="h-5 w-5" />
             </a>
             <a
               href={`mailto:${siteConfig.email}`}

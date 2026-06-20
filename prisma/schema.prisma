@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -12,17 +12,12 @@ model User {
   email         String    @unique
   name          String?
   password         String
-  role             Role      @default(ADMIN)
+  role             String    @default("ADMIN")
   passwordChanged  Boolean   @default(false)
   resumeUrl        String?
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   blogPosts        BlogPost[]
-}
-
-enum Role {
-  ADMIN
-  VIEWER
 }
 
 model Project {
@@ -31,7 +26,7 @@ model Project {
   githubUrl     String?
   liveUrl       String?
   featured      Boolean   @default(false)
-  status        Status    @default(DRAFT)
+  status        String    @default("DRAFT")
   order         Int       @default(0)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -68,7 +63,7 @@ model BlogPost {
   coverImage    String?
   readingTime   Int       @default(5)
   featured      Boolean   @default(false)
-  status        Status    @default(DRAFT)
+  status        String    @default("DRAFT")
   publishedAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -120,8 +115,30 @@ model ContactMessage {
   createdAt     DateTime  @default(now())
 }
 
-enum Status {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
+model Service {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  icon          String?
+  featured      Boolean   @default(false)
+  status        String    @default("DRAFT")
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  translations  ServiceTranslation[]
 }
+
+model ServiceTranslation {
+  id            String    @id @default(cuid())
+  locale        String
+  title         String
+  shortDesc     String
+  description   String
+  features      String?
+  serviceId     String
+  service       Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, locale])
+}
+
+

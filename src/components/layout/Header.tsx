@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Menu, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -47,9 +48,10 @@ export function Header({ locale, dict }: HeaderProps) {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link
           href={`/${locale}`}
-          className="text-xl font-bold tracking-tight"
+          className="flex items-center"
         >
-          TM
+          <Image src="/images/logo.png" alt="TM" width={32} height={32} className="dark:hidden" />
+          <Image src="/images/logoForDarckTheme.png" alt="TM" width={32} height={32} className="hidden dark:block" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">

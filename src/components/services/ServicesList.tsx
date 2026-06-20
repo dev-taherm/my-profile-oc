@@ -57,7 +57,7 @@ export function ServicesList({ services, locale, dict }: ServicesListProps) {
                     </div>
                   )}
                 </div>
-                <h3 className="text-xl font-bold mb-2">{service.translation.title}</h3>
+                <h2 className="text-xl font-bold mb-2">{service.translation.title}</h2>
                 <p className="text-muted-foreground flex-1 mb-4">{service.translation.shortDesc}</p>
                 <Button
                   variant="ghost"

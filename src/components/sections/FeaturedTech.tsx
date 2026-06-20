@@ -39,15 +39,17 @@ export function FeaturedTech({ dict }: FeaturedTechProps) {
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.4, delay: index * 0.05 }}
               viewport={{ once: true }}
-              className="px-5 py-2.5 rounded-full border bg-card text-sm font-medium shadow-sm hover:shadow-md transition-shadow"
-              style={{
-                borderColor: `${tech.color}30`,
-              }}
+              className="tech-pill px-5 py-2.5 rounded-full border bg-card text-sm font-medium shadow-sm hover:shadow-md transition-shadow"
+              style={
+                {
+                  "--tech-border": `${tech.color}30`,
+                  "--tech-dot": tech.color,
+                } as React.CSSProperties
+              }
             >
               <span className="flex items-center gap-2">
                 <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: tech.color }}
+                  className="w-2.5 h-2.5 rounded-full bg-[var(--tech-dot)]"
                 />
                 {tech.name}
               </span>

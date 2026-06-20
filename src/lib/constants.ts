@@ -7,6 +7,11 @@ export const localeNames: Record<Locale, string> = {
   ar: "العربية",
 };
 
+export const localeConfig: Record<Locale, { hreflang: string; ogLocale: string }> = {
+  en: { hreflang: "en-US", ogLocale: "en_US" },
+  ar: { hreflang: "ar-SA", ogLocale: "ar_SA" },
+};
+
 export const siteConfig = {
   name: "Taher Mahram",
   title: "Taher Mahram — Software Engineer",

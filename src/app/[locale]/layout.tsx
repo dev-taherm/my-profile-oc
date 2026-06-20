@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
-import { locales, type Locale } from "@/lib/constants";
+import { locales, localeConfig, type Locale } from "@/lib/constants";
+import { siteConfig } from "@/lib/constants";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LocaleSetter } from "@/components/shared/LocaleSetter";
@@ -29,7 +30,8 @@ export async function generateMetadata({
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
-  const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+  const baseUrl = siteConfig.url;
+  const geo = localeConfig[locale];
 
   return {
     title: {
@@ -37,25 +39,40 @@ export async function generateMetadata({
       template: `%s | ${dict.hero.name}`,
     },
     description: dict.hero.subtitle,
+    keywords: locale === "ar"
+      ? ["مهندس برمجيات", "مطور باك إند", "ذكاء اصطناعي", " اليمن", "Django", "Python", "LLM", "طاهر محرم"]
+      : ["software engineer", "backend developer", "AI engineer", "Django", "Python", "LLM", "Taher Mahram", "Yemen"],
     metadataBase: new URL(baseUrl),
     alternates: {
       canonical: `${baseUrl}/${locale}`,
-      languages: Object.fromEntries(
-        locales.map((l) => [l, `${baseUrl}/${l}`])
-      ),
+      languages: {
+        ...Object.fromEntries(
+          locales.map((l) => [localeConfig[l].hreflang, `${baseUrl}/${l}`])
+        ),
+        "x-default": `${baseUrl}/en`,
+      },
     },
     openGraph: {
       title: `${dict.hero.name} — ${dict.hero.title}`,
       description: dict.hero.subtitle,
       url: `${baseUrl}/${locale}`,
       siteName: dict.hero.name,
-      locale: locale === "ar" ? "ar_SA" : "en_US",
+      locale: geo.ogLocale,
       type: "website",
+      images: [
+        {
+          url: `${baseUrl}/favicon/android-chrome-512x512.png`,
+          width: 512,
+          height: 512,
+          alt: dict.hero.name,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: `${dict.hero.name} — ${dict.hero.title}`,
       description: dict.hero.subtitle,
+      images: [`${baseUrl}/favicon/android-chrome-512x512.png`],
     },
     robots: {
       index: true,

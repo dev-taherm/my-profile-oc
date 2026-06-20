@@ -61,7 +61,7 @@ async function uploadFile(file: File, folderId: string | null): Promise<UploadRe
   }
 
   const bytes = await file.arrayBuffer();
-  let buffer = Buffer.from(bytes);
+  let buffer: Buffer = Buffer.from(bytes);
   let mimeType = file.type;
   let filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
@@ -75,7 +75,7 @@ async function uploadFile(file: File, folderId: string | null): Promise<UploadRe
       webpBuffer = await sharp(buffer).webp({ quality }).toBuffer();
     }
 
-    buffer = webpBuffer;
+    buffer = webpBuffer as Buffer;
     mimeType = "image/webp";
     filename = filename.replace(/\.[^.]+$/, ".webp");
   }

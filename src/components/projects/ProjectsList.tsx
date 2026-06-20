@@ -207,9 +207,9 @@ export function ProjectsList({ projects, locale, dict }: ProjectsListProps) {
                   />
                 )}
                 <div className="flex items-start justify-between mb-3">
-                  <h3 className="text-xl font-bold group-hover:text-primary transition-colors">
+                  <h2 className="text-xl font-bold group-hover:text-primary transition-colors">
                     {t.title}
-                  </h3>
+                  </h2>
                   {project.featured && (
                     <Badge variant="default" className="shrink-0">
                       {dict.projects.featured}

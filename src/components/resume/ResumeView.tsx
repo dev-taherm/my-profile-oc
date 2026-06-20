@@ -127,7 +127,7 @@ export function ResumeView({ dict }: ResumeViewProps) {
               <div key={index}>
                 {index > 0 && <Separator className="mb-6" />}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
-                  <h3 className="font-bold">{exp.role}</h3>
+                  <h2 className="font-bold text-lg">{exp.role}</h2>
                   <Badge variant="outline">{exp.period}</Badge>
                 </div>
                 <p className="text-primary text-sm mb-2">{exp.company}</p>
@@ -153,7 +153,7 @@ export function ResumeView({ dict }: ResumeViewProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <h3 className="font-bold">B.Sc. in Computer Science (Software Development), with Honors</h3>
+          <h2 className="font-bold text-lg">B.Sc. in Computer Science (Software Development), with Honors</h2>
           <p className="text-primary text-sm">Universiti Teknikal Malaysia Melaka (UTeM)</p>
           <p className="text-sm text-muted-foreground">Malaysia · 2018–2022</p>
         </CardContent>

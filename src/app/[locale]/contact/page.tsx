@@ -1,10 +1,41 @@
+import type { Metadata } from "next";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { type Locale } from "@/lib/constants";
+import { type Locale, siteConfig } from "@/lib/constants";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { ContactInfo } from "@/components/contact/ContactInfo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
+  const baseUrl = siteConfig.url;
+
+  const titles: Record<Locale, string> = {
+    en: "Contact Taher Mahram — Hire a Software Engineer",
+    ar: "تواصل مع طاهر محرم — توظيف مهندس برمجيات",
+  };
+
+  const descriptions: Record<Locale, string> = {
+    en: "Get in touch with Taher Mahram for software engineering projects, backend development, AI integration, or freelance opportunities.",
+    ar: "تواصل مع طاهر محرم لمشاريع هندسة البرمجيات أو تطوير الأنظمة الخلفية أو دمج الذكاء الاصطناعي أو الفرص الحرة.",
+  };
+
+  return {
+    title: titles[locale],
+    description: descriptions[locale],
+    openGraph: {
+      title: titles[locale],
+      description: descriptions[locale],
+      url: `${baseUrl}/${locale}/contact`,
+    },
+  };
+}
 
 export default async function ContactPage({
   params,

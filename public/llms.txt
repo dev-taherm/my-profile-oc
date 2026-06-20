@@ -1,0 +1,25 @@
+# Taher Mahram — Software Engineer
+
+## About
+Taher Mahram is a software engineer specializing in backend development and AI systems, based in Sana'a, Yemen. Available for freelance and remote opportunities.
+
+## Expertise
+- Backend & Systems: Python, Django, FastAPI, PostgreSQL, Microservices, System Design, DDD, Multi-tenancy, RBAC, REST API
+- AI & LLM Engineering: LangChain, RAG Pipelines, Chroma, FAISS, OpenAI, Prompt Engineering, Guardrails
+- Cloud & DevOps: AWS, Docker, CI/CD, Celery, Rate Limiting, Observability
+- Frontend & Data: React, Next.js, TypeScript, Tailwind CSS
+
+## Experience
+- Software Engineer at Neo Platrix (Hopofy) — Jan 2024 to Present
+- Founder & Software Engineer at Pixova Agency — Nov 2022 to Dec 2023
+- Web Application Developer Intern at Khebrat Technology — Mar 2022 to Aug 2022
+
+## Education
+B.Sc. in Computer Science (Software Development), with Honors — Universiti Teknikal Malaysia Melaka (UTeM), 2018–2022
+
+## Contact
+- Website: https://tahermahram.dev
+- Email: tahermahram0@gmail.com
+- WhatsApp: +967733918465
+- GitHub: https://github.com/dev-taherm
+- LinkedIn: https://www.linkedin.com/in/taher-mahram/

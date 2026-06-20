@@ -212,9 +212,9 @@ export function BlogList({ posts, locale, dict }: BlogListProps) {
                     </>
                   )}
                 </div>
-                <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
+                <h2 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
                   {t.title}
-                </h3>
+                </h2>
                 <p className="text-muted-foreground mb-4 line-clamp-2">
                   {t.excerpt}
                 </p>

@@ -145,3 +145,7 @@
   background: transparent !important;
   padding: 0;
 }
+
+.tech-pill {
+  border-color: var(--tech-border);
+}

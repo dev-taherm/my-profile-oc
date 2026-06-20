@@ -1,11 +1,42 @@
+import type { Metadata } from "next";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { type Locale } from "@/lib/constants";
+import { type Locale, siteConfig } from "@/lib/constants";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { AnimatedSection } from "@/components/shared/AnimatedSection";
 import { Briefcase, GraduationCap, Award, Languages } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale: rawLocale } = await params;
+  const locale = rawLocale as Locale;
+  const baseUrl = siteConfig.url;
+
+  const titles: Record<Locale, string> = {
+    en: "About Taher Mahram — Software Engineer Profile",
+    ar: "عن طاهر محرم — ملف مهندس البرمجيات",
+  };
+
+  const descriptions: Record<Locale, string> = {
+    en: "Learn about Taher Mahram's experience, education, and skills as a software engineer specializing in backend systems, AI, and scalable architectures.",
+    ar: "تعرّف على خبرات طاهر محرم وتعليماته ومهاراته كمهندس برمجيات متخصص في الأنظمة الخلفية والذكاء الاصطناعي والهندسة المعمارية القابلة للتوسع.",
+  };
+
+  return {
+    title: titles[locale],
+    description: descriptions[locale],
+    openGraph: {
+      title: titles[locale],
+      description: descriptions[locale],
+      url: `${baseUrl}/${locale}/about`,
+    },
+  };
+}
 
 export default async function AboutPage({
   params,

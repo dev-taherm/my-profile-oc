@@ -19,6 +19,7 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
+RUN npm install --prefix /tmp sharp@0.35.2 && cp /tmp/node_modules/@img/sharp-libvips-linux-x64/lib/*.so* /usr/lib/ && ldconfig && rm -rf /tmp
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
@@ -28,9 +29,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modul
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm ./node_modules/.pnpm
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/sharp ./node_modules/sharp
 RUN chown nextjs:nodejs /app/data/dev.db
-RUN mkdir -p /app/node_modules/.pnpm/@img+sharp-libvips-linux-x64@1.3.1/node_modules/@img/sharp-libvips-linux-x64/lib && \
-    ln -sf /app/node_modules/.pnpm/@img+sharp-libvips-linux-x64@1.2.4/node_modules/@img/sharp-libvips-linux-x64/lib/libvips-cpp.so.8.17.3 \
-           /app/node_modules/.pnpm/@img+sharp-libvips-linux-x64@1.3.1/node_modules/@img/sharp-libvips-linux-x64/lib/libvips-cpp.so.8.18.3
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000

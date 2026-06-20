@@ -6,6 +6,11 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN corepack enable pnpm && corepack prepare pnpm@9 --activate && pnpm install --frozen-lockfile
 
+FROM base AS prod-deps
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN corepack enable pnpm && corepack prepare pnpm@9 --activate && pnpm install --prod --frozen-lockfile
+
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
@@ -24,9 +29,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma/dev.db /app/data/dev.db
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/sharp ./node_modules/sharp
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@img ./node_modules/@img
+COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
 RUN chown nextjs:nodejs /app/data/dev.db
 USER nextjs
 EXPOSE 3000

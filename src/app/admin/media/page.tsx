@@ -90,6 +90,7 @@ export default function AdminMediaPage() {
 
     const targetFolder = folderId !== undefined ? folderId : activeFolder;
 
+    const errors: string[] = [];
     for (let i = 0; i < files.length; i++) {
       const formData = new FormData();
       formData.append("file", files[i]);
@@ -102,11 +103,18 @@ export default function AdminMediaPage() {
           if (uploaded?.length) {
             setMedia((prev) => [uploaded[0], ...prev]);
           }
+        } else {
+          const data = await res.json().catch(() => ({}));
+          errors.push(`${files[i].name}: ${data.error || "Upload failed"}`);
         }
       } catch {
-        // continue with next file
+        errors.push(`${files[i].name}: Network error`);
       }
       setUploadProgress(i + 1);
+    }
+
+    if (errors.length > 0) {
+      alert(`Failed to upload ${errors.length} file(s):\n${errors.join("\n")}`);
     }
 
     setUploading(false);

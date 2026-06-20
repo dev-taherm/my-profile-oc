@@ -50,8 +50,8 @@ export function Header({ locale, dict }: HeaderProps) {
           href={`/${locale}`}
           className="flex items-center"
         >
-          <Image src="/images/logo.png" alt="TM" width={32} height={32} className="dark:hidden" />
-          <Image src="/images/logoForDarckTheme.png" alt="TM" width={32} height={32} className="hidden dark:block" />
+          <Image src="/images/logo.png" alt="TM" width={64} height={64} className="dark:hidden" />
+          <Image src="/images/logoForDarckTheme.png" alt="TM" width={64} height={64} className="hidden dark:block" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">

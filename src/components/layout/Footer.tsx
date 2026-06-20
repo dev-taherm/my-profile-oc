@@ -23,8 +23,8 @@ export function Footer({ locale, dict }: FooterProps) {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link href={`/${locale}`} className="flex items-center">
-              <Image src="/images/logo.png" alt="TM" width={28} height={28} className="dark:hidden" />
-              <Image src="/images/logoForDarckTheme.png" alt="TM" width={28} height={28} className="hidden dark:block" />
+              <Image src="/images/logo.png" alt="TM" width={56} height={56} className="dark:hidden" />
+              <Image src="/images/logoForDarckTheme.png" alt="TM" width={56} height={56} className="hidden dark:block" />
             </Link>
             <p className="text-sm text-muted-foreground">
               © {year} {siteConfig.author}. {dict.footer.copyright}

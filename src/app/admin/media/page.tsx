@@ -316,11 +316,13 @@ export default function AdminMediaPage() {
                     />
                   </div>
                 ) : (
-                  <button
-                    type="button"
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setActiveFolder(folder.id)}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setActiveFolder(folder.id); }}
                     className={cn(
-                      "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors text-left",
+                      "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors text-left cursor-pointer",
                       activeFolder === folder.id
                         ? "bg-primary text-primary-foreground"
                         : "text-muted-foreground hover:text-foreground hover:bg-muted"
@@ -363,7 +365,7 @@ export default function AdminMediaPage() {
                         </div>
                       )}
                     </div>
-                  </button>
+                  </div>
                 )}
               </div>
             ))}

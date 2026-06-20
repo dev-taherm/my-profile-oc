@@ -3,7 +3,7 @@ import { MetadataRoute } from "next";
 const BASE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const staticPages = ["", "/about", "/projects", "/blog", "/resume", "/contact"];
+  const staticPages = ["", "/about", "/services", "/projects", "/blog", "/resume", "/contact"];
 
   const entries: MetadataRoute.Sitemap = [];
 

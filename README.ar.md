@@ -29,15 +29,17 @@
 
 ## لقطات الشاشة
 
-> أضف لقطات الشاشة الخاصة بك هنا. استبدل مسارات العناصر النائبة بالصور الفعلية.
-
-| الصفحة الرئيسية | لوحة التحكم | المدونة |
+| الصفحة الرئيسية | من أنا | المشاريع |
 |---|---|---|
-| ![الرئيسية](screenshots/homepage.png) | ![اللوحة](screenshots/admin.png) | ![المدونة](screenshots/blog.png) |
+| ![الرئيسية](public/images/screenshots/home.png) | ![من أنا](public/images/screenshots/about.png) | ![المشاريع](public/images/screenshots/projects.png) |
 
-| المشاريع | الاتصال | الوضع الداكن |
+| المدونة | السيرة الذاتية | التواصل |
 |---|---|---|
-| ![المشاريع](screenshots/projects.png) | ![الاتصال](screenshots/contact.png) | ![الوضع الداكن](screenshots/dark-mode.png) |
+| ![المدونة](public/images/screenshots/blog.png) | ![السيرة الذاتية](public/images/screenshots/resume.png) | ![التواصل](public/images/screenshots/contact.png) |
+
+| لوحة التحكم | محرر المشاريع | الإعدادات |
+|---|---|---|
+| ![لوحة التحكم](public/images/screenshots/adminDashboard.png) | ![محرر المشاريع](public/images/screenshots/adminProject.png) | ![الإعدادات](public/images/screenshots/adminSettings.png) |
 
 ---
 
@@ -141,7 +143,7 @@
 | التنسيق | Tailwind CSS | 4.x |
 | مكتبة المكونات | shadcn/ui (Base UI) | 4.11.0 |
 | الحركات | Framer Motion | 12.40.0 |
-| قاعدة البيانات | PostgreSQL / SQLite | -- |
+| قاعدة البيانات | SQLite / PostgreSQL | -- |
 | ORM | Prisma | 5.22.0 |
 | المصادقة | NextAuth.js (Credentials) | 4.24.14 |
 | الأيقونات | Lucide React | 1.17.0 |
@@ -155,16 +157,86 @@
 
 يدعم هذا المشروع خياري قاعدة بيانات. اختر ما يناسب احتياجاتك:
 
-| | Docker/PostgreSQL (فرع `main`) | SQLite (فرع `main-sqlite`) |
+| | SQLite (فرع `main-sqlite`) | Docker/PostgreSQL (فرع `main`) |
 |---|---|---|
-| **يتطلب Docker** | نعم | لا |
-| **قاعدة البيانات** | PostgreSQL 16 | SQLite (ملف محلي) |
-| **الأفضل لـ** | الإنتاج، الإعداد الكامل | التطوير المحلي، الإعداد السريع |
-| **الأداء** | أفضل للمواقع ذات الحركة العالية | مناسب للحركة المنخفضة والمتوسطة |
+| **يتطلب Docker** | لا | نعم |
+| **قاعدة البيانات** | SQLite (ملف محلي) | PostgreSQL 16 |
+| **الأفضل لـ** | التطوير المحلي، الإعداد السريع | الإنتاج، الإعداد الكامل |
 
 ---
 
-## البدء السريع (Docker/PostgreSQL -- هذا الفرع)
+## البدء السريع (SQLite -- هذا الفرع)
+
+> لا يتطلب Docker. هذه هي الطريقة الأبسط لتشغيل المشروع محلياً.
+
+### المتطلبات
+
+- **Node.js** 18+ (موصى به: 20)
+- **pnpm** (مدير الحزم)
+
+### 1. استنساخ المستودع
+
+```bash
+git clone -b main-sqlite https://github.com/dev-taherm/my-profile-oc.git
+cd my-profile-oc
+```
+
+### 2. تثبيت التبعيات
+
+```bash
+pnpm install
+```
+
+### 3. إعداد متغيرات البيئة
+
+```bash
+cp .env.example .env
+```
+
+عدّل `.env` وأنشئ سراً آمناً:
+
+```bash
+openssl rand -base64 32
+```
+
+يجب أن يبدو `.env` الخاص بك هكذا:
+
+```env
+DATABASE_URL="file:./dev.db"
+NEXTAUTH_SECRET="your-generated-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+ADMIN_EMAIL="admin"
+ADMIN_PASSWORD="123456"
+```
+
+### 4. تهيئة قاعدة البيانات
+
+```bash
+pnpm db:generate
+pnpm db:push
+pnpm db:seed
+```
+
+يقوم هذا بإنشاء قاعدة بيانات SQLite، ودفع المخطط، وملئها ببيانات عينة (مستخدم مسؤول، مشاريع، مقال، تصنيفات، ووسوم).
+
+### 5. إضافة صورة ملفك الشخصي
+
+احفظ صورة ملفك الشخصي باسم `public/images/profile.jpg`.
+
+### 6. بدء خادم التطوير
+
+```bash
+pnpm dev
+```
+
+افتح في متصفحك:
+- **الإنجليزية**: http://localhost:3000/en
+- **العربية**: http://localhost:3000/ar
+- **لوحة التحكم**: http://localhost:3000/admin/login
+
+---
+
+## البدء السريع (Docker/PostgreSQL)
 
 > يتطلب Docker. يستخدم PostgreSQL لإعداد شبيه بالإنتاج.
 
@@ -242,78 +314,9 @@ pnpm dev
 
 ---
 
-## البدء السريع (SQLite -- بدون Docker)
-
-> لا يتطلب Docker. يستخدم SQLite لإعداد محلي خفيف.
-
-### المتطلبات
-
-- **Node.js** 18+ (موصى به: 20)
-- **pnpm** (مدير الحزم)
-
-### 1. استنساخ المستودع
-
-```bash
-git clone -b main-sqlite https://github.com/dev-taherm/my-profile-oc.git
-cd my-profile-oc
-```
-
-### 2. تثبيت التبعيات
-
-```bash
-pnpm install
-```
-
-### 3. إعداد متغيرات البيئة
-
-```bash
-cp .env.example .env
-```
-
-عدّل `.env` وأنشئ سراً آمناً:
-
-```bash
-openssl rand -base64 32
-```
-
-يجب أن يبدو `.env` الخاص بك هكذا:
-
-```env
-DATABASE_URL="file:./dev.db"
-NEXTAUTH_SECRET="your-generated-secret-here"
-NEXTAUTH_URL="http://localhost:3000"
-ADMIN_EMAIL="admin"
-ADMIN_PASSWORD="123456"
-```
-
-### 4. تهيئة قاعدة البيانات
-
-```bash
-pnpm db:generate
-pnpm db:push
-pnpm db:seed
-```
-
-### 5. إضافة صورة ملفك الشخصي
-
-احفظ صورة ملفك الشخصي باسم `public/images/profile.jpg`.
-
-### 6. بدء خادم التطوير
-
-```bash
-pnpm dev
-```
-
-افتح في متصفحك:
-- **الإنجليزية**: http://localhost:3000/en
-- **العربية**: http://localhost:3000/ar
-- **لوحة التحكم**: http://localhost:3000/admin/login
-
----
-
 ## لوحة التحكم
 
-الوصول إلى لوحة التحكم على http://localhost:3000/admin/login
+ الوصول إلى لوحة التحكم على http://localhost:3000/admin/login
 
 ### بيانات الاعتماد الافتراضية
 
@@ -330,7 +333,7 @@ pnpm dev
 
 ### لوحة القيادة
 
-تعرض لوحة القيادة رسالة ترحيب مع اسمك وأزرار الإجراءات السريعة لإنشاء مشاريع أو مقالات جديدة. بطاقات الإحصائيات تظهر العدد الإجمالي للمشاريع والمقالات ورسائل الاتصال.
+ تعرض لوحة القيادة رسالة ترحيب مع اسمك وأزرار الإجراءات السريعة لإنشاء مشاريع أو مقالات جديدة. بطاقات الإحصائيات تظهر العدد الإجمالي للمشاريع والمقالات ورسائل الاتصال.
 
 ### إدارة المشاريع
 
@@ -420,7 +423,7 @@ pnpm dev
 
 ```
 ├── prisma/
-│   ├── schema.prisma              # مخطط قاعدة البيانات (PostgreSQL أو SQLite)
+│   ├── schema.prisma              # مخطط قاعدة البيانات (SQLite أو PostgreSQL)
 │   └── seed.ts                    # سكربت الزراعة (يملا قاعدة البيانات ببيانات عينة)
 │
 ├── public/images/                 # الصور الثابتة (صورة الملف الشخصي)
@@ -490,7 +493,7 @@ pnpm dev
 │   │
 │   └── proxy.ts                 # اكتشاف اللغة والتوجيه وإعادة التوجيه (Next.js 16)
 │
-├── docker-compose.yml             # خدمات PostgreSQL + التطبيق
+├── docker-compose.yml             # خدمات PostgreSQL + التطبيق (فرع main)
 ├── Dockerfile                     # بناء الإنتاج متعدد المراحل
 ├── components.json                # إعدادات shadcn/ui
 ├── next.config.ts                 # إعدادات Next.js
@@ -558,7 +561,7 @@ docker compose up -d
 
 | المتغير | مطلوب | الوصف |
 |---|---|---|
-| `DATABASE_URL` | نعم | سلسلة اتصال قاعدة البيانات: `postgresql://user:pass@host:5432/db` (PostgreSQL) أو `file:./dev.db` (SQLite) |
+| `DATABASE_URL` | نعم | سلسلة اتصال قاعدة البيانات: `file:./dev.db` (SQLite) أو `postgresql://user:pass@host:5432/db` (PostgreSQL) |
 | `NEXTAUTH_SECRET` | نعم | سر عشوائي لتوقيع JWT. يتم إنشاؤه بـ `openssl rand -base64 32` |
 | `NEXTAUTH_URL` | نعم | رابط موقعك (مثلاً `http://localhost:3000` للتطوير، `https://yourdomain.com` للإنتاج) |
 | `ADMIN_EMAIL` | نعم | البريد الإلكتروني الافتراضي للمسؤول لتسجيل الدخول الأولي (الافتراضي: `admin`) |

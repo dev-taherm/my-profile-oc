@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { MediaPicker } from "@/components/admin/MediaPicker";
 
 interface TaxonomyItem {
   id: string;
@@ -231,14 +232,23 @@ export default function AdminProjectEditorPage({
               </Reorder.Group>
             )}
 
-            <Button
-              variant="outline"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploading}
-            >
-              <Upload className="me-2 h-4 w-4" />
-              {uploading ? "Uploading..." : "Add Image"}
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                type="button"
+              >
+                <Upload className="me-2 h-4 w-4" />
+                {uploading ? "Uploading..." : "Upload New"}
+              </Button>
+              <MediaPicker
+                accept="image"
+                onSelect={(url) =>
+                  setImages((prev) => [...prev, { url, order: prev.length }])
+                }
+              />
+            </div>
             {images.length > 0 && (
               <p className="text-xs text-muted-foreground mt-2">Drag to reorder. First image is the cover.</p>
             )}

@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    if (!config.types.includes(file.type as typeof config.types[number])) {
+    if (!(config.types as readonly string[]).includes(file.type)) {
       return NextResponse.json(
         { error: `Invalid file type. Allowed: ${config.types.join(", ")}` },
         { status: 400 }

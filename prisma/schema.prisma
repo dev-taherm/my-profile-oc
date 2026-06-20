@@ -141,4 +141,24 @@ model ServiceTranslation {
   @@unique([serviceId, locale])
 }
 
+model Media {
+  id          String        @id @default(cuid())
+  filename    String
+  url         String        @unique
+  mimeType    String
+  size        Int
+  alt         String?
+  folderId    String?
+  folder      MediaFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  createdAt   DateTime      @default(now())
+}
+
+model MediaFolder {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  media     Media[]
+}
+
 

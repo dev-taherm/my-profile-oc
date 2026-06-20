@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MediaPicker } from "@/components/admin/MediaPicker";
 
 interface TaxonomyItem {
   id: string;
@@ -185,14 +186,21 @@ export default function AdminBlogEditorPage({
                 </button>
               </div>
             ) : (
-              <Button
-                variant="outline"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                <Upload className="me-2 h-4 w-4" />
-                {uploading ? "Uploading..." : "Upload Cover Image"}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  type="button"
+                >
+                  <Upload className="me-2 h-4 w-4" />
+                  {uploading ? "Uploading..." : "Upload New"}
+                </Button>
+                <MediaPicker
+                  accept="image"
+                  onSelect={(url) => setCoverImage(url)}
+                />
+              </div>
             )}
           </div>
 

@@ -51,7 +51,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   if (!session) return null;
 
-  if (!session.user.passwordChanged) return null;
+  if (!session.user?.passwordChanged) return null;
 
   return (
     <div className="min-h-screen flex">

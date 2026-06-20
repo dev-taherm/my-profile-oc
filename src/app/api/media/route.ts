@@ -11,6 +11,8 @@ const ALLOWED_TYPES = [
   "application/pdf",
 ];
 const MAX_SIZE = 5 * 1024 * 1024;
+const MAX_PROCESSED_SIZE = 1 * 1024 * 1024;
+const CONVERT_TO_WEBP = ["image/jpeg", "image/png"];
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -59,9 +61,25 @@ async function uploadFile(file: File, folderId: string | null): Promise<UploadRe
   }
 
   const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+  let buffer = Buffer.from(bytes);
+  let mimeType = file.type;
+  let filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
-  const filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+  if (CONVERT_TO_WEBP.includes(file.type)) {
+    const sharp = (await import("sharp")).default;
+    let quality = 80;
+    let webpBuffer = await sharp(buffer).webp({ quality }).toBuffer();
+
+    while (webpBuffer.length > MAX_PROCESSED_SIZE && quality > 10) {
+      quality -= 10;
+      webpBuffer = await sharp(buffer).webp({ quality }).toBuffer();
+    }
+
+    buffer = webpBuffer;
+    mimeType = "image/webp";
+    filename = filename.replace(/\.[^.]+$/, ".webp");
+  }
+
   const { writeFile, mkdir } = await import("fs/promises");
   const { join } = await import("path");
 
@@ -77,8 +95,8 @@ async function uploadFile(file: File, folderId: string | null): Promise<UploadRe
     data: {
       filename,
       url,
-      mimeType: file.type,
-      size: file.size,
+      mimeType,
+      size: buffer.length,
       alt: null,
       folderId: folderId || null,
     },

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { MediaPicker } from "@/components/admin/MediaPicker";
+import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 
 interface TaxonomyItem {
   id: string;
@@ -312,12 +313,18 @@ export default function AdminProjectEditorPage({
         <TabsContent value="en" className="space-y-4 mt-4">
           <Input placeholder="Title (English)" value={enTitle} onChange={(e) => setEnTitle(e.target.value)} />
           <Textarea placeholder="Description (English)" value={enDescription} onChange={(e) => setEnDescription(e.target.value)} />
-          <Textarea placeholder="Content (Markdown, English)" rows={10} value={enContent} onChange={(e) => setEnContent(e.target.value)} />
+          <div>
+            <p className="text-sm font-medium mb-2">Content (Markdown)</p>
+            <MarkdownEditor value={enContent} onChange={setEnContent} height={400} />
+          </div>
         </TabsContent>
         <TabsContent value="ar" className="space-y-4 mt-4">
           <Input placeholder="العنوان (عربي)" dir="rtl" value={arTitle} onChange={(e) => setArTitle(e.target.value)} />
           <Textarea placeholder="الوصف (عربي)" dir="rtl" value={arDescription} onChange={(e) => setArDescription(e.target.value)} />
-          <Textarea placeholder="المحتوى (ماركداون، عربي)" dir="rtl" rows={10} value={arContent} onChange={(e) => setArContent(e.target.value)} />
+          <div>
+            <p className="text-sm font-medium mb-2">المحتوى (ماركداون)</p>
+            <MarkdownEditor value={arContent} onChange={setArContent} height={400} dir="rtl" />
+          </div>
         </TabsContent>
       </Tabs>
 

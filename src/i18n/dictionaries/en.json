@@ -2,6 +2,7 @@
   "nav": {
     "home": "Home",
     "about": "About",
+    "services": "Services",
     "projects": "Projects",
     "blog": "Blog",
     "resume": "Resume",
@@ -13,7 +14,7 @@
     "title": "Software Engineer — Backend & AI Systems",
     "subtitle": "Building scalable architectures and integrating LLMs into production workflows.",
     "cta_projects": "View Projects",
-    "cta_contact": "Get in Touch",
+    "cta_contact": "Chat on WhatsApp",
     "cta_resume": "Download CV"
   },
   "stats": {
@@ -24,6 +25,14 @@
   },
   "featuredTech": {
     "title": "Technologies I Work With"
+  },
+  "services": {
+    "title": "Services",
+    "subtitle": "Professional software engineering services tailored to your needs.",
+    "viewService": "View Service",
+    "backToServices": "Back to Services",
+    "features": "What's Included",
+    "getInTouch": "Get in Touch"
   },
   "about": {
     "title": "About Me",
@@ -120,7 +129,7 @@
     "title": "Get in Touch",
     "subtitle": "Have a project in mind or want to discuss opportunities? I'd love to hear from you.",
     "form": {
-    "name": "Taher Mahram",
+      "name": "Your Name",
       "email": "Your Email",
       "subject": "Subject",
       "message": "Your Message",

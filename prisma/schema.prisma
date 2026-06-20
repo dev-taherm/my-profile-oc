@@ -115,4 +115,30 @@ model ContactMessage {
   createdAt     DateTime  @default(now())
 }
 
+model Service {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  icon          String?
+  featured      Boolean   @default(false)
+  status        String    @default("DRAFT")
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  translations  ServiceTranslation[]
+}
+
+model ServiceTranslation {
+  id            String    @id @default(cuid())
+  locale        String
+  title         String
+  shortDesc     String
+  description   String
+  features      String?
+  serviceId     String
+  service       Service   @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, locale])
+}
+
 

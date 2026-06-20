@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Mail } from "lucide-react";
-import { GithubIcon, LinkedinIcon } from "@/components/shared/Icons";
+import { GithubIcon, LinkedinIcon, InstagramIcon, FacebookIcon, WhatsappIcon } from "@/components/shared/Icons";
 import { Button } from "@/components/ui/button";
 import { type Locale, siteConfig } from "@/lib/constants";
 
@@ -89,10 +89,11 @@ export function Hero({ locale, dict }: HeroProps) {
                 variant="outline"
                 size="lg"
                 render={
-                  <Link href={`/${locale}/contact`} />
+                  <a href={`https://wa.me/${siteConfig.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" />
                 }
               >
                 {dict.hero.cta_contact}
+                <WhatsappIcon className={`${locale === "ar" ? "rtl:rotate-180 ms-2" : "ms-2"} h-4 w-4`} />
               </Button>
             </motion.div>
 
@@ -117,6 +118,22 @@ export function Hero({ locale, dict }: HeroProps) {
                 className="p-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <LinkedinIcon className="h-5 w-5" />
+              </Link>
+              <Link
+                href={siteConfig.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <InstagramIcon className="h-5 w-5" />
+              </Link>
+              <Link
+                href={siteConfig.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <FacebookIcon className="h-5 w-5" />
               </Link>
               <Link
                 href={`mailto:${siteConfig.email}`}

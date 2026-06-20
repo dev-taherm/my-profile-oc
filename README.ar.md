@@ -29,15 +29,17 @@
 
 ## لقطات الشاشة
 
-> أضف لقطات الشاشة الخاصة بك هنا. استبدل مسارات العناصر النائبة بالصور الفعلية.
-
-| الصفحة الرئيسية | لوحة التحكم | المدونة |
+| الصفحة الرئيسية | من أنا | المشاريع |
 |---|---|---|
-| ![الرئيسية](screenshots/homepage.png) | ![اللوحة](screenshots/admin.png) | ![المدونة](screenshots/blog.png) |
+| ![الرئيسية](public/images/screenshots/home.png) | ![من أنا](public/images/screenshots/about.png) | ![المشاريع](public/images/screenshots/projects.png) |
 
-| المشاريع | الاتصال | الوضع الداكن |
+| المدونة | السيرة الذاتية | التواصل |
 |---|---|---|
-| ![المشاريع](screenshots/projects.png) | ![الاتصال](screenshots/contact.png) | ![الوضع الداكن](screenshots/dark-mode.png) |
+| ![المدونة](public/images/screenshots/blog.png) | ![السيرة الذاتية](public/images/screenshots/resume.png) | ![التواصل](public/images/screenshots/contact.png) |
+
+| لوحة التحكم | محرر المشاريع | الإعدادات |
+|---|---|---|
+| ![لوحة التحكم](public/images/screenshots/adminDashboard.png) | ![محرر المشاريع](public/images/screenshots/adminProject.png) | ![الإعدادات](public/images/screenshots/adminSettings.png) |
 
 ---
 

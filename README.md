@@ -29,15 +29,17 @@ Whether you're looking for a remote software engineering role or want to showcas
 
 ## Screenshots
 
-> Add your own screenshots here. Replace the placeholder paths with actual images.
-
-| Homepage | Admin Dashboard | Blog |
+| Homepage | About | Projects |
 |---|---|---|
-| ![Homepage](screenshots/homepage.png) | ![Admin](screenshots/admin.png) | ![Blog](screenshots/blog.png) |
+| ![Homepage](public/images/screenshots/home.png) | ![About](public/images/screenshots/about.png) | ![Projects](public/images/screenshots/projects.png) |
 
-| Projects | Contact | Dark Mode |
+| Blog | Resume | Contact |
 |---|---|---|
-| ![Projects](screenshots/projects.png) | ![Contact](screenshots/contact.png) | ![Dark Mode](screenshots/dark-mode.png) |
+| ![Blog](public/images/screenshots/blog.png) | ![Resume](public/images/screenshots/resume.png) | ![Contact](public/images/screenshots/contact.png) |
+
+| Admin Dashboard | Admin Project Editor | Admin Settings |
+|---|---|---|
+| ![Admin Dashboard](public/images/screenshots/adminDashboard.png) | ![Admin Project](public/images/screenshots/adminProject.png) | ![Admin Settings](public/images/screenshots/adminSettings.png) |
 
 ---
 

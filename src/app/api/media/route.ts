@@ -66,18 +66,22 @@ async function uploadFile(file: File, folderId: string | null): Promise<UploadRe
   let filename = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
 
   if (CONVERT_TO_WEBP.includes(file.type)) {
-    const sharp = (await import("sharp")).default;
-    let quality = 80;
-    let webpBuffer = await sharp(buffer).webp({ quality }).toBuffer();
+    try {
+      const sharp = (await import("sharp")).default;
+      let quality = 80;
+      let webpBuffer = await sharp(buffer).webp({ quality }).toBuffer();
 
-    while (webpBuffer.length > MAX_PROCESSED_SIZE && quality > 10) {
-      quality -= 10;
-      webpBuffer = await sharp(buffer).webp({ quality }).toBuffer();
+      while (webpBuffer.length > MAX_PROCESSED_SIZE && quality > 10) {
+        quality -= 10;
+        webpBuffer = await sharp(buffer).webp({ quality }).toBuffer();
+      }
+
+      buffer = webpBuffer as Buffer;
+      mimeType = "image/webp";
+      filename = filename.replace(/\.[^.]+$/, ".webp");
+    } catch {
+      // sharp unavailable, keep original format
     }
-
-    buffer = webpBuffer as Buffer;
-    mimeType = "image/webp";
-    filename = filename.replace(/\.[^.]+$/, ".webp");
   }
 
   const { writeFile, mkdir } = await import("fs/promises");

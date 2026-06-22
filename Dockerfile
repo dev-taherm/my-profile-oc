@@ -18,7 +18,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
-RUN mkdir -p /app/data /app/public/uploads/media && chown -R nextjs:nodejs /app/data /app/public/uploads
+RUN mkdir -p /app/data /app/public/uploads/media /app/public/uploads/resume /app/public/uploads/blog /app/public/uploads/projects && chown -R nextjs:nodejs /app/data /app/public/uploads
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static

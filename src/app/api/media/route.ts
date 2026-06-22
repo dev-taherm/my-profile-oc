@@ -143,8 +143,9 @@ export async function POST(request: NextRequest) {
       media: uploaded.map((r) => ("media" in r ? r.media : null)).filter(Boolean),
       errors,
     });
-  } catch {
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  } catch (error) {
+    console.error("Upload error:", error);
+    return NextResponse.json({ error: "Upload failed", details: String(error) }, { status: 500 });
   }
 }
 

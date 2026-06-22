@@ -10,13 +10,13 @@ export async function GET(request: NextRequest) {
   if (id) {
     const post = await prisma.blogPost.findUnique({
       where: { id },
-      include: { translations: true, categories: true, tags: true, author: { select: { name: true } } },
+      include: { translations: true, categories: true, tags: true, author: { select: { name: true, email: true } } },
     });
     return NextResponse.json(post);
   }
 
   const posts = await prisma.blogPost.findMany({
-    include: { translations: true, categories: true, tags: true, author: { select: { name: true } } },
+    include: { translations: true, categories: true, tags: true, author: { select: { name: true, email: true } } },
     orderBy: { createdAt: "desc" },
   });
   return NextResponse.json(posts);

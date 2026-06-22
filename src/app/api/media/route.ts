@@ -111,12 +111,11 @@ async function uploadFile(file: File, folderId: string | null): Promise<UploadRe
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     const formData = await request.formData();
     const files = formData.getAll("files") as File[];
     const folderId = (formData.get("folderId") as string) || null;

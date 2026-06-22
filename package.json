@@ -59,7 +59,8 @@
       "esbuild",
       "prisma",
       "@swc/core",
-      "@parcel/watcher"
+      "@parcel/watcher",
+      "sharp"
     ]
   }
 }

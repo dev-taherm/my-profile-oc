@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { locales, defaultLocale } from "@/lib/constants";
+import { prisma } from "@/lib/prisma";
+import { createHash } from "crypto";
 
 const TRACKABLE_PREFIXES = ["/en", "/ar"];
 const ANALYTICS_IGNORED = ["/api", "/admin", "/_next", "/uploads", "/favicon"];
@@ -13,6 +15,11 @@ function shouldTrack(pathname: string): boolean {
   }
   if (pathname === "/") return true;
   return false;
+}
+
+function hashSession(ip: string | null, ua: string | null): string {
+  const raw = `${ip || "unknown"}-${ua || "unknown"}`;
+  return createHash("sha256").update(raw).digest("hex").slice(0, 16);
 }
 
 function getLocaleFromRequest(request: NextRequest): string {
@@ -81,26 +88,21 @@ export function proxy(request: NextRequest) {
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
       request.headers.get("x-real-ip") ||
       "unknown";
+    const ua = request.headers.get("user-agent") || null;
+    const sessionId = hashSession(ip, ua);
 
-    const body = JSON.stringify({
-      path: request.nextUrl.pathname,
-      referrer: request.headers.get("referer") || null,
-      userAgent: request.headers.get("user-agent") || null,
-      country: request.headers.get("cf-ipcountry") || null,
-    });
-
-    const url = request.nextUrl.clone();
-    url.pathname = "/api/analytics";
-    url.search = "";
-
-    try {
-      fetch(url.toString(), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-        keepalive: true,
-      }).catch(() => {});
-    } catch {}
+    prisma.pageView
+      .create({
+        data: {
+          path: request.nextUrl.pathname,
+          referrer: request.headers.get("referer") || null,
+          userAgent: ua,
+          country: request.headers.get("cf-ipcountry") || null,
+          sessionId,
+          ip,
+        },
+      })
+      .catch(() => {});
   }
 
   return response;

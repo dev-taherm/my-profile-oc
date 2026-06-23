@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { ExternalLink, Search, ChevronDown } from "lucide-react";
 import { GithubIcon } from "@/components/shared/Icons";
@@ -200,11 +201,15 @@ export function ProjectsList({ projects, locale, dict }: ProjectsListProps) {
                 className="group block p-6 rounded-xl border bg-card hover:shadow-lg transition-all"
               >
                 {project.projectImages?.length > 0 && (
-                  <img
-                    src={project.projectImages[0].url}
-                    alt={t.title}
-                    className="w-full h-40 object-cover rounded-md mb-4"
-                  />
+                  <div className="relative w-full h-40 rounded-md mb-4 overflow-hidden">
+                    <Image
+                      src={project.projectImages[0].url}
+                      alt={t.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-cover"
+                    />
+                  </div>
                 )}
                 <div className="flex items-start justify-between mb-3">
                   <h2 className="text-xl font-bold group-hover:text-primary transition-colors">

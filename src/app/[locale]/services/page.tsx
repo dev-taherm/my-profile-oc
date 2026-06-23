@@ -84,6 +84,14 @@ export default async function ServicesPage({
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: locale === "ar" ? "الرئيسية" : "Home", item: `${siteConfig.url}/${locale}` },
+          { "@type": "ListItem", position: 2, name: dict.services.title },
+        ],
+      }) }} />
       <Header locale={locale} dict={dict} />
       <main className="flex-1">
         <div className="container mx-auto px-4 py-16">

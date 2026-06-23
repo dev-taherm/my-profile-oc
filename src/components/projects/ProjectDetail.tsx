@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { GithubIcon } from "@/components/shared/Icons";
 import { Badge } from "@/components/ui/badge";
@@ -53,11 +54,15 @@ export function ProjectDetail({ project, locale, dict }: ProjectDetailProps) {
       {sortedImages.length > 0 && (
         <div className="mb-8">
           <div className="relative">
-            <img
-              src={sortedImages[currentImage].url}
-              alt={t.title}
-              className="w-full h-80 object-cover rounded-xl"
-            />
+            <div className="relative w-full h-80 rounded-xl overflow-hidden">
+              <Image
+                src={sortedImages[currentImage].url}
+                alt={t.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 768px"
+                className="object-cover"
+              />
+            </div>
             {sortedImages.length > 1 && (
               <>
                 <button
@@ -83,7 +88,7 @@ export function ProjectDetail({ project, locale, dict }: ProjectDetailProps) {
                   onClick={() => setCurrentImage(i)}
                   className={`rounded-md overflow-hidden border-2 transition-colors ${i === currentImage ? "border-primary" : "border-transparent"}`}
                 >
-                  <img src={img.url} alt="" className="h-14 w-20 object-cover" />
+                  <img src={img.url} alt={t.title} className="h-14 w-20 object-cover" />
                 </button>
               ))}
             </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -64,11 +65,15 @@ export function LatestBlog({ posts, locale, dict }: LatestBlogProps) {
                   className="group block p-6 rounded-xl border bg-card hover:shadow-lg transition-all"
                 >
                   {post.coverImage && (
-                    <img
-                      src={post.coverImage}
-                      alt={t.title}
-                      className="w-full h-40 object-cover rounded-md mb-4"
-                    />
+                    <div className="relative w-full h-40 rounded-md mb-4 overflow-hidden">
+                      <Image
+                        src={post.coverImage}
+                        alt={t.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover"
+                      />
+                    </div>
                   )}
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
                     <Clock className="h-4 w-4" />

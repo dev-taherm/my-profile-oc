@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -64,11 +65,15 @@ export function FeaturedProjects({ projects, locale, dict }: FeaturedProjectsPro
                   className="group block p-6 rounded-xl border bg-card hover:shadow-lg transition-all h-full"
                 >
                   {project.projectImages?.length > 0 && (
-                    <img
-                      src={project.projectImages[0].url}
-                      alt={t.title}
-                      className="w-full h-40 object-cover rounded-md mb-4"
-                    />
+                    <div className="relative w-full h-40 rounded-md mb-4 overflow-hidden">
+                      <Image
+                        src={project.projectImages[0].url}
+                        alt={t.title}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 33vw"
+                        className="object-cover"
+                      />
+                    </div>
                   )}
                   <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
                     {t.title}

@@ -60,7 +60,32 @@
     "mission": "My mission is to leverage technology to solve real-world problems, building systems that are not only technically sound but also deliver measurable business value.",
     "experience": "Work Experience",
     "education": "Education",
-    "certifications": "Certifications & Languages"
+    "certifications": "Certifications & Languages",
+    "faq": {
+      "title": "Frequently Asked Questions",
+      "items": [
+        {
+          "question": "What does Taher Mahram do?",
+          "answer": "Taher Mahram is a software engineer specializing in backend development and AI systems. He builds scalable architectures, integrates LLMs into production workflows, and designs multi-tenant systems with Django and Python."
+        },
+        {
+          "question": "What technologies does Taher Mahram use?",
+          "answer": "Taher works with Python, Django, FastAPI, PostgreSQL, Docker, AWS, LangChain, OpenAI, React, Next.js, and TypeScript. He focuses on backend systems, AI/LLM engineering, and cloud-native architectures."
+        },
+        {
+          "question": "Is Taher Mahram available for freelance work?",
+          "answer": "Yes, Taher is available for freelance and remote opportunities. He can be reached via WhatsApp at +967733918465 or through the contact page on this website."
+        },
+        {
+          "question": "Where is Taher Mahram based?",
+          "answer": "Taher Mahram is based in Sana'a, Yemen. He works remotely with clients worldwide."
+        },
+        {
+          "question": "What is Taher Mahram's educational background?",
+          "answer": "Taher holds a B.Sc. in Computer Science (Software Development) with Honors from Universiti Teknikal Malaysia Melaka (UTeM), completed in 2022."
+        }
+      ]
+    }
   },
   "experience": {
     "neoPlatrix": {

@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { AnimatedSection } from "@/components/shared/AnimatedSection";
-import { Briefcase, GraduationCap, Award, Languages } from "lucide-react";
+import { Briefcase, GraduationCap, Award, Languages, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export async function generateMetadata({
@@ -84,8 +84,34 @@ export default async function AboutPage({
     },
   ];
 
+  const baseUrl = siteConfig.url;
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: locale === "ar" ? "الرئيسية" : "Home", item: `${baseUrl}/${locale}` },
+      { "@type": "ListItem", position: 2, name: dict.about.title },
+    ],
+  };
+
+  const faqItems = dict.about.faq.items;
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <Header locale={locale} dict={dict} />
       <main className="flex-1">
         <div className="container mx-auto px-4 py-16">
@@ -165,6 +191,24 @@ export default async function AboutPage({
               <div className="flex gap-3">
                 <Badge variant="outline" className="text-base py-1.5 px-4">Arabic — Native</Badge>
                 <Badge variant="outline" className="text-base py-1.5 px-4">English — Professional</Badge>
+              </div>
+            </AnimatedSection>
+
+            <AnimatedSection delay={0.5}>
+              <div className="flex items-center gap-3 mb-6">
+                <HelpCircle className="h-6 w-6 text-primary" />
+                <h2 className="text-2xl font-bold">{dict.about.faq.title}</h2>
+              </div>
+              <div className="space-y-4">
+                {faqItems.map((item, i) => (
+                  <details key={i} className="group p-6 rounded-xl border bg-card">
+                    <summary className="font-bold text-lg cursor-pointer list-none flex items-center justify-between">
+                      {item.question}
+                      <span className="text-muted-foreground group-open:rotate-180 transition-transform">▾</span>
+                    </summary>
+                    <p className="mt-4 text-muted-foreground leading-relaxed">{item.answer}</p>
+                  </details>
+                ))}
               </div>
             </AnimatedSection>
           </div>

@@ -4,7 +4,7 @@
 Taher Mahram is a software engineer specializing in backend development and AI systems, based in Sana'a, Yemen. Available for freelance and remote opportunities.
 
 ## Expertise
-- Backend & Systems: Python, Django, FastAPI, PostgreSQL, Microservices, System Design, DDD, Multi-tenancy, RBAC, REST API
+- Backend & Systems: Python, Django, FastAPI, PostgreSQL, SQLite, Microservices, System Design, DDD, Multi-tenancy, RBAC, REST API
 - AI & LLM Engineering: LangChain, RAG Pipelines, Chroma, FAISS, OpenAI, Prompt Engineering, Guardrails
 - Cloud & DevOps: AWS, Docker, CI/CD, Celery, Rate Limiting, Observability
 - Frontend & Data: React, Next.js, TypeScript, Tailwind CSS
@@ -17,8 +17,23 @@ Taher Mahram is a software engineer specializing in backend development and AI s
 ## Education
 B.Sc. in Computer Science (Software Development), with Honors — Universiti Teknikal Malaysia Melaka (UTeM), 2018–2022
 
+## Key Facts
+- Based in Sana'a, Yemen
+- Speaks Arabic (native) and English (professional)
+- Available for remote and freelance work
+- Specializes in Django/Python backend systems and LLM integration
+
+## Pages
+- Home: https://taher.pixovagency.com/en
+- About: https://taher.pixovagency.com/en/about
+- Services: https://taher.pixovagency.com/en/services
+- Projects: https://taher.pixovagency.com/en/projects
+- Blog: https://taher.pixovagency.com/en/blog
+- Resume: https://taher.pixovagency.com/en/resume
+- Contact: https://taher.pixovagency.com/en/contact
+
 ## Contact
-- Website: https://tahermahram.dev
+- Website: https://taher.pixovagency.com
 - Email: tahermahram0@gmail.com
 - WhatsApp: +967733918465
 - GitHub: https://github.com/dev-taherm

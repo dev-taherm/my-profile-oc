@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
+import { InlineTaxonomyCreator } from "@/components/admin/InlineTaxonomyCreator";
 
 interface TaxonomyItem {
   id: string;
@@ -271,36 +272,24 @@ export default function AdminProjectEditorPage({
 
           <div>
             <p className="text-sm font-medium mb-2">Categories</p>
-            <div className="flex flex-wrap gap-2">
-              {allCategories.map((cat) => (
-                <label key={cat.id} className="flex items-center gap-1.5 text-sm border rounded-md px-3 py-1.5 cursor-pointer hover:bg-accent">
-                  <input
-                    type="checkbox"
-                    checked={selectedCategoryIds.includes(cat.id)}
-                    onChange={() => toggleId(selectedCategoryIds, setSelectedCategoryIds, cat.id)}
-                  />
-                  {cat.name}
-                </label>
-              ))}
-              {allCategories.length === 0 && <p className="text-sm text-muted-foreground">No categories available</p>}
-            </div>
+            <InlineTaxonomyCreator
+              type="category"
+              items={allCategories}
+              selectedIds={selectedCategoryIds}
+              onToggle={(id) => toggleId(selectedCategoryIds, setSelectedCategoryIds, id)}
+              onCreated={(item) => setAllCategories((prev) => [...prev, item])}
+            />
           </div>
 
           <div>
             <p className="text-sm font-medium mb-2">Tags</p>
-            <div className="flex flex-wrap gap-2">
-              {allTags.map((tag) => (
-                <label key={tag.id} className="flex items-center gap-1.5 text-sm border rounded-md px-3 py-1.5 cursor-pointer hover:bg-accent">
-                  <input
-                    type="checkbox"
-                    checked={selectedTagIds.includes(tag.id)}
-                    onChange={() => toggleId(selectedTagIds, setSelectedTagIds, tag.id)}
-                  />
-                  {tag.name}
-                </label>
-              ))}
-              {allTags.length === 0 && <p className="text-sm text-muted-foreground">No tags available</p>}
-            </div>
+            <InlineTaxonomyCreator
+              type="tag"
+              items={allTags}
+              selectedIds={selectedTagIds}
+              onToggle={(id) => toggleId(selectedTagIds, setSelectedTagIds, id)}
+              onCreated={(item) => setAllTags((prev) => [...prev, item])}
+            />
           </div>
         </CardContent>
       </Card>

@@ -162,4 +162,19 @@ model MediaFolder {
   media     Media[]
 }
 
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String?
+  userAgent String?
+  country   String?
+  sessionId String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([path])
+  @@index([createdAt])
+  @@index([sessionId])
+}
+
 

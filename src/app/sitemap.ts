@@ -5,15 +5,23 @@ import { siteConfig, locales, localeConfig } from "@/lib/constants";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
   const staticPages = ["", "/about", "/services", "/projects", "/blog", "/resume", "/contact"];
+  const staticDates: Record<string, string> = {
+    "": "2025-06-01",
+    "/about": "2025-06-01",
+    "/services": "2025-06-01",
+    "/projects": "2025-06-01",
+    "/blog": "2025-06-01",
+    "/resume": "2025-06-01",
+    "/contact": "2025-06-01",
+  };
 
   const entries: MetadataRoute.Sitemap = [];
 
   for (const page of staticPages) {
     for (const locale of locales) {
-      const geo = localeConfig[locale];
       entries.push({
         url: `${baseUrl}/${locale}${page}`,
-        lastModified: new Date(),
+        lastModified: new Date(staticDates[page]),
         changeFrequency: page === "" ? "daily" : "weekly",
         priority: page === "" ? 1 : 0.8,
         alternates: {
@@ -32,25 +40,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const [publishedPosts, publishedProjects, publishedServices] = await Promise.all([
       prisma.blogPost.findMany({
         where: { status: "PUBLISHED" },
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, updatedAt: true, coverImage: true, translations: { select: { title: true, locale: true } } },
       }),
       prisma.project.findMany({
         where: { status: "PUBLISHED" },
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, updatedAt: true, projectImages: { select: { url: true }, take: 1, orderBy: { order: "asc" } }, translations: { select: { title: true, locale: true } } },
       }),
       prisma.service.findMany({
         where: { status: "PUBLISHED" },
-        select: { slug: true, updatedAt: true },
+        select: { slug: true, updatedAt: true, translations: { select: { title: true, locale: true } } },
       }),
     ]);
 
     for (const post of publishedPosts) {
       for (const locale of locales) {
+        const postUrl = `${baseUrl}/${locale}/blog/${post.slug}`;
+        const imageUrls: string[] = [];
+        if (post.coverImage) {
+          imageUrls.push(post.coverImage);
+        }
         entries.push({
-          url: `${baseUrl}/${locale}/blog/${post.slug}`,
+          url: postUrl,
           lastModified: post.updatedAt,
           changeFrequency: "monthly",
           priority: 0.6,
+          images: imageUrls.length > 0 ? imageUrls : undefined,
           alternates: {
             languages: {
               ...Object.fromEntries(
@@ -65,11 +79,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     for (const project of publishedProjects) {
       for (const locale of locales) {
+        const projectUrl = `${baseUrl}/${locale}/projects/${project.slug}`;
+        const imageUrls: string[] = project.projectImages.map((img) => img.url);
         entries.push({
-          url: `${baseUrl}/${locale}/projects/${project.slug}`,
+          url: projectUrl,
           lastModified: project.updatedAt,
           changeFrequency: "monthly",
           priority: 0.6,
+          images: imageUrls.length > 0 ? imageUrls : undefined,
           alternates: {
             languages: {
               ...Object.fromEntries(

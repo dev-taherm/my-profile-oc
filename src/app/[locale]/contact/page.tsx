@@ -29,10 +29,26 @@ export async function generateMetadata({
   return {
     title: titles[locale],
     description: descriptions[locale],
+    alternates: {
+      canonical: `${baseUrl}/${locale}/contact`,
+      languages: {
+        "en": `${baseUrl}/en/contact`,
+        "ar": `${baseUrl}/ar/contact`,
+        "x-default": `${baseUrl}/en/contact`,
+      },
+    },
     openGraph: {
       title: titles[locale],
       description: descriptions[locale],
       url: `${baseUrl}/${locale}/contact`,
+      type: "website",
+      images: [{ url: `${baseUrl}/images/profile.jpg`, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titles[locale],
+      description: descriptions[locale],
+      images: [`${baseUrl}/images/profile.jpg`],
     },
   };
 }

@@ -9,7 +9,7 @@ export const localeNames: Record<Locale, string> = {
 
 export const localeConfig: Record<Locale, { hreflang: string; ogLocale: string }> = {
   en: { hreflang: "en-US", ogLocale: "en_US" },
-  ar: { hreflang: "ar-SA", ogLocale: "ar_SA" },
+  ar: { hreflang: "ar", ogLocale: "ar" },
 };
 
 export const siteConfig = {
@@ -17,7 +17,7 @@ export const siteConfig = {
   title: "Taher Mahram — Software Engineer",
   description:
     "Software Engineer specializing in backend and AI systems, with experience designing scalable, microservices-oriented architectures and integrating LLMs into production workflows.",
-  url: "https://tahermahram.dev",
+  url: "https://taher.pixovagency.com",
   author: "Taher Mahram",
   email: "tahermahram0@gmail.com",
   phone: "+967 779991263",

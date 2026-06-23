@@ -38,6 +38,9 @@ export const metadata: Metadata = {
       { rel: "manifest", url: "/favicon/site.webmanifest" },
     ],
   },
+  other: {
+    "llms-txt": "/llms.txt",
+  },
 };
 
 export default function RootLayout({
@@ -48,9 +51,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      dir="ltr"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var l=window.location.pathname.split('/')[1];if(['en','ar'].indexOf(l)!==-1){document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr';}})();`,
+          }}
+        />
+        <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt" />
+      </head>
       <body className="min-h-full flex flex-col">
         <JsonLd />
         {children}

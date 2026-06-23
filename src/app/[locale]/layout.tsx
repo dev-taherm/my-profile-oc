@@ -61,18 +61,19 @@ export async function generateMetadata({
       type: "website",
       images: [
         {
-          url: `${baseUrl}/favicon/android-chrome-512x512.png`,
-          width: 512,
-          height: 512,
+          url: `${baseUrl}/images/profile.jpg`,
+          width: 1200,
+          height: 630,
           alt: dict.hero.name,
         },
       ],
     },
     twitter: {
       card: "summary_large_image",
+      site: "@dev_taher",
       title: `${dict.hero.name} — ${dict.hero.title}`,
       description: dict.hero.subtitle,
-      images: [`${baseUrl}/favicon/android-chrome-512x512.png`],
+      images: [`${baseUrl}/images/profile.jpg`],
     },
     robots: {
       index: true,

@@ -2,6 +2,8 @@ import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { siteConfig, locales, localeConfig } from "@/lib/constants";
 
+export const dynamic = "force-dynamic";
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
   const staticPages = ["", "/about", "/services", "/projects", "/blog", "/resume", "/contact", "/privacy", "/terms"];
@@ -119,8 +121,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         });
       }
     }
-  } catch {
-    // DB may not be available at build time
+  } catch (e) {
+    console.error("[sitemap] Failed to fetch dynamic content:", e);
   }
 
   return entries;

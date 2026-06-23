@@ -47,13 +47,13 @@ export async function generateMetadata({
       description: t.description?.substring(0, 160),
       url,
       type: "website",
-      images: [{ url: `${baseUrl}/images/profile.jpg`, width: 1200, height: 630, alt: t.title }],
+      images: [{ url: `${baseUrl}/api/og?title=${encodeURIComponent(t.title)}&subtitle=${encodeURIComponent(t.description?.substring(0, 100) || "")}&locale=${locale}`, width: 1200, height: 630, alt: t.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: t.title,
       description: t.description?.substring(0, 160),
-      images: [`${baseUrl}/images/profile.jpg`],
+      images: [`${baseUrl}/api/og?title=${encodeURIComponent(t.title)}&subtitle=${encodeURIComponent(t.description?.substring(0, 100) || "")}&locale=${locale}`],
     },
   };
 }

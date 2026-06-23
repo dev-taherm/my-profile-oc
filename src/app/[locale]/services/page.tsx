@@ -45,13 +45,13 @@ export async function generateMetadata({
       description: descriptions[locale],
       url: `${baseUrl}/${locale}/services`,
       type: "website",
-      images: [{ url: `${baseUrl}/images/profile.jpg`, width: 1200, height: 630 }],
+      images: [{ url: `${baseUrl}/api/og?title=${encodeURIComponent(titles[locale])}&subtitle=${encodeURIComponent(descriptions[locale])}&locale=${locale}`, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title: titles[locale],
       description: descriptions[locale],
-      images: [`${baseUrl}/images/profile.jpg`],
+      images: [`${baseUrl}/api/og?title=${encodeURIComponent(titles[locale])}&subtitle=${encodeURIComponent(descriptions[locale])}&locale=${locale}`],
     },
   };
 }

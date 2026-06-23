@@ -61,7 +61,7 @@ export async function generateMetadata({
       type: "website",
       images: [
         {
-          url: `${baseUrl}/images/profile.jpg`,
+          url: `${baseUrl}/api/og?title=${encodeURIComponent(dict.hero.name)}&subtitle=${encodeURIComponent(dict.hero.title)}&locale=${locale}`,
           width: 1200,
           height: 630,
           alt: dict.hero.name,
@@ -73,7 +73,7 @@ export async function generateMetadata({
       site: "@dev_taher",
       title: `${dict.hero.name} — ${dict.hero.title}`,
       description: dict.hero.subtitle,
-      images: [`${baseUrl}/images/profile.jpg`],
+      images: [`${baseUrl}/api/og?title=${encodeURIComponent(dict.hero.name)}&subtitle=${encodeURIComponent(dict.hero.title)}&locale=${locale}`],
     },
     robots: {
       index: true,

@@ -9,7 +9,7 @@ export const localeNames: Record<Locale, string> = {
 
 export const localeConfig: Record<Locale, { hreflang: string; ogLocale: string }> = {
   en: { hreflang: "en-US", ogLocale: "en_US" },
-  ar: { hreflang: "ar", ogLocale: "ar" },
+  ar: { hreflang: "ar-YE", ogLocale: "ar_YE" },
 };
 
 export const siteConfig = {

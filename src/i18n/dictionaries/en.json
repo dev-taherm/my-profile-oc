@@ -61,6 +61,28 @@
     "experience": "Work Experience",
     "education": "Education",
     "certifications": "Certifications & Languages",
+    "process": {
+      "title": "How I Work",
+      "subtitle": "My approach to building software — from concept to deployment.",
+      "steps": [
+        {
+          "name": "Discovery & Planning",
+          "description": "Understanding requirements, defining scope, system design, and selecting the right tech stack for each project."
+        },
+        {
+          "name": "Development",
+          "description": "Building robust backend APIs, designing database schemas, implementing business logic, and integrating AI/LLM components."
+        },
+        {
+          "name": "Testing & QA",
+          "description": "Writing unit and integration tests, performing code reviews, and ensuring performance and reliability under load."
+        },
+        {
+          "name": "Deployment & Monitoring",
+          "description": "Containerizing with Docker, setting up CI/CD pipelines, configuring logging, and monitoring system health in production."
+        }
+      ]
+    },
     "faq": {
       "title": "Frequently Asked Questions",
       "items": [

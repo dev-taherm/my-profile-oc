@@ -6,7 +6,7 @@ import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { AnimatedSection } from "@/components/shared/AnimatedSection";
-import { Briefcase, GraduationCap, Award, Languages, HelpCircle } from "lucide-react";
+import { Briefcase, GraduationCap, Award, Languages, HelpCircle, Workflow } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 export async function generateMetadata({
@@ -44,13 +44,13 @@ export async function generateMetadata({
       description: descriptions[locale],
       url: `${baseUrl}/${locale}/about`,
       type: "profile",
-      images: [{ url: `${baseUrl}/images/profile.jpg`, width: 1200, height: 630 }],
+      images: [{ url: `${baseUrl}/api/og?title=${encodeURIComponent(titles[locale])}&subtitle=${encodeURIComponent(descriptions[locale])}&locale=${locale}`, width: 1200, height: 630 }],
     },
     twitter: {
       card: "summary_large_image",
       title: titles[locale],
       description: descriptions[locale],
-      images: [`${baseUrl}/images/profile.jpg`],
+      images: [`${baseUrl}/api/og?title=${encodeURIComponent(titles[locale])}&subtitle=${encodeURIComponent(descriptions[locale])}&locale=${locale}`],
     },
   };
 }
@@ -142,10 +142,25 @@ export default async function AboutPage({
     },
   };
 
+  const howToSteps = dict.about.process.steps;
+  const howToSchema = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: dict.about.process.title,
+    description: dict.about.process.subtitle,
+    step: howToSteps.map((step, index) => ({
+      "@type": "HowToStep",
+      position: index + 1,
+      name: step.name,
+      text: step.description,
+    })),
+  };
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(howToSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutPageSchema) }} />
       <Header locale={locale} dict={dict} />
       <main className="flex-1">
@@ -191,6 +206,25 @@ export default async function AboutPage({
                         ))}
                       </ul>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </AnimatedSection>
+
+            <AnimatedSection delay={0.15}>
+              <div className="flex items-center gap-3 mb-6">
+                <Workflow className="h-6 w-6 text-primary" />
+                <h2 className="text-2xl font-bold">{dict.about.process.title}</h2>
+              </div>
+              <p className="text-muted-foreground mb-6">{dict.about.process.subtitle}</p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {howToSteps.map((step, index) => (
+                  <div key={index} className="p-5 rounded-xl border bg-card relative">
+                    <div className="absolute -top-3 -start-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-bold">
+                      {index + 1}
+                    </div>
+                    <h3 className="font-bold text-lg mb-2">{step.name}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{step.description}</p>
                   </div>
                 ))}
               </div>

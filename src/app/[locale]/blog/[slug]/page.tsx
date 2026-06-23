@@ -49,13 +49,13 @@ export async function generateMetadata({
       type: "article",
       publishedTime: post.publishedAt?.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
-      images: post.coverImage ? [{ url: post.coverImage, width: 1200, height: 630, alt: t.title }] : [{ url: `${baseUrl}/images/profile.jpg`, width: 1200, height: 630, alt: t.title }],
+      images: post.coverImage ? [{ url: post.coverImage, width: 1200, height: 630, alt: t.title }] : [{ url: `${baseUrl}/api/og?title=${encodeURIComponent(t.title)}&subtitle=${encodeURIComponent(t.excerpt || "")}&locale=${locale}`, width: 1200, height: 630, alt: t.title }],
     },
     twitter: {
       card: "summary_large_image",
       title: t.title,
       description: t.excerpt || t.content?.substring(0, 160),
-      images: [post.coverImage || `${baseUrl}/images/profile.jpg`],
+      images: [post.coverImage || `${baseUrl}/api/og?title=${encodeURIComponent(t.title)}&subtitle=${encodeURIComponent(t.excerpt || "")}&locale=${locale}`],
     },
   };
 }

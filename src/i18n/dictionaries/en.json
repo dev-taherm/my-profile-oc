@@ -26,6 +26,25 @@
   "featuredTech": {
     "title": "Technologies I Work With"
   },
+  "home": {
+    "featuredServices": {
+      "title": "What I Do",
+      "viewAll": "View All Services"
+    },
+    "featuredProjects": {
+      "title": "Featured Projects",
+      "viewAll": "View All Projects"
+    },
+    "latestBlog": {
+      "title": "Latest Posts",
+      "viewAll": "View All Posts"
+    },
+    "cta": {
+      "title": "Let's Work Together",
+      "subtitle": "Have a project in mind? Let's discuss how I can help bring it to life.",
+      "button": "Chat on WhatsApp"
+    }
+  },
   "services": {
     "title": "Services",
     "subtitle": "Professional software engineering services tailored to your needs.",
@@ -146,8 +165,7 @@
     }
   },
   "footer": {
-    "copyright": "All rights reserved.",
-    "builtWith": "Built with Next.js"
+    "copyright": "All rights reserved."
   },
   "admin": {
     "dashboard": "Dashboard",

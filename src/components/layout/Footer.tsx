@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Mail, Heart } from "lucide-react";
+import { Mail } from "lucide-react";
 import { GithubIcon, LinkedinIcon, InstagramIcon, FacebookIcon } from "@/components/shared/Icons";
 import { siteConfig, type Locale } from "@/lib/constants";
 
@@ -9,7 +9,6 @@ interface FooterProps {
   dict: {
     footer: {
       copyright: string;
-      builtWith: string;
     };
   };
 }
@@ -77,9 +76,15 @@ export function Footer({ locale, dict }: FooterProps) {
             </Link>
           </div>
 
-          <p className="text-xs text-muted-foreground flex items-center gap-1">
-            {dict.footer.builtWith} <Heart className="h-3 w-3 text-red-500 fill-current" />
-          </p>
+          <Link
+            href="https://github.com/dev-taherm"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
+          >
+            <GithubIcon className="h-3.5 w-3.5" />
+            GitHub
+          </Link>
         </div>
       </div>
     </footer>

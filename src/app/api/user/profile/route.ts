@@ -26,6 +26,10 @@ export async function PUT(request: NextRequest) {
     const { name, email, password, resumeUrl } = body;
 
     const userId = (session.user as { id: string }).id;
+    const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+    if (!userExists) {
+      return NextResponse.json({ error: "Session expired. Please log in again." }, { status: 401 });
+    }
 
     if (resumeUrl !== undefined || (body.hasOwnProperty("resumeUrl") && !name)) {
       await prisma.user.update({

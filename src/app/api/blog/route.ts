@@ -33,6 +33,9 @@ export async function POST(request: NextRequest) {
     if (!slug) return NextResponse.json({ error: "Slug is required" }, { status: 400 });
     if (!translations?.length) return NextResponse.json({ error: "At least one translation is required" }, { status: 400 });
 
+    const userId = (session.user as { id: string }).id;
+    const authorExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+
     const post = await prisma.blogPost.create({
       data: {
         slug,
@@ -41,7 +44,7 @@ export async function POST(request: NextRequest) {
         featured,
         status,
         publishedAt,
-        authorId: (session.user as { id: string }).id,
+        authorId: authorExists ? userId : null,
         translations: {
           create: translations.map((t: { locale: string; title: string; excerpt: string; content: string }) => ({
             locale: t.locale,

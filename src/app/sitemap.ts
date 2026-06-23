@@ -4,15 +4,17 @@ import { siteConfig, locales, localeConfig } from "@/lib/constants";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
-  const staticPages = ["", "/about", "/services", "/projects", "/blog", "/resume", "/contact"];
+  const staticPages = ["", "/about", "/services", "/projects", "/blog", "/resume", "/contact", "/privacy", "/terms"];
   const staticDates: Record<string, string> = {
-    "": "2025-06-01",
-    "/about": "2025-06-01",
-    "/services": "2025-06-01",
-    "/projects": "2025-06-01",
-    "/blog": "2025-06-01",
-    "/resume": "2025-06-01",
-    "/contact": "2025-06-01",
+    "": "2025-06-23",
+    "/about": "2025-06-23",
+    "/services": "2025-06-23",
+    "/projects": "2025-06-23",
+    "/blog": "2025-06-23",
+    "/resume": "2025-06-23",
+    "/contact": "2025-06-23",
+    "/privacy": "2025-06-23",
+    "/terms": "2025-06-23",
   };
 
   const entries: MetadataRoute.Sitemap = [];

@@ -4,6 +4,7 @@ import { type Locale, siteConfig } from "@/lib/constants";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { AnimatedSection } from "@/components/shared/AnimatedSection";
 import { Briefcase, GraduationCap, Award, Languages, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -85,6 +86,10 @@ export default async function AboutPage({
   ];
 
   const baseUrl = siteConfig.url;
+  const descriptions: Record<Locale, string> = {
+    en: "Learn about Taher Mahram's experience, education, and skills as a software engineer specializing in backend systems, AI, and scalable architectures.",
+    ar: "تعرّف على خبرات طاهر محرم وتعليماته ومهاراته كمهندس برمجيات متخصص في الأنظمة الخلفية والذكاء الاصطناعي والهندسة المعمارية القابلة للتوسع.",
+  };
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -108,14 +113,51 @@ export default async function AboutPage({
     })),
   };
 
+  const aboutPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "AboutPage",
+    name: dict.about.title,
+    description: descriptions[locale],
+    url: `${baseUrl}/${locale}/about`,
+    mainEntity: {
+      "@type": "Person",
+      name: siteConfig.name,
+      jobTitle: "Software Engineer",
+      hasOccupation: [
+        {
+          "@type": "Occupation",
+          name: "Software Engineer",
+          occupationLocation: {
+            "@type": "Country",
+            name: "Yemen",
+          },
+          skills: "Python, Django, FastAPI, PostgreSQL, Docker, LangChain, React, Next.js",
+        },
+      ],
+      alumniOf: {
+        "@type": "CollegeOrUniversity",
+        name: "Universiti Teknikal Malaysia Melaka (UTeM)",
+        educationalCredentialAward: "B.Sc. in Computer Science (Software Development), with Honors",
+      },
+    },
+  };
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutPageSchema) }} />
       <Header locale={locale} dict={dict} />
       <main className="flex-1">
         <div className="container mx-auto px-4 py-16">
           <PageHeader title={dict.about.title} subtitle={dict.about.subtitle} />
+          <Breadcrumb
+            items={[
+              { label: dict.breadcrumbs.home, href: `/${locale}` },
+              { label: dict.about.title },
+            ]}
+            locale={locale}
+          />
 
           <div className="max-w-3xl mx-auto space-y-16">
             <AnimatedSection>

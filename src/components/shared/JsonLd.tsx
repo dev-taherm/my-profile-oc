@@ -55,6 +55,10 @@ export function JsonLd() {
       "@type": "Person",
       name: siteConfig.name,
     },
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: [".hero-name", ".hero-title"],
+    },
   };
 
   return (

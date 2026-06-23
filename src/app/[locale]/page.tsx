@@ -13,6 +13,7 @@ import { FeaturedServices } from "@/components/sections/FeaturedServices";
 import { FeaturedProjects } from "@/components/sections/FeaturedProjects";
 import { LatestBlog } from "@/components/sections/LatestBlog";
 import { CTA } from "@/components/sections/CTA";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
 
 export async function generateMetadata({
   params,
@@ -142,6 +143,10 @@ export default async function HomePage({
     <>
       <Header locale={locale} dict={dict} />
       <main className="flex-1">
+        <Breadcrumb
+          items={[{ label: dict.breadcrumbs.home }]}
+          locale={locale}
+        />
         <Hero locale={locale} dict={dict} />
         <Stats dict={dict} />
         <FeaturedTech dict={dict} />

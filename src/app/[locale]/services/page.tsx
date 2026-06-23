@@ -7,6 +7,7 @@ import { type Locale, siteConfig } from "@/lib/constants";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { ServicesList } from "@/components/services/ServicesList";
 
 export async function generateMetadata({
@@ -96,6 +97,13 @@ export default async function ServicesPage({
       <main className="flex-1">
         <div className="container mx-auto px-4 py-16">
           <PageHeader title={dict.services.title} subtitle={dict.services.subtitle} />
+          <Breadcrumb
+            items={[
+              { label: dict.breadcrumbs.home, href: `/${locale}` },
+              { label: dict.services.title },
+            ]}
+            locale={locale}
+          />
           <ServicesList services={services} locale={locale} dict={dict} />
         </div>
       </main>

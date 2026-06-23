@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { type Locale, siteConfig } from "@/lib/constants";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { ServiceDetail } from "@/components/services/ServiceDetail";
 
 export async function generateMetadata({
@@ -106,6 +107,14 @@ export default async function ServiceDetailPage({
       <Header locale={locale} dict={dict} />
       <main className="flex-1">
         <div className="container mx-auto px-4 py-16">
+          <Breadcrumb
+            items={[
+              { label: dict.breadcrumbs.home, href: `/${locale}` },
+              { label: dict.services.title, href: `/${locale}/services` },
+              { label: translation.title },
+            ]}
+            locale={locale}
+          />
           <ServiceDetail
             service={{
               slug: service.slug,

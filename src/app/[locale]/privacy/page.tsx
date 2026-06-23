@@ -5,7 +5,6 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
-import { ResumeView } from "@/components/resume/ResumeView";
 
 export async function generateMetadata({
   params,
@@ -17,43 +16,36 @@ export async function generateMetadata({
   const baseUrl = siteConfig.url;
 
   const titles: Record<Locale, string> = {
-    en: "Taher Mahram — Software Engineer Resume & CV",
-    ar: "طاهر محرم — سيرة ذاتية لمهندس البرمجيات",
+    en: "Privacy Policy — Taher Mahram",
+    ar: "سياسة الخصوصية — طاهر محرم",
   };
 
   const descriptions: Record<Locale, string> = {
-    en: "Professional resume of Taher Mahram — Software Engineer with experience in Django, Python, AI systems, and scalable backend architectures.",
-    ar: "السيرة الذاتية المهنية لطاهر محرم — مهندس برمجيات ذو خبرة في Django وPython وأنظمة الذكاء الاصطناعي والهندسة المعمارية الخلفية القابلة للتوسع.",
+    en: "Privacy policy for taher.pixovagency.com. Learn how I collect, use, and protect your information.",
+    ar: "سياسة الخصوصية لموقع taher.pixovagency.com. تعرّف على كيفية جمع معلوماتك واستخدامها وحمايتها.",
   };
 
   return {
     title: titles[locale],
     description: descriptions[locale],
     alternates: {
-      canonical: `${baseUrl}/${locale}/resume`,
+      canonical: `${baseUrl}/${locale}/privacy`,
       languages: {
-        "en": `${baseUrl}/en/resume`,
-        "ar": `${baseUrl}/ar/resume`,
-        "x-default": `${baseUrl}/en/resume`,
+        "en": `${baseUrl}/en/privacy`,
+        "ar": `${baseUrl}/ar/privacy`,
+        "x-default": `${baseUrl}/en/privacy`,
       },
     },
     openGraph: {
       title: titles[locale],
       description: descriptions[locale],
-      url: `${baseUrl}/${locale}/resume`,
-      type: "profile",
-      images: [{ url: `${baseUrl}/images/profile.jpg`, width: 1200, height: 630 }],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: titles[locale],
-      description: descriptions[locale],
-      images: [`${baseUrl}/images/profile.jpg`],
+      url: `${baseUrl}/${locale}/privacy`,
+      type: "website",
     },
   };
 }
 
-export default async function ResumePage({
+export default async function PrivacyPage({
   params,
 }: {
   params: Promise<{ locale: string }>;
@@ -68,7 +60,7 @@ export default async function ResumePage({
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: locale === "ar" ? "الرئيسية" : "Home", item: `${baseUrl}/${locale}` },
-      { "@type": "ListItem", position: 2, name: dict.resume.title },
+      { "@type": "ListItem", position: 2, name: dict.privacy.title },
     ],
   };
 
@@ -78,15 +70,25 @@ export default async function ResumePage({
       <Header locale={locale} dict={dict} />
       <main className="flex-1">
         <div className="container mx-auto px-4 py-16">
-          <PageHeader title={dict.resume.title} subtitle={dict.resume.subtitle} />
-          <Breadcrumb
-            items={[
-              { label: dict.breadcrumbs.home, href: `/${locale}` },
-              { label: dict.resume.title },
-            ]}
-            locale={locale}
-          />
-          <ResumeView dict={dict} />
+          <PageHeader title={dict.privacy.title} subtitle={dict.privacy.subtitle} />
+          <div className="max-w-3xl mx-auto">
+            <Breadcrumb
+              items={[
+                { label: dict.breadcrumbs.home, href: `/${locale}` },
+                { label: dict.privacy.title },
+              ]}
+              locale={locale}
+            />
+            <p className="text-sm text-muted-foreground mb-8">{dict.privacy.lastUpdated}</p>
+            <div className="space-y-8">
+              {dict.privacy.sections.map((section, i) => (
+                <section key={i}>
+                  <h2 className="text-xl font-bold mb-3">{section.heading}</h2>
+                  <p className="text-muted-foreground leading-relaxed">{section.content}</p>
+                </section>
+              ))}
+            </div>
+          </div>
         </div>
       </main>
       <Footer locale={locale} dict={dict} />

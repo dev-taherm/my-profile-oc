@@ -9,6 +9,8 @@ interface FooterProps {
   dict: {
     footer: {
       copyright: string;
+      privacy: string;
+      terms: string;
     };
   };
 }
@@ -22,13 +24,22 @@ export function Footer({ locale, dict }: FooterProps) {
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <Link href={`/${locale}`} className="flex items-center">
-              <Image src="/images/logo.png" alt="TM" width={56} height={56} className="dark:hidden" />
-              <Image src="/images/logoForDarckTheme.png" alt="TM" width={56} height={56} className="hidden dark:block" />
+              <Image src="/images/logo.png" alt="Taher Mahram" width={56} height={56} className="dark:hidden" />
+              <Image src="/images/logoForDarckTheme.png" alt="Taher Mahram" width={56} height={56} className="hidden dark:block" />
             </Link>
             <p className="text-sm text-muted-foreground">
               © {year} {siteConfig.author}. {dict.footer.copyright}
             </p>
           </div>
+
+          <nav className="flex items-center gap-4 text-sm text-muted-foreground">
+            <Link href={`/${locale}/privacy`} className="hover:text-foreground transition-colors">
+              {dict.footer.privacy}
+            </Link>
+            <Link href={`/${locale}/terms`} className="hover:text-foreground transition-colors">
+              {dict.footer.terms}
+            </Link>
+          </nav>
 
           <div className="flex items-center gap-1">
             <Link
@@ -75,16 +86,6 @@ export function Footer({ locale, dict }: FooterProps) {
               <span className="sr-only">Email</span>
             </Link>
           </div>
-
-          <Link
-            href="https://github.com/dev-taherm"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
-          >
-            <GithubIcon className="h-3.5 w-3.5" />
-            GitHub
-          </Link>
         </div>
       </div>
     </footer>

@@ -190,7 +190,74 @@
     }
   },
   "footer": {
-    "copyright": "All rights reserved."
+    "copyright": "All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service"
+  },
+  "breadcrumbs": {
+    "home": "Home"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "subtitle": "How I collect, use, and protect your information.",
+    "lastUpdated": "Last updated: June 23, 2026",
+    "sections": [
+      {
+        "heading": "Information I Collect",
+        "content": "When you contact me through the contact form, I collect your name, email address, and message content. This information is stored locally and is only used to respond to your inquiry."
+      },
+      {
+        "heading": "How I Use Your Information",
+        "content": "I use your contact information solely to communicate with you regarding your inquiry. I do not sell, trade, or otherwise transfer your personal information to third parties."
+      },
+      {
+        "heading": "Cookies",
+        "content": "This website uses essential cookies for theme preferences and session management. No tracking or analytics cookies are used."
+      },
+      {
+        "heading": "Third-Party Services",
+        "content": "This website is hosted on a Vercel-compatible infrastructure. No third-party analytics or advertising services are integrated."
+      },
+      {
+        "heading": "Data Security",
+        "content": "I implement appropriate security measures to protect your personal information. However, no method of transmission over the Internet is 100% secure."
+      },
+      {
+        "heading": "Contact",
+        "content": "If you have questions about this Privacy Policy, you can contact me at tahermahram0@gmail.com."
+      }
+    ]
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "subtitle": "Terms and conditions for using this website.",
+    "lastUpdated": "Last updated: June 23, 2026",
+    "sections": [
+      {
+        "heading": "Acceptance",
+        "content": "By accessing this website, you agree to these Terms of Service. If you do not agree, please do not use the site."
+      },
+      {
+        "heading": "Intellectual Property",
+        "content": "All content on this website, including text, code, images, and design, is the property of Taher Mahram unless otherwise noted. You may not reproduce or distribute content without permission."
+      },
+      {
+        "heading": "Portfolio Content",
+        "content": "Project descriptions and screenshots are presented for portfolio purposes. Client names and details may be simplified or omitted for confidentiality."
+      },
+      {
+        "heading": "External Links",
+        "content": "This website may contain links to external sites. I am not responsible for the content or practices of third-party websites."
+      },
+      {
+        "heading": "Limitation of Liability",
+        "content": "This website is provided as-is. Taher Mahram shall not be liable for any damages arising from the use of this website."
+      },
+      {
+        "heading": "Contact",
+        "content": "For questions about these Terms, contact tahermahram0@gmail.com."
+      }
+    ]
   },
   "admin": {
     "dashboard": "Dashboard",

@@ -23,7 +23,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma/dev.db /app/data/dev.db
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm/sharp@0.34.5/ ./node_modules/.pnpm/sharp@0.34.5/
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm/@img+sharp-linux-x64@0.34.5/ ./node_modules/.pnpm/@img+sharp-linux-x64@0.34.5/
@@ -31,9 +30,10 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.pnpm/@img+sharp-lib
 RUN mkdir -p ./node_modules/@img && \
     ln -sf .pnpm/sharp@0.34.5/node_modules/sharp ./node_modules/sharp && \
     ln -sf ../../.pnpm/@img+sharp-linux-x64@0.34.5/node_modules/@img/sharp-linux-x64 ./node_modules/@img/sharp-linux-x64 && \
-    ln -sf ../../.pnpm/@img+sharp-libvips-linux-x64@1.2.4/node_modules/@img/sharp-libvips-linux-x64 ./node_modules/@img/sharp-libvips-linux-x64 && \
-    chown nextjs:nodejs /app/data/dev.db
+    ln -sf ../../.pnpm/@img+sharp-libvips-linux-x64@1.2.4/node_modules/@img/sharp-libvips-linux-x64 ./node_modules/@img/sharp-libvips-linux-x64
+COPY --from=builder --chown=nextjs:nodejs /app/docker-entrypoint.sh ./docker-entrypoint.sh
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
+ENTRYPOINT ["sh", "docker-entrypoint.sh"]
 CMD ["node", "server.js"]

@@ -23,6 +23,9 @@
 # uploads
 /public/uploads/
 
+# backups
+/backups/
+
 # prisma
 /prisma/dev.db
 

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import { ArrowLeft, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -72,22 +73,7 @@ export function BlogPostDetail({ post, locale, dict }: BlogPostDetailProps) {
       </header>
 
       <div className="prose prose-lg dark:prose-invert max-w-none">
-        {t.content.split("\n").map((line, i) => {
-          if (line.startsWith("## ")) {
-            return <h2 key={i} className="text-2xl font-bold mt-8 mb-4">{line.slice(3)}</h2>;
-          }
-          if (line.startsWith("### ")) {
-            return <h3 key={i} className="text-xl font-bold mt-6 mb-3">{line.slice(4)}</h3>;
-          }
-          if (line.startsWith("- ")) {
-            return <li key={i} className="text-muted-foreground">{line.slice(2)}</li>;
-          }
-          if (line.startsWith("**") && line.endsWith("**")) {
-            return <p key={i} className="font-bold">{line.slice(2, -2)}</p>;
-          }
-          if (line.trim() === "") return <br key={i} />;
-          return <p key={i} className="text-muted-foreground leading-relaxed">{line}</p>;
-        })}
+        <ReactMarkdown>{t.content}</ReactMarkdown>
       </div>
     </article>
   );

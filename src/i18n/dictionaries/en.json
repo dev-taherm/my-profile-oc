@@ -13,6 +13,7 @@
     "name": "Taher Mahram",
     "title": "Software Engineer — Backend & AI Systems",
     "subtitle": "Building scalable architectures and integrating LLMs into production workflows.",
+    "description": "I design and build robust backend systems, AI-powered applications, and cloud-native architectures. With over 3 years of experience in Python, Django, and LLM engineering, I help businesses transform ideas into production-ready software that scales.",
     "cta_projects": "View Projects",
     "cta_contact": "Chat on WhatsApp",
     "cta_resume": "Download CV"
@@ -24,11 +25,13 @@
     "certifications": "Certifications"
   },
   "featuredTech": {
-    "title": "Technologies I Work With"
+    "title": "Technologies I Work With",
+    "subtitle": "A curated stack of tools and frameworks I use to build reliable, scalable software systems."
   },
   "home": {
     "featuredServices": {
       "title": "What I Do",
+      "subtitle": "End-to-end software engineering services from concept to deployment.",
       "viewAll": "View All Services"
     },
     "featuredProjects": {

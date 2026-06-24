@@ -30,7 +30,7 @@ interface FeaturedServicesProps {
   locale: Locale;
   dict: {
     home: {
-      featuredServices: { title: string; viewAll: string };
+      featuredServices: { title: string; subtitle: string; viewAll: string };
     };
     services: { viewService: string };
   };
@@ -46,10 +46,13 @@ export function FeaturedServices({ services, locale, dict }: FeaturedServicesPro
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-2xl font-bold text-center mb-10"
+          className="text-2xl font-bold text-center mb-3"
         >
           {dict.home.featuredServices.title}
         </motion.h2>
+        <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-10">
+          {dict.home.featuredServices.subtitle}
+        </p>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {services.map((service, index) => {
             const IconComponent = service.icon ? iconMap[service.icon] : Layers;

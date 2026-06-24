@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { JsonLd } from "@/components/shared/JsonLd";
 import "./globals.css";
 
@@ -56,13 +57,16 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){var l=window.location.pathname.split('/')[1];if(['en','ar'].indexOf(l)!==-1){document.documentElement.lang=l;document.documentElement.dir=l==='ar'?'rtl':'ltr';}})();`,
-          }}
-        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+        <link rel="alternate" type="application/rss+xml" href="/rss.xml" title="Taher Mahram — RSS Feed" />
         <link rel="alternate" type="text/plain" href="/llms.txt" title="LLMs.txt" />
       </head>
+      <Script
+        src="/scripts/set-locale.js"
+        strategy="afterInteractive"
+      />
       <body className="min-h-full flex flex-col">
         <JsonLd />
         {children}

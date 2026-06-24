@@ -16,6 +16,7 @@ interface HeroProps {
       name: string;
       title: string;
       subtitle: string;
+      description: string;
       cta_projects: string;
       cta_contact: string;
       cta_resume: string;
@@ -65,9 +66,17 @@ export function Hero({ locale, dict }: HeroProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
-              className="text-lg text-muted-foreground max-w-xl mb-8"
+              className="text-lg text-muted-foreground max-w-xl mb-4"
             >
               {dict.hero.subtitle}
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.6 }}
+              className="text-base text-muted-foreground/80 max-w-xl mb-8"
+            >
+              {dict.hero.description}
             </motion.p>
 
             <motion.div

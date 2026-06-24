@@ -39,9 +39,6 @@ export async function generateMetadata({
       template: `%s | ${dict.hero.name}`,
     },
     description: dict.hero.subtitle,
-    keywords: locale === "ar"
-      ? ["مهندس برمجيات", "مطور باك إند", "ذكاء اصطناعي", " اليمن", "Django", "Python", "LLM", "طاهر محرم"]
-      : ["software engineer", "backend developer", "AI engineer", "Django", "Python", "LLM", "Taher Mahram", "Yemen"],
     metadataBase: new URL(baseUrl),
     alternates: {
       canonical: `${baseUrl}/${locale}`,

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 import { ArrowLeft, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,7 +75,7 @@ export function BlogPostDetail({ post, locale, dict }: BlogPostDetailProps) {
       </header>
 
       <div className="prose prose-lg dark:prose-invert max-w-none">
-        <ReactMarkdown>{t.content}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>{t.content}</ReactMarkdown>
       </div>
     </article>
   );

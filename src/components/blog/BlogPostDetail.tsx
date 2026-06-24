@@ -53,7 +53,9 @@ export function BlogPostDetail({ post, locale, dict }: BlogPostDetailProps) {
               <span>·</span>
               <span>
                 {dict.blog.publishedOn}{" "}
-                {new Date(post.publishedAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US")}
+                <time dateTime={post.publishedAt}>
+                  {new Date(post.publishedAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US")}
+                </time>
               </span>
             </>
           )}

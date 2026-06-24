@@ -26,7 +26,7 @@ interface FeaturedProjectsProps {
   locale: Locale;
   dict: {
     home: {
-      featuredProjects: { title: string; viewAll: string };
+      featuredProjects: { title: string; subtitle: string; viewAll: string };
     };
   };
 }
@@ -41,10 +41,13 @@ export function FeaturedProjects({ projects, locale, dict }: FeaturedProjectsPro
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-2xl font-bold text-center mb-10"
+          className="text-2xl font-bold text-center mb-3"
         >
           {dict.home.featuredProjects.title}
         </motion.h2>
+        <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-10">
+          {dict.home.featuredProjects.subtitle}
+        </p>
         <div className="grid md:grid-cols-3 gap-6 mb-8">
           {projects.map((project, index) => {
             const t = project.translations.find((tr) => tr.locale === locale)

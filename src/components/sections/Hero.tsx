@@ -52,16 +52,9 @@ export function Hero({ locale, dict }: HeroProps) {
               transition={{ delay: 0.3, duration: 0.6 }}
               className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4"
             >
-              {dict.hero.name}
+              {dict.hero.name}{" "}
+              <span className="text-primary">— {dict.hero.title}</span>
             </motion.h1>
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.6 }}
-              className="text-xl md:text-2xl font-medium text-primary mb-6"
-            >
-              {dict.hero.title}
-            </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

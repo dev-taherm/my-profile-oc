@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { pingIndexNow } from "@/app/api/indexnow/route";
 
 export async function GET() {
   const projects = await prisma.project.findMany({
@@ -45,6 +46,13 @@ export async function POST(request: NextRequest) {
       },
       include: { translations: true, categories: true, tags: true, projectImages: { orderBy: { order: "asc" } } },
     });
+
+    if (status === "PUBLISHED") {
+      pingIndexNow([
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/en/projects/${slug}`,
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/ar/projects/${slug}`,
+      ]);
+    }
 
     return NextResponse.json(project);
   } catch (error) {
@@ -91,6 +99,13 @@ export async function PUT(request: NextRequest) {
       },
       include: { translations: true, categories: true, tags: true, projectImages: { orderBy: { order: "asc" } } },
     });
+
+    if (status === "PUBLISHED") {
+      pingIndexNow([
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/en/projects/${slug}`,
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/ar/projects/${slug}`,
+      ]);
+    }
 
     return NextResponse.json(project);
   } catch (error) {

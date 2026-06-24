@@ -213,7 +213,9 @@ export function BlogList({ posts, locale, dict }: BlogListProps) {
                   {post.publishedAt && (
                     <>
                       <span>·</span>
-                      <span>{new Date(post.publishedAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US")}</span>
+                      <time dateTime={post.publishedAt}>
+                        {new Date(post.publishedAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US")}
+                      </time>
                     </>
                   )}
                 </div>

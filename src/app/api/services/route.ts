@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { pingIndexNow } from "@/app/api/indexnow/route";
 
 export async function GET() {
   const services = await prisma.service.findMany({
@@ -41,6 +42,13 @@ export async function POST(request: NextRequest) {
       },
       include: { translations: true },
     });
+
+    if (status === "PUBLISHED") {
+      pingIndexNow([
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/en/services/${slug}`,
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/ar/services/${slug}`,
+      ]);
+    }
 
     return NextResponse.json(service);
   } catch (error) {
@@ -82,6 +90,13 @@ export async function PUT(request: NextRequest) {
       },
       include: { translations: true },
     });
+
+    if (status === "PUBLISHED") {
+      pingIndexNow([
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/en/services/${slug}`,
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/ar/services/${slug}`,
+      ]);
+    }
 
     return NextResponse.json(service);
   } catch (error) {

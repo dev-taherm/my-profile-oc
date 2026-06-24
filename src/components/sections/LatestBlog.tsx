@@ -25,7 +25,7 @@ interface LatestBlogProps {
   locale: Locale;
   dict: {
     home: {
-      latestBlog: { title: string; viewAll: string };
+      latestBlog: { title: string; subtitle: string; viewAll: string };
     };
     blog: { minRead: string };
   };
@@ -41,10 +41,13 @@ export function LatestBlog({ posts, locale, dict }: LatestBlogProps) {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-2xl font-bold text-center mb-10"
+          className="text-2xl font-bold text-center mb-3"
         >
           {dict.home.latestBlog.title}
         </motion.h2>
+        <p className="text-muted-foreground text-center max-w-2xl mx-auto mb-10">
+          {dict.home.latestBlog.subtitle}
+        </p>
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           {posts.map((post, index) => {
             const t = post.translations.find((tr) => tr.locale === locale)
@@ -81,7 +84,9 @@ export function LatestBlog({ posts, locale, dict }: LatestBlogProps) {
                     {post.publishedAt && (
                       <>
                         <span>·</span>
-                        <span>{new Date(post.publishedAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US")}</span>
+                        <time dateTime={post.publishedAt}>
+                          {new Date(post.publishedAt).toLocaleDateString(locale === "ar" ? "ar-SA" : "en-US")}
+                        </time>
                       </>
                     )}
                   </div>

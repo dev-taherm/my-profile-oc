@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { pingIndexNow } from "@/app/api/indexnow/route";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -59,6 +60,13 @@ export async function POST(request: NextRequest) {
       include: { translations: true, categories: true, tags: true },
     });
 
+    if (status === "PUBLISHED") {
+      pingIndexNow([
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/en/blog/${slug}`,
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/ar/blog/${slug}`,
+      ]);
+    }
+
     return NextResponse.json(post);
   } catch (error) {
     console.error("POST /api/blog error:", error);
@@ -101,6 +109,13 @@ export async function PUT(request: NextRequest) {
       },
       include: { translations: true, categories: true, tags: true },
     });
+
+    if (status === "PUBLISHED") {
+      pingIndexNow([
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/en/blog/${slug}`,
+        `${process.env.NEXTAUTH_URL || "https://taher.pixovagency.com"}/ar/blog/${slug}`,
+      ]);
+    }
 
     return NextResponse.json(post);
   } catch (error) {

@@ -36,10 +36,12 @@
     },
     "featuredProjects": {
       "title": "Featured Projects",
+      "subtitle": "A selection of projects showcasing backend systems, AI integrations, and scalable web applications.",
       "viewAll": "View All Projects"
     },
     "latestBlog": {
       "title": "Latest Posts",
+      "subtitle": "Technical articles and insights on software engineering, backend development, and AI systems.",
       "viewAll": "View All Posts"
     },
     "cta": {

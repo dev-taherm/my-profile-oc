@@ -130,57 +130,107 @@
   }
 }
 
-.prose pre {
-  background: var(--muted) !important;
-  border-radius: 0.375rem;
+/* Blog markdown — match wmde-markdown (editor preview) exactly */
+
+.prose {
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
-.prose code {
-  background: var(--muted) !important;
-  padding: 0.125rem 0.25rem;
-  border-radius: 0.25rem;
-  font-size: 0.875em;
-}
-
-.prose pre code {
-  background: transparent !important;
-  padding: 0;
-}
-
-.prose table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.prose th {
-  background: var(--muted);
+/* Headings */
+.prose h1 {
+  font-size: 2em;
   font-weight: 600;
-  text-align: start;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
+  margin-top: 24px;
+  margin-bottom: 16px;
+  line-height: 1.25;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
 }
 
-.prose td {
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
+.prose h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  line-height: 1.25;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--border);
 }
 
-.prose blockquote {
-  border-inline-start: 3px solid var(--border);
-  padding-inline-start: 1rem;
+.prose h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+.prose h4 {
+  font-size: 1em;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+.prose h5 {
+  font-size: 0.875em;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  line-height: 1.25;
+}
+
+.prose h6 {
+  font-size: 0.85em;
+  font-weight: 600;
+  margin-top: 24px;
+  margin-bottom: 16px;
+  line-height: 1.25;
   color: var(--muted-foreground);
-  font-style: italic;
 }
 
-.prose img {
-  border-radius: 0.5rem;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+/* Paragraphs */
+.prose p {
+  margin-top: 0;
+  margin-bottom: 10px;
+  line-height: 1.5;
 }
 
+/* Lists */
+.prose ul,
+.prose ol {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-left: 2em;
+}
+
+.prose li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+
+.prose li + li {
+  margin-top: 0.25em;
+}
+
+.prose ol ol,
+.prose ul ol {
+  list-style-type: lower-roman;
+}
+
+.prose ul ul ol,
+.prose ul ol ol,
+.prose ol ul ol,
+.prose ol ol ol {
+  list-style-type: lower-alpha;
+}
+
+/* Task lists */
 .prose ul:has(input[type="checkbox"]) {
   list-style: none;
-  padding-left: 0;
+  padding-left: 2em;
 }
 
 .prose ul:has(input[type="checkbox"]) li {
@@ -189,10 +239,92 @@
   gap: 0.5rem;
 }
 
+.prose input[type="checkbox"] {
+  margin: 0 0.2em 0.25em -1.6em;
+}
+
+/* Blockquotes */
+.prose blockquote {
+  border-inline-start: 0.25em solid var(--border);
+  padding-inline-start: 1em;
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+/* Inline code */
+.prose code {
+  background: var(--muted);
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  font-size: 85%;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
+}
+
+/* Code blocks */
+.prose pre {
+  background: var(--muted);
+  border-radius: 6px;
+  font-size: 85%;
+  line-height: 1.45;
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.prose pre code {
+  background: transparent;
+  padding: 16px;
+  overflow: auto;
+  display: block;
+}
+
+/* Tables */
+.prose table {
+  border-spacing: 0;
+  border-collapse: collapse;
+  display: block;
+  width: max-content;
+  max-width: 100%;
+  overflow: auto;
+}
+
+.prose th {
+  font-weight: 600;
+  padding: 6px 13px;
+  border: 1px solid var(--border);
+}
+
+.prose td {
+  padding: 6px 13px;
+  border: 1px solid var(--border);
+}
+
+.prose tr {
+  background-color: transparent;
+  border-top: 1px solid var(--border);
+}
+
+.prose tbody tr:nth-child(2n) {
+  background-color: var(--muted);
+}
+
+/* Images */
+.prose img {
+  display: inline-block;
+  max-width: 100%;
+  box-sizing: content-box;
+  background-color: transparent;
+}
+
+/* Horizontal rules */
 .prose hr {
-  border-color: var(--border);
-  margin-top: 2rem;
-  margin-bottom: 2rem;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  height: 0.25em;
+  padding: 0;
+  margin: 24px 0;
+  background-color: var(--border);
+  box-sizing: content-box;
+  overflow: hidden;
 }
 
 .tech-pill {

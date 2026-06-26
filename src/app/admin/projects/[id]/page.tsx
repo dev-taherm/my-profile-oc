@@ -1,19 +1,24 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Reorder } from "framer-motion";
-import { Upload, X, GripVertical } from "lucide-react";
+import { Upload, X, GripVertical, Bot, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { InlineTaxonomyCreator } from "@/components/admin/InlineTaxonomyCreator";
 import { AiChatPanel } from "@/components/admin/AiChatPanel";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 interface TaxonomyItem {
   id: string;
@@ -32,6 +37,7 @@ export default function AdminProjectEditorPage({
 }) {
   const [id, setId] = useState<string>("");
   const [isNew, setIsNew] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [slug, setSlug] = useState("");
   const [images, setImages] = useState<ProjectImage[]>([]);
   const [githubUrl, setGithubUrl] = useState("");
@@ -51,15 +57,45 @@ export default function AdminProjectEditorPage({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [locale, setLocale] = useState<"en" | "ar">("en");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [aiActiveLocale, setAiActiveLocale] = useState<"en" | "ar">("en");
 
+  const loadedRef = useRef<string>("");
+
+  const snapshotState = useCallback(() => {
+    return JSON.stringify({
+      slug, githubUrl, liveUrl, featured, status,
+      enTitle, enDescription, enContent,
+      arTitle, arDescription, arContent,
+      selectedCategoryIds, selectedTagIds,
+      images: images.map((i) => i.url),
+    });
+  }, [slug, githubUrl, liveUrl, featured, status, enTitle, enDescription, enContent, arTitle, arDescription, arContent, selectedCategoryIds, selectedTagIds, images]);
+
   useEffect(() => {
-    fetch("/api/categories").then((r) => r.json()).then(setAllCategories);
-    fetch("/api/tags").then((r) => r.json()).then(setAllTags);
+    setIsDirty(loadedRef.current !== "" && snapshotState() !== loadedRef.current);
+  }, [snapshotState]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/categories").then((r) => r.json()).then(setAllCategories).catch(() => {}),
+      fetch("/api/tags").then((r) => r.json()).then(setAllTags).catch(() => {}),
+    ]);
   }, []);
 
   useEffect(() => {
@@ -67,6 +103,7 @@ export default function AdminProjectEditorPage({
       setId(projectId);
       if (projectId === "new") {
         setIsNew(true);
+        setLoading(false);
         return;
       }
       fetch(`/api/projects`)
@@ -87,9 +124,20 @@ export default function AdminProjectEditorPage({
             if (en) { setEnTitle(en.title); setEnDescription(en.description); setEnContent(en.content || ""); }
             if (ar) { setArTitle(ar.title); setArDescription(ar.description); setArContent(ar.content || ""); }
           }
+          setLoading(false);
+        })
+        .catch(() => {
+          setError("Failed to load project data. Please refresh.");
+          setLoading(false);
         });
     });
   }, [params]);
+
+  useEffect(() => {
+    if (!loading) {
+      loadedRef.current = snapshotState();
+    }
+  }, [loading, snapshotState]);
 
   const toggleId = (ids: string[], setIds: (v: string[]) => void, targetId: string) => {
     setIds(ids.includes(targetId) ? ids.filter((i) => i !== targetId) : [...ids, targetId]);
@@ -171,6 +219,8 @@ export default function AdminProjectEditorPage({
         return;
       }
 
+      loadedRef.current = snapshotState();
+      setIsDirty(false);
       router.push("/admin/projects");
     } catch {
       setError("Network error. Please try again.");
@@ -178,8 +228,17 @@ export default function AdminProjectEditorPage({
     }
   };
 
-  const openAiPanel = (locale: "en" | "ar") => {
-    setAiActiveLocale(locale);
+  const handleCancel = () => {
+    if (isDirty) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+        return;
+      }
+    }
+    router.push("/admin/projects");
+  };
+
+  const openAiPanel = (loc: "en" | "ar") => {
+    setAiActiveLocale(loc);
     setAiPanelOpen(true);
   };
 
@@ -243,24 +302,138 @@ export default function AdminProjectEditorPage({
       setSelectedCategoryIds(newIds);
     }
     setAiActiveLocale(targetLocale);
+    setLocale(targetLocale);
   };
 
   const availableTagsStr = allTags.map((t) => t.name).join(", ");
   const availableCategoriesStr = allCategories.map((c) => c.name).join(", ");
 
+  if (loading) {
+    return (
+      <div className="max-w-3xl space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-3xl">
-      <h1 className="text-2xl font-bold mb-6">{isNew ? "New Project" : "Edit Project"}</h1>
+    <div className="max-w-3xl pb-20">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">
+          {isNew ? "New Project" : "Edit Project"}
+        </h1>
+        <Button variant="outline" size="sm" onClick={() => openAiPanel(locale)}>
+          <Bot className="h-4 w-4 me-1" />
+          AI Assistant
+        </Button>
+      </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-sm">Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input placeholder="Slug (e.g. my-project)" value={slug} onChange={(e) => setSlug(e.target.value)} />
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 mb-6 rounded-md bg-destructive/10 text-destructive text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError("")}>
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
+      {/* Content Tabs — Primary Area */}
+      <Tabs value={locale} onValueChange={(v) => setLocale(v as "en" | "ar")}>
+        <TabsList>
+          <TabsTrigger value="en">
+            English
+            {enContent && <span className="h-1.5 w-1.5 rounded-full bg-primary inline-block ms-1.5" />}
+          </TabsTrigger>
+          <TabsTrigger value="ar">
+            العربية
+            {arContent && <span className="h-1.5 w-1.5 rounded-full bg-primary inline-block ms-1.5" />}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="en" className="space-y-4 mt-4">
+          <Input
+            placeholder="Title (English)"
+            value={enTitle}
+            onChange={(e) => setEnTitle(e.target.value)}
+          />
+          <Textarea
+            placeholder="Description (English)"
+            value={enDescription}
+            onChange={(e) => setEnDescription(e.target.value)}
+            rows={3}
+          />
           <div>
-            <p className="text-sm font-medium mb-2">Project Images</p>
+            <p className="text-sm font-medium mb-2">Content (Markdown)</p>
+            <MarkdownEditor
+              value={enContent}
+              onChange={setEnContent}
+              height={400}
+              onOpenAi={() => openAiPanel("en")}
+            />
+          </div>
+        </TabsContent>
+        <TabsContent value="ar" className="space-y-4 mt-4">
+          <Input
+            placeholder="العنوان (عربي)"
+            dir="rtl"
+            value={arTitle}
+            onChange={(e) => setArTitle(e.target.value)}
+          />
+          <Textarea
+            placeholder="الوصف (عربي)"
+            dir="rtl"
+            value={arDescription}
+            onChange={(e) => setArDescription(e.target.value)}
+            rows={3}
+          />
+          <div>
+            <p className="text-sm font-medium mb-2">المحتوى (ماركداون)</p>
+            <MarkdownEditor
+              value={arContent}
+              onChange={setArContent}
+              height={400}
+              dir="rtl"
+              onOpenAi={() => openAiPanel("ar")}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Settings — Collapsible Sections */}
+      <Accordion defaultValue={["links"]} className="mt-8">
+        <AccordionItem value="links">
+          <AccordionTrigger>URL & Links</AccordionTrigger>
+          <AccordionContent className="space-y-4">
+            <Input
+              placeholder="Slug (URL-friendly)"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Leave empty to auto-generate from the English title.
+            </p>
+            <Input
+              placeholder="GitHub URL"
+              value={githubUrl}
+              onChange={(e) => setGithubUrl(e.target.value)}
+            />
+            <Input
+              placeholder="Live URL"
+              value={liveUrl}
+              onChange={(e) => setLiveUrl(e.target.value)}
+            />
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="media">
+          <AccordionTrigger>Project Images</AccordionTrigger>
+          <AccordionContent>
             <input
               ref={fileInputRef}
               type="file"
@@ -276,7 +449,7 @@ export default function AdminProjectEditorPage({
                 onReorder={handleReorder}
                 className="flex gap-3 flex-wrap mb-3"
               >
-                {images.map((img) => (
+                {images.map((img, i) => (
                   <Reorder.Item
                     key={img.url}
                     value={img}
@@ -291,13 +464,13 @@ export default function AdminProjectEditorPage({
                       <div className="absolute top-1 left-1">
                         <GripVertical className="h-4 w-4 text-white drop-shadow-md" />
                       </div>
-                      {img.order === 0 && (
+                      {i === 0 && (
                         <div className="absolute top-1 right-8">
-                          <Badge variant="default" className="text-[10px] px-1.5 py-0">Cover</Badge>
+                          <span className="bg-primary text-primary-foreground text-[10px] px-1.5 py-0 rounded">Cover</span>
                         </div>
                       )}
                       <button
-                        onClick={() => removeImage(img.order)}
+                        onClick={() => removeImage(i)}
                         className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="h-3 w-3" />
@@ -314,6 +487,7 @@ export default function AdminProjectEditorPage({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 type="button"
+                size="sm"
               >
                 <Upload className="me-2 h-4 w-4" />
                 {uploading ? "Uploading..." : "Upload New"}
@@ -328,89 +502,77 @@ export default function AdminProjectEditorPage({
             {images.length > 0 && (
               <p className="text-xs text-muted-foreground mt-2">Drag to reorder. First image is the cover.</p>
             )}
-          </div>
+          </AccordionContent>
+        </AccordionItem>
 
-          <Input placeholder="GitHub URL" value={githubUrl} onChange={(e) => setGithubUrl(e.target.value)} />
-          <Input placeholder="Live URL" value={liveUrl} onChange={(e) => setLiveUrl(e.target.value)} />
-          <div className="flex gap-4 items-center">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
-              Featured
-            </label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="border rounded-md px-3 py-1.5 text-sm">
-              <option value="DRAFT">Draft</option>
-              <option value="PUBLISHED">Published</option>
-              <option value="ARCHIVED">Archived</option>
-            </select>
-          </div>
+        <AccordionItem value="publication">
+          <AccordionTrigger>Publication</AccordionTrigger>
+          <AccordionContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="border rounded-md px-3 py-1.5 text-sm"
+              >
+                <option value="DRAFT">Draft</option>
+                <option value="PUBLISHED">Published</option>
+                <option value="ARCHIVED">Archived</option>
+              </select>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={featured}
+                  onChange={(e) => setFeatured(e.target.checked)}
+                  className="rounded"
+                />
+                Featured
+              </label>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-          <div>
-            <p className="text-sm font-medium mb-2">Categories</p>
-            <InlineTaxonomyCreator
-              type="category"
-              items={allCategories}
-              selectedIds={selectedCategoryIds}
-              onToggle={(id) => toggleId(selectedCategoryIds, setSelectedCategoryIds, id)}
-              onCreated={(item) => setAllCategories((prev) => [...prev, item])}
-            />
-          </div>
+        <AccordionItem value="taxonomy">
+          <AccordionTrigger>Categories & Tags</AccordionTrigger>
+          <AccordionContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Categories</p>
+              <InlineTaxonomyCreator
+                type="category"
+                items={allCategories}
+                selectedIds={selectedCategoryIds}
+                onToggle={(id) => toggleId(selectedCategoryIds, setSelectedCategoryIds, id)}
+                onCreated={(item) => setAllCategories((prev) => [...prev, item])}
+              />
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Tags</p>
+              <InlineTaxonomyCreator
+                type="tag"
+                items={allTags}
+                selectedIds={selectedTagIds}
+                onToggle={(id) => toggleId(selectedTagIds, setSelectedTagIds, id)}
+                onCreated={(item) => setAllTags((prev) => [...prev, item])}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
-          <div>
-            <p className="text-sm font-medium mb-2">Tags</p>
-            <InlineTaxonomyCreator
-              type="tag"
-              items={allTags}
-              selectedIds={selectedTagIds}
-              onToggle={(id) => toggleId(selectedTagIds, setSelectedTagIds, id)}
-              onCreated={(item) => setAllTags((prev) => [...prev, item])}
-            />
+      {/* Sticky Save Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-40">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <div className="flex gap-3">
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      <Tabs
-        value={aiActiveLocale}
-        onValueChange={(v) => setAiActiveLocale(v as "en" | "ar")}
-      >
-        <TabsList>
-          <TabsTrigger value="en">English</TabsTrigger>
-          <TabsTrigger value="ar">العربية</TabsTrigger>
-        </TabsList>
-        <TabsContent value="en" className="space-y-4 mt-4">
-          <Input placeholder="Title (English)" value={enTitle} onChange={(e) => setEnTitle(e.target.value)} />
-          <Textarea placeholder="Description (English)" value={enDescription} onChange={(e) => setEnDescription(e.target.value)} />
-          <div>
-            <p className="text-sm font-medium mb-2">Content (Markdown)</p>
-            <MarkdownEditor
-              value={enContent}
-              onChange={setEnContent}
-              height={400}
-              onOpenAi={() => openAiPanel("en")}
-            />
-          </div>
-        </TabsContent>
-        <TabsContent value="ar" className="space-y-4 mt-4">
-          <Input placeholder="العنوان (عربي)" dir="rtl" value={arTitle} onChange={(e) => setArTitle(e.target.value)} />
-          <Textarea placeholder="الوصف (عربي)" dir="rtl" value={arDescription} onChange={(e) => setArDescription(e.target.value)} />
-          <div>
-            <p className="text-sm font-medium mb-2">المحتوى (ماركداون)</p>
-            <MarkdownEditor
-              value={arContent}
-              onChange={setArContent}
-              height={400}
-              dir="rtl"
-              onOpenAi={() => openAiPanel("ar")}
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      <div className="flex gap-3 items-center">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Saving..." : "Save"}
-        </Button>
-        <Button variant="outline" onClick={() => router.push("/admin/projects")}>Cancel</Button>
-        {error && <p className="text-sm text-red-500">{error}</p>}
+          {isDirty && (
+            <span className="text-xs text-muted-foreground">Unsaved changes</span>
+          )}
+        </div>
       </div>
 
       <AiChatPanel
@@ -424,7 +586,10 @@ export default function AdminProjectEditorPage({
         availableTags={availableTagsStr}
         availableCategories={availableCategoriesStr}
         onApplyFields={handleAiApplyFields}
-        onSwitchLocale={setAiActiveLocale}
+        onSwitchLocale={(loc) => {
+          setAiActiveLocale(loc);
+          setLocale(loc);
+        }}
       />
     </div>
   );

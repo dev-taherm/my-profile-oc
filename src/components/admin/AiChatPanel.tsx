@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import ReactMarkdown from "react-markdown";
 import {
   X,
   Send,
@@ -12,6 +13,7 @@ import {
   Hammer,
   Check,
   XCircle,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +41,23 @@ const FIELD_LABELS: Record<string, string> = {
   slug: "Slug",
   tags: "Tags",
   categories: "Categories",
+};
+
+const SUGGESTIONS: Record<string, string[]> = {
+  blog: [
+    "Translate this to Arabic",
+    "Optimize for SEO",
+    "Create a compelling excerpt",
+    "Improve the writing",
+    "Suggest a better title",
+  ],
+  project: [
+    "Translate this to Arabic",
+    "Write a project description",
+    "Optimize for SEO",
+    "Improve the writing",
+    "Suggest tags",
+  ],
 };
 
 export function AiChatPanel({
@@ -136,20 +155,27 @@ export function AiChatPanel({
 
   const getFieldList = (fields: AiFieldUpdates): string[] => {
     return Object.entries(fields)
-      .filter(([, v]) => v !== undefined && v !== null && v !== "")
+      .filter(([, v]) => v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && v.length === 0))
       .map(([k]) => FIELD_LABELS[k] || k);
+  };
+
+  const handleSuggestion = (suggestion: string) => {
+    setInput(suggestion);
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
 
   if (!isOpen) return null;
 
+  const suggestions = SUGGESTIONS[entityType] || SUGGESTIONS.blog;
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end" onClick={onClose}>
       <div
-        className="w-96 h-full bg-background border-l shadow-xl flex flex-col"
+        className="w-full sm:w-96 h-full bg-background border-l shadow-xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b">
+        <div className="flex items-center justify-between px-4 py-3 border-b shrink-0">
           <div className="flex items-center gap-2">
             <Bot className="h-4 w-4 text-primary" />
             <h3 className="text-sm font-semibold">AI Agent</h3>
@@ -172,15 +198,24 @@ export function AiChatPanel({
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.length === 0 && !streamedText && (
-            <div className="text-center text-muted-foreground py-8">
-              <Bot className="h-8 w-8 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">AI Content Agent</p>
-              <p className="text-xs mt-1">
+            <div className="text-center py-8">
+              <Bot className="h-10 w-10 mx-auto mb-3 text-primary" />
+              <p className="text-sm font-medium">AI Content Agent</p>
+              <p className="text-xs text-muted-foreground mt-1">
                 Write, edit, translate, and optimize your content.
               </p>
-              <p className="text-xs mt-2 text-muted-foreground/70">
-                Just describe what you need — I&apos;ll figure out the rest.
-              </p>
+              <div className="flex flex-wrap gap-2 mt-4 justify-center px-2">
+                {suggestions.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => handleSuggestion(s)}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-xs rounded-full border hover:bg-muted transition-colors"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    {s}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -194,7 +229,7 @@ export function AiChatPanel({
                 <Bot className="h-4 w-4 text-primary" />
               </div>
               <div className="rounded-lg px-3 py-2 text-sm bg-muted/50 border border-primary/20 max-w-[85%]">
-                <div className="whitespace-pre-wrap break-words text-xs leading-relaxed">
+                <div className="prose prose-xs max-w-none dark:prose-invert">
                   {streamedText}
                   <span className="inline-block w-1.5 h-3.5 bg-primary/70 animate-pulse ml-0.5 align-text-bottom" />
                 </div>
@@ -213,33 +248,85 @@ export function AiChatPanel({
 
         {/* Pending Update Banner */}
         {pendingUpdate && !autoApply && (
-          <div className="mx-3 mb-2 rounded-lg border border-primary/30 bg-primary/5 p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <Check className="h-4 w-4 text-primary" />
-              <span className="text-xs font-medium">
-                AI prepared updates for:{" "}
-                {getFieldList(pendingUpdate.fields).join(", ")}
-              </span>
+          <div className="mx-3 mb-2 rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Check className="h-4 w-4 text-green-500" />
+              <span className="text-sm font-medium">Ready to apply</span>
             </div>
-            <p className="text-[11px] text-muted-foreground mb-2">
-              Target: <strong>{pendingUpdate.locale === "en" ? "English" : "Arabic"}</strong> section
-            </p>
-            <div className="flex gap-2">
+
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span>Target:</span>
+                <Badge variant="outline" className="text-[10px]">
+                  {pendingUpdate.locale === "en" ? "English" : "Arabic"}
+                </Badge>
+              </div>
+
+              {pendingUpdate.fields.title && (
+                <div>
+                  <span className="font-medium text-muted-foreground">Title:</span>
+                  <p className="mt-0.5 truncate">{pendingUpdate.fields.title}</p>
+                </div>
+              )}
+              {pendingUpdate.fields.excerpt && (
+                <div>
+                  <span className="font-medium text-muted-foreground">Excerpt:</span>
+                  <p className="mt-0.5 line-clamp-2">{pendingUpdate.fields.excerpt}</p>
+                </div>
+              )}
+              {pendingUpdate.fields.content && (
+                <div>
+                  <span className="font-medium text-muted-foreground">Content:</span>
+                  <p className="mt-0.5 line-clamp-3">
+                    {pendingUpdate.fields.content.slice(0, 300)}
+                    {pendingUpdate.fields.content.length > 300 ? "..." : ""}
+                  </p>
+                </div>
+              )}
+              {pendingUpdate.fields.slug && (
+                <div>
+                  <span className="font-medium text-muted-foreground">Slug:</span>
+                  <p className="mt-0.5 font-mono">{pendingUpdate.fields.slug}</p>
+                </div>
+              )}
+              {pendingUpdate.fields.tags && pendingUpdate.fields.tags.length > 0 && (
+                <div>
+                  <span className="font-medium text-muted-foreground">Tags:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {pendingUpdate.fields.tags.map((t) => (
+                      <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {pendingUpdate.fields.categories && pendingUpdate.fields.categories.length > 0 && (
+                <div>
+                  <span className="font-medium text-muted-foreground">Categories:</span>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {pendingUpdate.fields.categories.map((c) => (
+                      <Badge key={c} variant="secondary" className="text-[10px]">{c}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-1">
               <Button
                 size="sm"
                 onClick={() => handleApplyUpdate(pendingUpdate)}
-                className="h-7 text-xs"
+                className="h-8"
               >
-                <Check className="h-3 w-3 me-1" />
+                <Check className="h-3.5 w-3.5 me-1" />
                 Apply to {pendingUpdate.locale === "en" ? "EN" : "AR"}
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleDiscardUpdate}
-                className="h-7 text-xs"
+                className="h-8"
               >
-                <XCircle className="h-3 w-3 me-1" />
+                <XCircle className="h-3.5 w-3.5 me-1" />
                 Discard
               </Button>
             </div>
@@ -247,7 +334,7 @@ export function AiChatPanel({
         )}
 
         {/* Input Area */}
-        <div className="border-t p-3">
+        <div className="border-t p-3 shrink-0">
           <div className="flex gap-2">
             <textarea
               ref={inputRef}
@@ -288,7 +375,8 @@ export function AiChatPanel({
               size="sm"
               className="flex-1 h-8 text-xs"
               onClick={handlePlan}
-              disabled={isGenerating || !input.trim()}
+              disabled={isGenerating}
+              title="Generate a structured plan"
             >
               <FileText className="h-3 w-3 me-1" />
               Plan
@@ -297,7 +385,8 @@ export function AiChatPanel({
               size="sm"
               className="flex-1 h-8 text-xs"
               onClick={handleBuild}
-              disabled={isGenerating || !input.trim()}
+              disabled={isGenerating}
+              title="Build and apply changes"
             >
               <Hammer className="h-3 w-3 me-1" />
               Build
@@ -312,7 +401,7 @@ export function AiChatPanel({
                 onChange={(e) => setAutoApply(e.target.checked)}
                 className="rounded"
               />
-              Auto-apply updates
+              Auto-apply
             </label>
             {messages.some((m) => m.role === "assistant") && (
               <button
@@ -320,7 +409,7 @@ export function AiChatPanel({
                   const last = [...messages].reverse().find((m) => m.role === "assistant");
                   if (last) navigator.clipboard.writeText(last.cleanContent || last.content);
                 }}
-                className="text-[10px] text-muted-foreground hover:text-foreground"
+                className="text-[11px] text-muted-foreground hover:text-foreground"
               >
                 Copy last
               </button>
@@ -351,12 +440,18 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             : "bg-muted/50 border"
         }`}
       >
-        <div className="whitespace-pre-wrap break-words text-xs leading-relaxed">
-          {message.cleanContent || message.content}
-        </div>
+        {isUser ? (
+          <div className="whitespace-pre-wrap break-words text-xs leading-relaxed">
+            {message.content}
+          </div>
+        ) : (
+          <div className="prose prose-xs max-w-none dark:prose-invert">
+            <ReactMarkdown>{message.cleanContent || message.content}</ReactMarkdown>
+          </div>
+        )}
         {message.pendingUpdate && (
-          <Badge variant="outline" className="text-[9px] mt-1">
-            Has updates for {message.pendingUpdate.locale === "en" ? "EN" : "AR"}
+          <Badge variant="outline" className="text-[10px] mt-1">
+            Updates for {message.pendingUpdate.locale === "en" ? "EN" : "AR"}
           </Badge>
         )}
       </div>

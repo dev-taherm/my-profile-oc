@@ -31,9 +31,8 @@ export function MarkdownEditor({
   };
 
   return (
-    <div ref={editorRef} data-color-mode="dark">
-      <div data-color-mode="dark">
-        <MDEditor
+    <div ref={editorRef}>
+      <MDEditor
           value={value}
           onChange={(val) => onChange(val || "")}
           height={height}
@@ -41,7 +40,6 @@ export function MarkdownEditor({
           visibleDragbar={true}
           dir={dir}
         />
-      </div>
       <div className="flex items-center gap-2 mt-2">
         <MediaPicker
           accept="image"

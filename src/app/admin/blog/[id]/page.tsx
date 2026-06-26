@@ -1,17 +1,23 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, X } from "lucide-react";
+import { Upload, X, Bot, AlertCircle, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { InlineTaxonomyCreator } from "@/components/admin/InlineTaxonomyCreator";
 import { AiChatPanel } from "@/components/admin/AiChatPanel";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 interface TaxonomyItem {
   id: string;
@@ -25,6 +31,7 @@ export default function AdminBlogEditorPage({
 }) {
   const [id, setId] = useState<string>("");
   const [isNew, setIsNew] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [slug, setSlug] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [readingTime, setReadingTime] = useState(5);
@@ -43,22 +50,52 @@ export default function AdminBlogEditorPage({
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [locale, setLocale] = useState<"en" | "ar">("en");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [aiActiveLocale, setAiActiveLocale] = useState<"en" | "ar">("en");
 
+  const loadedRef = useRef<string>("");
+
+  const snapshotState = useCallback(() => {
+    return JSON.stringify({
+      slug, coverImage, readingTime, featured, status,
+      enTitle, enExcerpt, enContent,
+      arTitle, arExcerpt, arContent,
+      selectedCategoryIds, selectedTagIds,
+    });
+  }, [slug, coverImage, readingTime, featured, status, enTitle, enExcerpt, enContent, arTitle, arExcerpt, arContent, selectedCategoryIds, selectedTagIds]);
+
   useEffect(() => {
-    fetch("/api/categories").then((r) => r.json()).then(setAllCategories);
-    fetch("/api/tags").then((r) => r.json()).then(setAllTags);
+    setIsDirty(loadedRef.current !== "" && snapshotState() !== loadedRef.current);
+  }, [snapshotState]);
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/categories").then((r) => r.json()).then(setAllCategories).catch(() => {}),
+      fetch("/api/tags").then((r) => r.json()).then(setAllTags).catch(() => {}),
+    ]);
   }, []);
 
   useEffect(() => {
     params.then(({ id: blogId }) => {
       setId(blogId);
       if (blogId === "new") {
-        setIsNew(true);
+        setIsNew(false);
+        setLoading(false);
         return;
       }
       fetch("/api/blog")
@@ -78,9 +115,20 @@ export default function AdminBlogEditorPage({
             if (en) { setEnTitle(en.title); setEnExcerpt(en.excerpt); setEnContent(en.content); }
             if (ar) { setArTitle(ar.title); setArExcerpt(ar.excerpt); setArContent(ar.content); }
           }
+          setLoading(false);
+        })
+        .catch(() => {
+          setError("Failed to load post data. Please refresh.");
+          setLoading(false);
         });
     });
   }, [params]);
+
+  useEffect(() => {
+    if (!loading) {
+      loadedRef.current = snapshotState();
+    }
+  }, [loading, snapshotState]);
 
   const toggleId = (ids: string[], setIds: (v: string[]) => void, targetId: string) => {
     setIds(ids.includes(targetId) ? ids.filter((i) => i !== targetId) : [...ids, targetId]);
@@ -154,6 +202,8 @@ export default function AdminBlogEditorPage({
         return;
       }
 
+      loadedRef.current = snapshotState();
+      setIsDirty(false);
       router.push("/admin/blog");
     } catch {
       setError("Network error. Please try again.");
@@ -161,8 +211,17 @@ export default function AdminBlogEditorPage({
     }
   };
 
-  const openAiPanel = (locale: "en" | "ar") => {
-    setAiActiveLocale(locale);
+  const handleCancel = () => {
+    if (isDirty) {
+      if (!window.confirm("You have unsaved changes. Are you sure you want to leave?")) {
+        return;
+      }
+    }
+    router.push("/admin/blog");
+  };
+
+  const openAiPanel = (loc: "en" | "ar") => {
+    setAiActiveLocale(loc);
     setAiPanelOpen(true);
   };
 
@@ -226,24 +285,150 @@ export default function AdminBlogEditorPage({
       setSelectedCategoryIds(newIds);
     }
     setAiActiveLocale(targetLocale);
+    setLocale(targetLocale);
   };
 
   const availableTagsStr = allTags.map((t) => t.name).join(", ");
   const availableCategoriesStr = allCategories.map((c) => c.name).join(", ");
 
+  if (loading) {
+    return (
+      <div className="max-w-3xl space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-12 w-full" />
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-3xl">
-      <h1 className="text-2xl font-bold mb-6">{isNew ? "New Blog Post" : "Edit Blog Post"}</h1>
+    <div className="max-w-3xl pb-20">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">
+          {isNew ? "New Blog Post" : "Edit Blog Post"}
+        </h1>
+        <Button variant="outline" size="sm" onClick={() => openAiPanel(locale)}>
+          <Bot className="h-4 w-4 me-1" />
+          AI Assistant
+        </Button>
+      </div>
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="text-sm">Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Input placeholder="Slug" value={slug} onChange={(e) => setSlug(e.target.value)} />
+      {/* Error Banner */}
+      {error && (
+        <div className="flex items-center gap-2 p-3 mb-6 rounded-md bg-destructive/10 text-destructive text-sm">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span className="flex-1">{error}</span>
+          <button onClick={() => setError("")}>
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
+      {/* Content Tabs — Primary Area */}
+      <Tabs value={locale} onValueChange={(v) => setLocale(v as "en" | "ar")}>
+        <TabsList>
+          <TabsTrigger value="en">
+            English
+            {enContent && <span className="h-1.5 w-1.5 rounded-full bg-primary inline-block ms-1.5" />}
+          </TabsTrigger>
+          <TabsTrigger value="ar">
+            العربية
+            {arContent && <span className="h-1.5 w-1.5 rounded-full bg-primary inline-block ms-1.5" />}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="en" className="space-y-4 mt-4">
+          <Input
+            placeholder="Title (English)"
+            value={enTitle}
+            onChange={(e) => setEnTitle(e.target.value)}
+          />
+          <Textarea
+            placeholder="Excerpt (English)"
+            value={enExcerpt}
+            onChange={(e) => setEnExcerpt(e.target.value)}
+            rows={3}
+          />
           <div>
-            <p className="text-sm font-medium mb-2">Cover Image</p>
+            <p className="text-sm font-medium mb-2">Content (Markdown)</p>
+            <MarkdownEditor
+              value={enContent}
+              onChange={setEnContent}
+              height={400}
+              onOpenAi={() => openAiPanel("en")}
+            />
+          </div>
+        </TabsContent>
+        <TabsContent value="ar" className="space-y-4 mt-4">
+          <Input
+            placeholder="العنوان (عربي)"
+            dir="rtl"
+            value={arTitle}
+            onChange={(e) => setArTitle(e.target.value)}
+          />
+          <Textarea
+            placeholder="المقتطف (عربي)"
+            dir="rtl"
+            value={arExcerpt}
+            onChange={(e) => setArExcerpt(e.target.value)}
+            rows={3}
+          />
+          <div>
+            <p className="text-sm font-medium mb-2">المحتوى (ماركداون)</p>
+            <MarkdownEditor
+              value={arContent}
+              onChange={setArContent}
+              height={400}
+              dir="rtl"
+              onOpenAi={() => openAiPanel("ar")}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Settings — Collapsible Sections */}
+      <Accordion defaultValue={["publication"]} className="mt-8">
+        <AccordionItem value="publication">
+          <AccordionTrigger>Publication</AccordionTrigger>
+          <AccordionContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="border rounded-md px-3 py-1.5 text-sm"
+              >
+                <option value="DRAFT">Draft</option>
+                <option value="PUBLISHED">Published</option>
+                <option value="ARCHIVED">Archived</option>
+              </select>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={featured}
+                  onChange={(e) => setFeatured(e.target.checked)}
+                  className="rounded"
+                />
+                Featured
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                Reading time:
+                <input
+                  type="number"
+                  value={readingTime}
+                  onChange={(e) => setReadingTime(Number(e.target.value))}
+                  className="w-16 border rounded px-2 py-1"
+                />
+                min
+              </label>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="media">
+          <AccordionTrigger>Media</AccordionTrigger>
+          <AccordionContent>
             <input
               ref={fileInputRef}
               type="file"
@@ -253,7 +438,11 @@ export default function AdminBlogEditorPage({
             />
             {coverImage ? (
               <div className="relative inline-block">
-                <img src={coverImage} alt="Cover" className="h-32 w-48 object-cover rounded-md border" />
+                <img
+                  src={coverImage}
+                  alt="Cover"
+                  className="h-24 sm:h-32 w-36 sm:w-48 object-cover rounded-md border"
+                />
                 <button
                   onClick={() => setCoverImage("")}
                   className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1"
@@ -268,102 +457,73 @@ export default function AdminBlogEditorPage({
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
                   type="button"
+                  size="sm"
                 >
                   <Upload className="me-2 h-4 w-4" />
-                  {uploading ? "Uploading..." : "Upload New"}
+                  {uploading ? "Uploading..." : "Upload Cover"}
                 </Button>
-                <MediaPicker
-                  accept="image"
-                  onSelect={(url) => setCoverImage(url)}
-                />
+                <MediaPicker accept="image" onSelect={(url) => setCoverImage(url)} />
               </div>
             )}
-          </div>
+          </AccordionContent>
+        </AccordionItem>
 
-          <div className="flex gap-4 items-center">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
-              Featured
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              Reading time:
-              <input type="number" value={readingTime} onChange={(e) => setReadingTime(Number(e.target.value))} className="w-16 border rounded px-2 py-1" />
-              min
-            </label>
-            <select value={status} onChange={(e) => setStatus(e.target.value)} className="border rounded-md px-3 py-1.5 text-sm">
-              <option value="DRAFT">Draft</option>
-              <option value="PUBLISHED">Published</option>
-              <option value="ARCHIVED">Archived</option>
-            </select>
-          </div>
+        <AccordionItem value="taxonomy">
+          <AccordionTrigger>Categories & Tags</AccordionTrigger>
+          <AccordionContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium mb-2">Categories</p>
+              <InlineTaxonomyCreator
+                type="category"
+                items={allCategories}
+                selectedIds={selectedCategoryIds}
+                onToggle={(id) => toggleId(selectedCategoryIds, setSelectedCategoryIds, id)}
+                onCreated={(item) => setAllCategories((prev) => [...prev, item])}
+              />
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Tags</p>
+              <InlineTaxonomyCreator
+                type="tag"
+                items={allTags}
+                selectedIds={selectedTagIds}
+                onToggle={(id) => toggleId(selectedTagIds, setSelectedTagIds, id)}
+                onCreated={(item) => setAllTags((prev) => [...prev, item])}
+              />
+            </div>
+          </AccordionContent>
+        </AccordionItem>
 
-          <div>
-            <p className="text-sm font-medium mb-2">Categories</p>
-            <InlineTaxonomyCreator
-              type="category"
-              items={allCategories}
-              selectedIds={selectedCategoryIds}
-              onToggle={(id) => toggleId(selectedCategoryIds, setSelectedCategoryIds, id)}
-              onCreated={(item) => setAllCategories((prev) => [...prev, item])}
+        <AccordionItem value="links">
+          <AccordionTrigger>URL</AccordionTrigger>
+          <AccordionContent>
+            <Input
+              placeholder="Slug (URL-friendly)"
+              value={slug}
+              onChange={(e) => setSlug(e.target.value)}
             />
-          </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Leave empty to auto-generate from the English title.
+            </p>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
-          <div>
-            <p className="text-sm font-medium mb-2">Tags</p>
-            <InlineTaxonomyCreator
-              type="tag"
-              items={allTags}
-              selectedIds={selectedTagIds}
-              onToggle={(id) => toggleId(selectedTagIds, setSelectedTagIds, id)}
-              onCreated={(item) => setAllTags((prev) => [...prev, item])}
-            />
+      {/* Sticky Save Bar */}
+      <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 z-40">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <div className="flex gap-3">
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      <Tabs
-        value={aiActiveLocale}
-        onValueChange={(v) => setAiActiveLocale(v as "en" | "ar")}
-      >
-        <TabsList>
-          <TabsTrigger value="en">English</TabsTrigger>
-          <TabsTrigger value="ar">العربية</TabsTrigger>
-        </TabsList>
-        <TabsContent value="en" className="space-y-4 mt-4">
-          <Input placeholder="Title (English)" value={enTitle} onChange={(e) => setEnTitle(e.target.value)} />
-          <Textarea placeholder="Excerpt (English)" value={enExcerpt} onChange={(e) => setEnExcerpt(e.target.value)} />
-          <div>
-            <p className="text-sm font-medium mb-2">Content (Markdown)</p>
-            <MarkdownEditor
-              value={enContent}
-              onChange={setEnContent}
-              height={400}
-              onOpenAi={() => openAiPanel("en")}
-            />
-          </div>
-        </TabsContent>
-        <TabsContent value="ar" className="space-y-4 mt-4">
-          <Input placeholder="العنوان (عربي)" dir="rtl" value={arTitle} onChange={(e) => setArTitle(e.target.value)} />
-          <Textarea placeholder="المقتطف (عربي)" dir="rtl" value={arExcerpt} onChange={(e) => setArExcerpt(e.target.value)} />
-          <div>
-            <p className="text-sm font-medium mb-2">المحتوى (ماركداون)</p>
-            <MarkdownEditor
-              value={arContent}
-              onChange={setArContent}
-              height={400}
-              dir="rtl"
-              onOpenAi={() => openAiPanel("ar")}
-            />
-          </div>
-        </TabsContent>
-      </Tabs>
-
-      <div className="flex gap-3 items-center">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? "Saving..." : "Save"}
-        </Button>
-        <Button variant="outline" onClick={() => router.push("/admin/blog")}>Cancel</Button>
-        {error && <p className="text-sm text-red-500">{error}</p>}
+          {isDirty && (
+            <span className="text-xs text-muted-foreground">Unsaved changes</span>
+          )}
+        </div>
       </div>
 
       <AiChatPanel
@@ -377,7 +537,10 @@ export default function AdminBlogEditorPage({
         availableTags={availableTagsStr}
         availableCategories={availableCategoriesStr}
         onApplyFields={handleAiApplyFields}
-        onSwitchLocale={setAiActiveLocale}
+        onSwitchLocale={(loc) => {
+          setAiActiveLocale(loc);
+          setLocale(loc);
+        }}
       />
     </div>
   );

@@ -7,6 +7,7 @@ import { LayoutDashboard, FolderOpen, FileText, Tags, Tag, Layers, Settings, Log
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useState } from "react";
 
 const sidebarItems = [
@@ -21,57 +22,118 @@ const sidebarItems = [
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
+function SidebarContent({ onItemClick, collapsed }: { onItemClick?: () => void; collapsed?: boolean }) {
   const pathname = usePathname();
 
+  const linkBaseClass = "flex items-center rounded-md text-sm transition-colors";
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-4 border-b">
-        <Link href="/admin" className="text-lg font-bold" onClick={onItemClick}>
-          Admin Panel
-        </Link>
+    <TooltipProvider delay={0}>
+      <div className="flex flex-col h-full">
+        <div className={cn("border-b", collapsed ? "p-3 flex justify-center" : "p-4")}>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Link href="/admin" onClick={onItemClick} className="text-lg font-bold" />
+                }
+              >
+                A
+              </TooltipTrigger>
+              <TooltipContent side="right">Admin Panel</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Link href="/admin" className="text-lg font-bold" onClick={onItemClick}>
+              Admin Panel
+            </Link>
+          )}
+        </div>
+        <nav className={cn("flex-1 space-y-1", collapsed ? "p-2" : "p-3")}>
+          {sidebarItems.map((item) => {
+            const isActive = pathname === item.href;
+
+            if (collapsed) {
+              return (
+                <Tooltip key={item.href}>
+                  <TooltipTrigger
+                    render={
+                      <Link
+                        href={item.href}
+                        onClick={onItemClick}
+                        className={cn(
+                          linkBaseClass,
+                          "justify-center p-2",
+                          isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        )}
+                      />
+                    }
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                  </TooltipTrigger>
+                  <TooltipContent side="right">{item.label}</TooltipContent>
+                </Tooltip>
+              );
+            }
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onItemClick}
+                className={cn(
+                  linkBaseClass,
+                  "gap-3 px-3 py-2",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                )}
+              >
+                <item.icon className="h-4 w-4 shrink-0" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className={cn("border-t", collapsed ? "p-2" : "p-3")}>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger
+                className="flex items-center justify-center p-2 w-full rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                onClick={() => signOut({ callbackUrl: "/admin/login" })}
+              >
+                <LogOut className="h-4 w-4" />
+              </TooltipTrigger>
+              <TooltipContent side="right">Logout</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button
+              variant="ghost"
+              className="w-full justify-start"
+              onClick={() => signOut({ callbackUrl: "/admin/login" })}
+            >
+              <LogOut className="h-4 w-4 me-2" />
+              Logout
+            </Button>
+          )}
+        </div>
       </div>
-      <nav className="flex-1 p-3 space-y-1">
-        {sidebarItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onItemClick}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors",
-              pathname === item.href
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-      <div className="p-3 border-t">
-        <Button
-          variant="ghost"
-          className="w-full justify-start"
-          onClick={() => signOut({ callbackUrl: "/admin/login" })}
-        >
-          <LogOut className="h-4 w-4 me-2" />
-          Logout
-        </Button>
-      </div>
-    </div>
+    </TooltipProvider>
   );
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ collapsed = false }: { collapsed?: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <div className="hidden md:block w-64 border-e bg-muted/30">
-        <SidebarContent />
+      {/* Desktop */}
+      <div className={cn("hidden md:block border-e bg-muted/30 shrink-0 transition-all duration-200", collapsed ? "w-16" : "w-64")}>
+        <SidebarContent collapsed={collapsed} />
       </div>
 
+      {/* Mobile */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger
           render={

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Upload, X, Bot, AlertCircle, ChevronDown } from "lucide-react";
+import { Upload, X, Bot, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,13 +11,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { InlineTaxonomyCreator } from "@/components/admin/InlineTaxonomyCreator";
-import { AiChatPanel } from "@/components/admin/AiChatPanel";
+import { useAiPanel } from "@/contexts/AiPanelContext";
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import type { AiFieldUpdates } from "@/lib/ai-providers";
 
 interface TaxonomyItem {
   id: string;
@@ -54,9 +55,7 @@ export default function AdminBlogEditorPage({
   const [locale, setLocale] = useState<"en" | "ar">("en");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
-  const [aiActiveLocale, setAiActiveLocale] = useState<"en" | "ar">("en");
+  const { openPanel } = useAiPanel();
 
   const loadedRef = useRef<string>("");
 
@@ -220,16 +219,7 @@ export default function AdminBlogEditorPage({
     router.push("/admin/blog");
   };
 
-  const openAiPanel = (loc: "en" | "ar") => {
-    setAiActiveLocale(loc);
-    setAiPanelOpen(true);
-  };
-
-  const currentTitle = aiActiveLocale === "en" ? enTitle : arTitle || enTitle;
-  const currentExcerpt = aiActiveLocale === "en" ? enExcerpt : arExcerpt || enExcerpt;
-  const currentContent = aiActiveLocale === "en" ? enContent : arContent;
-
-  const handleAiApplyFields = async (fields: import("@/lib/ai-providers").AiFieldUpdates, targetLocale: "en" | "ar") => {
+  const handleAiApplyFields = async (fields: AiFieldUpdates, targetLocale: "en" | "ar") => {
     if (fields.title !== undefined) {
       targetLocale === "en" ? setEnTitle(fields.title) : setArTitle(fields.title);
     }
@@ -284,12 +274,22 @@ export default function AdminBlogEditorPage({
       }
       setSelectedCategoryIds(newIds);
     }
-    setAiActiveLocale(targetLocale);
     setLocale(targetLocale);
   };
 
-  const availableTagsStr = allTags.map((t) => t.name).join(", ");
-  const availableCategoriesStr = allCategories.map((c) => c.name).join(", ");
+  const openAiPanel = (loc: "en" | "ar") => {
+    openPanel({
+      currentContent: loc === "en" ? enContent : arContent,
+      title: loc === "en" ? enTitle : arTitle || enTitle,
+      excerpt: loc === "en" ? enExcerpt : arExcerpt || enExcerpt,
+      locale: loc,
+      entityType: "blog",
+      availableTags: allTags.map((t) => t.name).join(", "),
+      availableCategories: allCategories.map((c) => c.name).join(", "),
+      onApplyFields: handleAiApplyFields,
+      onSwitchLocale: (newLoc) => setLocale(newLoc),
+    });
+  };
 
   if (loading) {
     return (
@@ -525,23 +525,6 @@ export default function AdminBlogEditorPage({
           )}
         </div>
       </div>
-
-      <AiChatPanel
-        isOpen={aiPanelOpen}
-        onClose={() => setAiPanelOpen(false)}
-        currentContent={currentContent}
-        title={currentTitle}
-        excerpt={currentExcerpt}
-        locale={aiActiveLocale}
-        entityType="blog"
-        availableTags={availableTagsStr}
-        availableCategories={availableCategoriesStr}
-        onApplyFields={handleAiApplyFields}
-        onSwitchLocale={(loc) => {
-          setAiActiveLocale(loc);
-          setLocale(loc);
-        }}
-      />
     </div>
   );
 }

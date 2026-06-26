@@ -2,9 +2,13 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { SessionProvider } from "next-auth/react";
+import { Group as PanelGroup, Panel, Separator } from "react-resizable-panels";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AiPanelProvider, useAiPanel } from "@/contexts/AiPanelContext";
+import { AiChatPanel } from "@/components/admin/AiChatPanel";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/change-password"];
 
@@ -15,7 +19,9 @@ export default function AdminLayout({
 }) {
   return (
     <SessionProvider>
-      <AdminLayoutInner>{children}</AdminLayoutInner>
+      <AiPanelProvider>
+        <AdminLayoutInner>{children}</AdminLayoutInner>
+      </AiPanelProvider>
     </SessionProvider>
   );
 }
@@ -53,6 +59,80 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
   if (!session.user?.passwordChanged) return null;
 
+  return <AdminLayoutShell>{children}</AdminLayoutShell>;
+}
+
+function AdminLayoutShell({ children }: { children: React.ReactNode }) {
+  const { isOpen, panelData, closePanel } = useAiPanel();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  // Mobile: AI panel opens as full-screen Sheet overlay
+  if (isMobile) {
+    return (
+      <div className="min-h-screen flex">
+        <AdminSidebar />
+        <main className="flex-1 p-6 overflow-auto">
+          {children}
+        </main>
+        <Sheet open={isOpen} onOpenChange={(open) => !open && closePanel()}>
+          <SheetContent side="right" className="w-full p-0 sm:w-96">
+            {panelData && (
+              <AiChatPanel
+                currentContent={panelData.currentContent}
+                title={panelData.title}
+                excerpt={panelData.excerpt}
+                locale={panelData.locale}
+                entityType={panelData.entityType}
+                availableTags={panelData.availableTags}
+                availableCategories={panelData.availableCategories}
+                onApplyFields={panelData.onApplyFields}
+                onSwitchLocale={panelData.onSwitchLocale}
+              />
+            )}
+          </SheetContent>
+        </Sheet>
+      </div>
+    );
+  }
+
+  // Desktop with AI panel open: resizable split view
+  if (isOpen && panelData) {
+    return (
+      <div className="min-h-screen flex">
+        <AdminSidebar collapsed />
+        <PanelGroup orientation="horizontal" className="flex-1">
+          <Panel defaultSize={50} minSize={30}>
+            <main className="h-full overflow-auto p-6 md:p-8">
+              {children}
+            </main>
+          </Panel>
+          <Separator className="w-2 bg-border hover:bg-primary/20 transition-colors" />
+          <Panel defaultSize={50} minSize={30}>
+            <AiChatPanel
+              currentContent={panelData.currentContent}
+              title={panelData.title}
+              excerpt={panelData.excerpt}
+              locale={panelData.locale}
+              entityType={panelData.entityType}
+              availableTags={panelData.availableTags}
+              availableCategories={panelData.availableCategories}
+              onApplyFields={panelData.onApplyFields}
+              onSwitchLocale={panelData.onSwitchLocale}
+            />
+          </Panel>
+        </PanelGroup>
+      </div>
+    );
+  }
+
+  // Desktop normal: sidebar + main
   return (
     <div className="min-h-screen flex">
       <AdminSidebar />

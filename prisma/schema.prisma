@@ -177,4 +177,13 @@ model PageView {
   @@index([sessionId])
 }
 
+model AiSettings {
+  id        String   @id @default("default")
+  provider  String   @default("ollama")
+  apiKey    String?
+  baseUrl   String?
+  model     String   @default("llama3")
+  updatedAt DateTime @updatedAt
+}
+
 

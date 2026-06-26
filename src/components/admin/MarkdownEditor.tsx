@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import dynamic from "next/dynamic";
+import { Bot } from "lucide-react";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), { ssr: false });
@@ -12,6 +13,7 @@ interface MarkdownEditorProps {
   placeholder?: string;
   height?: number;
   dir?: "ltr" | "rtl";
+  onOpenAi?: () => void;
 }
 
 export function MarkdownEditor({
@@ -19,6 +21,7 @@ export function MarkdownEditor({
   onChange,
   height = 300,
   dir = "ltr",
+  onOpenAi,
 }: MarkdownEditorProps) {
   const editorRef = useRef<HTMLDivElement>(null);
 
@@ -53,6 +56,16 @@ export function MarkdownEditor({
             </button>
           }
         />
+        {onOpenAi && (
+          <button
+            type="button"
+            onClick={onOpenAi}
+            className="inline-flex items-center gap-1.5 text-sm text-primary hover:text-primary/80 border border-primary/30 hover:border-primary/50 rounded-md px-3 py-1.5 transition-colors"
+          >
+            <Bot className="h-4 w-4" />
+            AI Assistant
+          </button>
+        )}
       </div>
     </div>
   );

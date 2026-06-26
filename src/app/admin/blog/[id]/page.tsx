@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MediaPicker } from "@/components/admin/MediaPicker";
 import { MarkdownEditor } from "@/components/admin/MarkdownEditor";
 import { InlineTaxonomyCreator } from "@/components/admin/InlineTaxonomyCreator";
+import { AiChatPanel } from "@/components/admin/AiChatPanel";
 
 interface TaxonomyItem {
   id: string;
@@ -44,6 +45,9 @@ export default function AdminBlogEditorPage({
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [aiActiveLocale, setAiActiveLocale] = useState<"en" | "ar">("en");
 
   useEffect(() => {
     fetch("/api/categories").then((r) => r.json()).then(setAllCategories);
@@ -157,6 +161,39 @@ export default function AdminBlogEditorPage({
     }
   };
 
+  const openAiPanel = (locale: "en" | "ar") => {
+    setAiActiveLocale(locale);
+    setAiPanelOpen(true);
+  };
+
+  const currentTitle = aiActiveLocale === "en" ? enTitle : arTitle || enTitle;
+  const currentExcerpt = aiActiveLocale === "en" ? enExcerpt : arExcerpt || enExcerpt;
+  const currentContent = aiActiveLocale === "en" ? enContent : arContent;
+
+  const handleAiApplyContent = (content: string) => {
+    if (aiActiveLocale === "en") {
+      setEnContent(content);
+    } else {
+      setArContent(content);
+    }
+  };
+
+  const handleAiApplyTitle = (title: string) => {
+    if (aiActiveLocale === "en") {
+      setEnTitle(title);
+    } else {
+      setArTitle(title);
+    }
+  };
+
+  const handleAiApplyExcerpt = (excerpt: string) => {
+    if (aiActiveLocale === "en") {
+      setEnExcerpt(excerpt);
+    } else {
+      setArExcerpt(excerpt);
+    }
+  };
+
   return (
     <div className="max-w-3xl">
       <h1 className="text-2xl font-bold mb-6">{isNew ? "New Blog Post" : "Edit Blog Post"}</h1>
@@ -247,7 +284,11 @@ export default function AdminBlogEditorPage({
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="en" className="mb-6">
+      <Tabs
+        defaultValue="en"
+        className="mb-6"
+        onValueChange={(v) => setAiActiveLocale(v as "en" | "ar")}
+      >
         <TabsList>
           <TabsTrigger value="en">English</TabsTrigger>
           <TabsTrigger value="ar">العربية</TabsTrigger>
@@ -257,7 +298,12 @@ export default function AdminBlogEditorPage({
           <Textarea placeholder="Excerpt (English)" value={enExcerpt} onChange={(e) => setEnExcerpt(e.target.value)} />
           <div>
             <p className="text-sm font-medium mb-2">Content (Markdown)</p>
-            <MarkdownEditor value={enContent} onChange={setEnContent} height={400} />
+            <MarkdownEditor
+              value={enContent}
+              onChange={setEnContent}
+              height={400}
+              onOpenAi={() => openAiPanel("en")}
+            />
           </div>
         </TabsContent>
         <TabsContent value="ar" className="space-y-4 mt-4">
@@ -265,7 +311,13 @@ export default function AdminBlogEditorPage({
           <Textarea placeholder="المقتطف (عربي)" dir="rtl" value={arExcerpt} onChange={(e) => setArExcerpt(e.target.value)} />
           <div>
             <p className="text-sm font-medium mb-2">المحتوى (ماركداون)</p>
-            <MarkdownEditor value={arContent} onChange={setArContent} height={400} dir="rtl" />
+            <MarkdownEditor
+              value={arContent}
+              onChange={setArContent}
+              height={400}
+              dir="rtl"
+              onOpenAi={() => openAiPanel("ar")}
+            />
           </div>
         </TabsContent>
       </Tabs>
@@ -277,6 +329,19 @@ export default function AdminBlogEditorPage({
         <Button variant="outline" onClick={() => router.push("/admin/blog")}>Cancel</Button>
         {error && <p className="text-sm text-red-500">{error}</p>}
       </div>
+
+      <AiChatPanel
+        isOpen={aiPanelOpen}
+        onClose={() => setAiPanelOpen(false)}
+        currentContent={currentContent}
+        title={currentTitle}
+        excerpt={currentExcerpt}
+        locale={aiActiveLocale}
+        entityType="blog"
+        onApplyContent={handleAiApplyContent}
+        onApplyTitle={handleAiApplyTitle}
+        onApplyExcerpt={handleAiApplyExcerpt}
+      />
     </div>
   );
 }

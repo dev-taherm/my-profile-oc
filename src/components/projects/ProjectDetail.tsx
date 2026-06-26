@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeHighlight from "rehype-highlight";
 import { ArrowLeft, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { GithubIcon } from "@/components/shared/Icons";
 import { Badge } from "@/components/ui/badge";
@@ -138,16 +141,9 @@ export function ProjectDetail({ project, locale, dict }: ProjectDetailProps) {
 
       {t.content && (
         <div className="prose prose-lg dark:prose-invert max-w-none">
-          {t.content.split("\n").map((line, i) => {
-            if (line.startsWith("## ")) {
-              return <h2 key={i} className="text-2xl font-bold mt-8 mb-4">{line.slice(3)}</h2>;
-            }
-            if (line.startsWith("- ")) {
-              return <li key={i} className="text-muted-foreground">{line.slice(2)}</li>;
-            }
-            if (line.trim() === "") return <br key={i} />;
-            return <p key={i} className="text-muted-foreground leading-relaxed">{line}</p>;
-          })}
+          <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
+            {t.content}
+          </ReactMarkdown>
         </div>
       )}
     </div>

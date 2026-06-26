@@ -170,29 +170,66 @@ export default function AdminBlogEditorPage({
   const currentExcerpt = aiActiveLocale === "en" ? enExcerpt : arExcerpt || enExcerpt;
   const currentContent = aiActiveLocale === "en" ? enContent : arContent;
 
-  const handleAiApplyContent = (content: string) => {
-    if (aiActiveLocale === "en") {
-      setEnContent(content);
-    } else {
-      setArContent(content);
+  const handleAiApplyFields = async (fields: import("@/lib/ai-providers").AiFieldUpdates, targetLocale: "en" | "ar") => {
+    if (fields.title !== undefined) {
+      targetLocale === "en" ? setEnTitle(fields.title) : setArTitle(fields.title);
     }
+    if (fields.excerpt !== undefined) {
+      targetLocale === "en" ? setEnExcerpt(fields.excerpt) : setArExcerpt(fields.excerpt);
+    }
+    if (fields.content !== undefined) {
+      targetLocale === "en" ? setEnContent(fields.content) : setArContent(fields.content);
+    }
+    if (fields.slug !== undefined) {
+      setSlug(fields.slug);
+    }
+    if (fields.tags && fields.tags.length > 0) {
+      const newIds: string[] = [];
+      for (const tagName of fields.tags) {
+        const existing = allTags.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
+        if (existing) {
+          newIds.push(existing.id);
+        } else {
+          const res = await fetch("/api/tags", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: tagName }),
+          });
+          if (res.ok) {
+            const created = await res.json();
+            setAllTags((prev) => [...prev, created]);
+            newIds.push(created.id);
+          }
+        }
+      }
+      setSelectedTagIds(newIds);
+    }
+    if (fields.categories && fields.categories.length > 0) {
+      const newIds: string[] = [];
+      for (const catName of fields.categories) {
+        const existing = allCategories.find((c) => c.name.toLowerCase() === catName.toLowerCase());
+        if (existing) {
+          newIds.push(existing.id);
+        } else {
+          const res = await fetch("/api/categories", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: catName }),
+          });
+          if (res.ok) {
+            const created = await res.json();
+            setAllCategories((prev) => [...prev, created]);
+            newIds.push(created.id);
+          }
+        }
+      }
+      setSelectedCategoryIds(newIds);
+    }
+    setAiActiveLocale(targetLocale);
   };
 
-  const handleAiApplyTitle = (title: string) => {
-    if (aiActiveLocale === "en") {
-      setEnTitle(title);
-    } else {
-      setArTitle(title);
-    }
-  };
-
-  const handleAiApplyExcerpt = (excerpt: string) => {
-    if (aiActiveLocale === "en") {
-      setEnExcerpt(excerpt);
-    } else {
-      setArExcerpt(excerpt);
-    }
-  };
+  const availableTagsStr = allTags.map((t) => t.name).join(", ");
+  const availableCategoriesStr = allCategories.map((c) => c.name).join(", ");
 
   return (
     <div className="max-w-3xl">
@@ -285,8 +322,7 @@ export default function AdminBlogEditorPage({
       </Card>
 
       <Tabs
-        defaultValue="en"
-        className="mb-6"
+        value={aiActiveLocale}
         onValueChange={(v) => setAiActiveLocale(v as "en" | "ar")}
       >
         <TabsList>
@@ -338,9 +374,10 @@ export default function AdminBlogEditorPage({
         excerpt={currentExcerpt}
         locale={aiActiveLocale}
         entityType="blog"
-        onApplyContent={handleAiApplyContent}
-        onApplyTitle={handleAiApplyTitle}
-        onApplyExcerpt={handleAiApplyExcerpt}
+        availableTags={availableTagsStr}
+        availableCategories={availableCategoriesStr}
+        onApplyFields={handleAiApplyFields}
+        onSwitchLocale={setAiActiveLocale}
       />
     </div>
   );

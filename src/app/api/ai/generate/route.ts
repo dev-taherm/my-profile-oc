@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { prompt, systemPrompt, entityType, locale, providerConfig } = body;
+  const { prompt, systemPrompt, entityType, locale, providerConfig, chatHistory } = body;
 
   if (!prompt) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });
@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       apiKey: providerConfig.apiKey || null,
       baseUrl: providerConfig.baseUrl || null,
       model: providerConfig.model || "",
+      tavilyApiKey: null,
     };
   } else {
     settings = await getAiSettings();
@@ -46,13 +47,17 @@ The current content language is ${locale || "en"}.
 Respond ONLY with the requested content. Do not include explanations or meta-commentary.`;
 
   try {
-    const req = await buildAiRequest({
-      prompt,
-      systemPrompt: finalSystemPrompt,
-    }, settings);
+    const req = await buildAiRequest(
+      {
+        prompt,
+        systemPrompt: finalSystemPrompt,
+        chatHistory: chatHistory || [],
+      },
+      settings
+    );
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const timeout = setTimeout(() => controller.abort(), 90000);
 
     let res;
     try {
@@ -61,7 +66,7 @@ Respond ONLY with the requested content. Do not include explanations or meta-com
         headers: req.headers,
         body: JSON.stringify(req.body),
         signal: controller.signal,
-        timeout: 60000,
+        timeout: 90000,
       });
     } catch (fetchErr) {
       clearTimeout(timeout);

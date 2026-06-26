@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot, Save, TestTube, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Bot, Save, TestTube, CheckCircle, XCircle, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,6 +37,8 @@ export default function AdminAiSettingsPage() {
   const [apiKeySet, setApiKeySet] = useState(false);
   const [baseUrl, setBaseUrl] = useState("");
   const [model, setModel] = useState("");
+  const [tavilyApiKey, setTavilyApiKey] = useState("");
+  const [tavilyKeySet, setTavilyKeySet] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -44,11 +46,14 @@ export default function AdminAiSettingsPage() {
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
+  const [testingSearch, setTestingSearch] = useState(false);
+  const [searchTestResult, setSearchTestResult] = useState<{ ok: boolean; message: string } | null>(null);
+
   useEffect(() => {
     fetch("/api/ai/settings")
       .then((r) => r.json())
       .then((data) => {
-        const p = data.provider || "ollama";
+        const p = (data.provider || "ollama") as AiProvider;
         setProvider(p);
         if (data.baseUrl) setBaseUrl(data.baseUrl);
         if (data.model) {
@@ -57,6 +62,8 @@ export default function AdminAiSettingsPage() {
           setModel(PROVIDER_INFO[p]?.models[0] || "");
         }
         if (data.apiKeySet) setApiKeySet(data.apiKeySet);
+        if (data.tavilyApiKey) setTavilyApiKey(data.tavilyApiKey);
+        if (data.tavilyKeySet) setTavilyKeySet(data.tavilyKeySet);
       });
   }, []);
 
@@ -78,7 +85,13 @@ export default function AdminAiSettingsPage() {
       const res = await fetch("/api/ai/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, apiKey: apiKey || undefined, baseUrl, model }),
+        body: JSON.stringify({
+          provider,
+          apiKey: apiKey || undefined,
+          baseUrl,
+          model,
+          tavilyApiKey: tavilyApiKey || undefined,
+        }),
       });
 
       if (!res.ok) {
@@ -89,6 +102,7 @@ export default function AdminAiSettingsPage() {
 
       setSuccess("AI settings saved successfully!");
       if (apiKey) setApiKeySet(true);
+      if (tavilyApiKey) setTavilyKeySet(true);
     } catch {
       setError("Failed to save settings");
     } finally {
@@ -153,6 +167,42 @@ export default function AdminAiSettingsPage() {
       setTestResult({ ok: false, message: msg });
     } finally {
       setTesting(false);
+    }
+  };
+
+  const handleTestSearch = async () => {
+    if (!tavilyApiKey) {
+      setSearchTestResult({ ok: false, message: "Enter a Tavily API key first" });
+      return;
+    }
+
+    setTestingSearch(true);
+    setSearchTestResult(null);
+
+    try {
+      const res = await fetch("/api/ai/web-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: "Next.js SEO best practices", maxResults: 3 }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setSearchTestResult({ ok: false, message: data.error || `HTTP ${res.status}` });
+        return;
+      }
+
+      const resultCount = data.results?.length || 0;
+      setSearchTestResult({
+        ok: true,
+        message: `Search works! Found ${resultCount} results. ${data.answer ? "AI summary available." : ""}`,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      setSearchTestResult({ ok: false, message: msg });
+    } finally {
+      setTestingSearch(false);
     }
   };
 
@@ -271,6 +321,64 @@ export default function AdminAiSettingsPage() {
                 <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
               )}
               <span>{testResult.message}</span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Web Search (Tavily)
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Tavily provides web search for SEO keyword research. Free tier: 1000 searches/month.
+            Get an API key from <code>tavily.com</code>.
+          </p>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Tavily API Key
+              {tavilyKeySet && !tavilyApiKey && (
+                <span className="text-green-500 ml-2 text-xs">(already set)</span>
+              )}
+            </label>
+            <Input
+              type="password"
+              value={tavilyApiKey}
+              onChange={(e) => setTavilyApiKey(e.target.value)}
+              placeholder={tavilyKeySet ? "Enter new key to replace" : "tvly-..."}
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleTestSearch} disabled={testingSearch}>
+              {testingSearch ? (
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="me-2 h-4 w-4" />
+              )}
+              {testingSearch ? "Testing..." : "Test Search"}
+            </Button>
+          </div>
+
+          {searchTestResult && (
+            <div
+              className={`flex items-start gap-2 p-3 rounded-md text-sm ${
+                searchTestResult.ok
+                  ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                  : "bg-red-500/10 text-red-600 dark:text-red-400"
+              }`}
+            >
+              {searchTestResult.ok ? (
+                <CheckCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              ) : (
+                <XCircle className="h-4 w-4 mt-0.5 shrink-0" />
+              )}
+              <span>{searchTestResult.message}</span>
             </div>
           )}
         </CardContent>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import { parseAiUpdate, type AiPendingUpdate } from "@/lib/ai-providers";
 
 interface UseAiStreamOptions {
   entityType?: "blog" | "project";
@@ -10,6 +11,8 @@ interface UseAiStreamOptions {
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  cleanContent?: string;
+  pendingUpdate?: AiPendingUpdate;
 }
 
 export function useAiStream(options: UseAiStreamOptions = {}) {
@@ -17,6 +20,8 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
   const [streamedText, setStreamedText] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [searchResults, setSearchResults] = useState<string | null>(null);
+  const [pendingUpdate, setPendingUpdate] = useState<AiPendingUpdate | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const stopGeneration = useCallback(() => {
@@ -24,6 +29,43 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
     abortControllerRef.current = null;
     setIsGenerating(false);
   }, []);
+
+  const searchWeb = useCallback(
+    async (query: string): Promise<string | null> => {
+      try {
+        const res = await fetch("/api/ai/web-search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, maxResults: 5 }),
+        });
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || `Search failed (${res.status})`);
+        }
+
+        const data = await res.json();
+        const resultsText = data.results
+          ?.map(
+            (r: { title: string; url: string; content: string; score: number }, i: number) =>
+              `${i + 1}. **${r.title}**\n   ${r.url}\n   ${r.content}\n   (relevance: ${(r.score * 100).toFixed(0)}%)`
+          )
+          .join("\n\n");
+
+        const fullText = data.answer
+          ? `**AI Summary:** ${data.answer}\n\n**Search Results:**\n${resultsText || "(none)"}`
+          : `**Search Results:**\n${resultsText || "(none)"}`;
+
+        setSearchResults(fullText);
+        return fullText;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Search failed";
+        setError(msg);
+        return null;
+      }
+    },
+    []
+  );
 
   const sendMessage = useCallback(
     async (
@@ -34,6 +76,7 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
       setError(null);
       setIsGenerating(true);
       setStreamedText("");
+      setPendingUpdate(null);
 
       setMessages((prev) => [...prev, { role: "user", content: prompt }]);
 
@@ -49,6 +92,10 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
             systemPrompt,
             entityType: options.entityType || "blog",
             locale: options.locale || "en",
+            chatHistory: messages.slice(-10).map((m) => ({
+              role: m.role,
+              content: m.content,
+            })),
           }),
           signal: controller.signal,
         });
@@ -91,7 +138,23 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
           }
         }
 
-        setMessages((prev) => [...prev, { role: "assistant", content: fullText }]);
+        // Parse <ai-update> tags from the response
+        const { cleanText, update } = parseAiUpdate(fullText);
+
+        if (update) {
+          setPendingUpdate(update);
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: fullText,
+            cleanContent: cleanText,
+            pendingUpdate: update || undefined,
+          },
+        ]);
+
         setIsGenerating(false);
         setStreamedText("");
         return fullText;
@@ -110,13 +173,19 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
         abortControllerRef.current = null;
       }
     },
-    [options.entityType, options.locale]
+    [options.entityType, options.locale, messages, searchWeb]
   );
+
+  const clearPendingUpdate = useCallback(() => {
+    setPendingUpdate(null);
+  }, []);
 
   const clearChat = useCallback(() => {
     setMessages([]);
     setStreamedText("");
     setError(null);
+    setSearchResults(null);
+    setPendingUpdate(null);
   }, []);
 
   return {
@@ -124,9 +193,13 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
     streamedText,
     messages,
     error,
+    searchResults,
+    pendingUpdate,
     sendMessage,
     stopGeneration,
+    clearPendingUpdate,
     clearChat,
+    searchWeb,
   };
 }
 

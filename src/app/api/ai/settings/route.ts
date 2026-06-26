@@ -16,6 +16,8 @@ export async function GET() {
     apiKeySet: !!settings.apiKey,
     baseUrl: settings.baseUrl,
     model: settings.model,
+    tavilyApiKey: maskApiKey(settings.tavilyApiKey),
+    tavilyKeySet: !!settings.tavilyApiKey,
   });
 }
 
@@ -26,7 +28,7 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const { provider, apiKey, baseUrl, model } = body;
+  const { provider, apiKey, baseUrl, model, tavilyApiKey } = body;
 
   const validProviders: AiProvider[] = ["ollama", "openai", "claude", "google"];
   if (!validProviders.includes(provider)) {
@@ -38,6 +40,7 @@ export async function PUT(request: Request) {
     apiKey: apiKey || null,
     baseUrl: baseUrl || null,
     model: model || undefined,
+    tavilyApiKey: tavilyApiKey || null,
   });
 
   return NextResponse.json({ success: true });

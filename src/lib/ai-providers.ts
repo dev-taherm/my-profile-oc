@@ -213,7 +213,10 @@ export async function buildAiRequest(
     case "ollama":
       return {
         url: `${baseUrl}/api/chat`,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(settings.apiKey ? { Authorization: `Bearer ${settings.apiKey}` } : {}),
+        },
         body: {
           model,
           messages,

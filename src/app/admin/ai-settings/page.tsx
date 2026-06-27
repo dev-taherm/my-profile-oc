@@ -10,9 +10,12 @@ type AiProvider = "ollama" | "openai" | "claude" | "google";
 
 const PROVIDER_INFO: Record<AiProvider, { label: string; defaultBaseUrl: string; models: string[] }> = {
   ollama: {
-    label: "Ollama (Local)",
+    label: "Ollama",
     defaultBaseUrl: "http://localhost:11434",
-    models: ["llama3", "llama3.1", "mistral", "codellama", "phi3", "gemma2"],
+    models: [
+      "llama3", "llama3.1", "mistral", "codellama", "phi3", "gemma2",
+      "gpt-oss:120b", "gpt-oss:20b", "deepseek-v3.1:671b", "qwen3-coder:480b-cloud",
+    ],
   },
   openai: {
     label: "OpenAI-Compatible",
@@ -206,8 +209,6 @@ export default function AdminAiSettingsPage() {
     }
   };
 
-  const needsApiKey = provider !== "ollama";
-
   return (
     <div className="max-w-2xl space-y-6">
       <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -239,8 +240,7 @@ export default function AdminAiSettingsPage() {
             </div>
           </div>
 
-          {needsApiKey && (
-            <div className="space-y-2">
+          <div className="space-y-2">
               <label className="text-sm font-medium">
                 API Key
                 {apiKeySet && !apiKey && (
@@ -251,10 +251,9 @@ export default function AdminAiSettingsPage() {
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                placeholder={apiKeySet ? "Enter new key to replace" : `Enter ${PROVIDER_INFO[provider].label} API key`}
+                placeholder={apiKeySet ? "Enter new key to replace" : provider === "ollama" ? "Optional for local, required for cloud" : `Enter ${PROVIDER_INFO[provider].label} API key`}
               />
             </div>
-          )}
 
           <div className="space-y-2">
             <label className="text-sm font-medium">Base URL</label>
@@ -265,7 +264,7 @@ export default function AdminAiSettingsPage() {
             />
             <p className="text-xs text-muted-foreground">
               Default: {PROVIDER_INFO[provider].defaultBaseUrl}
-              {provider === "ollama" && " (for remote Ollama, change this URL)"}
+              {provider === "ollama" && " — For Ollama Cloud, use https://ollama.com"}
               {provider === "openai" && " (works with OpenAI, OpenRouter, Together, etc.)"}
             </p>
           </div>
@@ -390,8 +389,9 @@ export default function AdminAiSettingsPage() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground space-y-3">
           <div>
-            <p className="font-medium text-foreground">Ollama (Local)</p>
-            <p>Free, runs locally. Install Ollama from <code>ollama.com</code>, then pull a model: <code>ollama pull llama3</code></p>
+            <p className="font-medium text-foreground">Ollama</p>
+            <p>Local: Free, runs on your machine. Install from <code>ollama.com</code>, then pull a model: <code>ollama pull llama3</code>. No API key needed.</p>
+            <p className="mt-1">Cloud: Use your Ollama API key (create at <code>ollama.com/settings/keys</code>). Set base URL to <code>https://ollama.com</code> and pick a cloud model like <code>gpt-oss:120b</code>.</p>
           </div>
           <div>
             <p className="font-medium text-foreground">OpenAI-Compatible</p>

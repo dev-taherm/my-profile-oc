@@ -65,6 +65,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   const { isOpen, panelData, closePanel } = useAiPanel();
   const [isMobile, setIsMobile] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -72,6 +73,11 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  // Auto-close AI panel on navigation
+  useEffect(() => {
+    closePanel();
+  }, [pathname, closePanel]);
 
   // Mobile: AI panel opens as full-screen Sheet overlay
   if (isMobile) {
@@ -94,6 +100,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                 availableCategories={panelData.availableCategories}
                 onApplyFields={panelData.onApplyFields}
                 onSwitchLocale={panelData.onSwitchLocale}
+                onClose={closePanel}
               />
             )}
           </SheetContent>
@@ -105,9 +112,9 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
   // Desktop with AI panel open: resizable split view
   if (isOpen && panelData) {
     return (
-      <div className="min-h-screen flex">
+      <div className="h-screen flex">
         <AdminSidebar collapsed />
-        <PanelGroup orientation="horizontal" className="flex-1">
+        <PanelGroup orientation="horizontal" className="flex-1 h-full">
           <Panel defaultSize={50} minSize={30}>
             <main className="h-full overflow-auto p-6 md:p-8">
               {children}
@@ -125,6 +132,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               availableCategories={panelData.availableCategories}
               onApplyFields={panelData.onApplyFields}
               onSwitchLocale={panelData.onSwitchLocale}
+              onClose={closePanel}
             />
           </Panel>
         </PanelGroup>

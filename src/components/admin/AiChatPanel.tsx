@@ -30,6 +30,7 @@ interface AiChatPanelProps {
   availableCategories: string;
   onApplyFields: (fields: AiFieldUpdates, targetLocale: "en" | "ar") => void;
   onSwitchLocale?: (locale: "en" | "ar") => void;
+  onClose?: () => void;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -68,6 +69,7 @@ export function AiChatPanel({
   availableCategories,
   onApplyFields,
   onSwitchLocale,
+  onClose,
 }: AiChatPanelProps) {
   const [input, setInput] = useState("");
   const [autoApply, setAutoApply] = useState(false);
@@ -169,6 +171,11 @@ export function AiChatPanel({
           {messages.length > 0 && (
             <Button variant="ghost" size="icon-xs" onClick={clearChat} title="Clear chat">
               <Trash2 className="h-3 w-3" />
+            </Button>
+          )}
+          {onClose && (
+            <Button variant="ghost" size="icon-xs" onClick={onClose} title="Close panel">
+              <X className="h-4 w-4" />
             </Button>
           )}
         </div>

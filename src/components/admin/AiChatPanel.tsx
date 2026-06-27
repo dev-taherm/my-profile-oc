@@ -19,20 +19,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAiStream, type ChatMessage } from "@/hooks/use-ai-stream";
 import { useAiPanel } from "@/contexts/AiPanelContext";
-import { type AiFieldUpdates, type AiPendingUpdate } from "@/lib/ai-providers";
+import { type AiPendingUpdate } from "@/lib/ai-providers";
 
 interface AiChatPanelProps {
   currentContent: string;
   title: string;
-  excerpt?: string;
+  excerpt: string;
   locale: string;
   entityType: "blog" | "project";
   availableTags: string;
   availableCategories: string;
   existingArticles?: string;
-  onApplyFields: (fields: AiFieldUpdates, targetLocale: "en" | "ar") => void;
-  onSwitchLocale?: (locale: "en" | "ar") => void;
-  onClose?: () => void;
+  onClose: () => void;
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -72,15 +70,13 @@ export function AiChatPanel({
   availableTags,
   availableCategories,
   existingArticles,
-  onApplyFields,
-  onSwitchLocale,
   onClose,
 }: AiChatPanelProps) {
   const [input, setInput] = useState("");
   const [autoApply, setAutoApply] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { updatePanelData } = useAiPanel();
+  const { applyHandlerRef, switchLocaleHandlerRef } = useAiPanel();
   const {
     isGenerating,
     streamedText,
@@ -143,27 +139,9 @@ export function AiChatPanel({
   };
 
   const handleApplyUpdate = (update: AiPendingUpdate) => {
-    onApplyFields(update.fields, update.locale);
-    onSwitchLocale?.(update.locale);
-
-    // Sync applied content back to panel context so next AI call sees updated content
-    const updates: Record<string, string> = {};
-    if (update.fields.content !== undefined) {
-      updates.currentContent = update.fields.content;
-    }
-    if (update.fields.title !== undefined) {
-      updates.title = update.fields.title;
-    }
-    if (update.fields.excerpt !== undefined) {
-      updates.excerpt = update.fields.excerpt;
-    }
-    if (update.locale) {
-      updates.locale = update.locale;
-    }
-    if (Object.keys(updates).length > 0) {
-      updatePanelData(updates);
-    }
-
+    // Use refs to always call the LATEST handler from the current editor instance
+    applyHandlerRef.current?.(update.fields, update.locale);
+    switchLocaleHandlerRef.current?.(update.locale);
     clearPendingUpdate();
   };
 

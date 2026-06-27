@@ -59,7 +59,11 @@ export default function AdminBlogEditorPage({
   const [contentVersion, setContentVersion] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
-  const { openPanel } = useAiPanel();
+  const {
+    openPanel,
+    registerApplyHandler,
+    registerSwitchLocaleHandler,
+  } = useAiPanel();
 
   const loadedRef = useRef<string>("");
 
@@ -295,6 +299,14 @@ export default function AdminBlogEditorPage({
     setLocale(targetLocale);
   };
 
+  const handleAiApplyFieldsRef = useRef(handleAiApplyFields);
+  handleAiApplyFieldsRef.current = handleAiApplyFields;
+
+  useEffect(() => {
+    registerApplyHandler((fields, targetLocale) => handleAiApplyFieldsRef.current(fields, targetLocale));
+    registerSwitchLocaleHandler((newLoc) => setLocale(newLoc));
+  }, [registerApplyHandler, registerSwitchLocaleHandler]);
+
   const openAiPanel = (loc: "en" | "ar") => {
     openPanel({
       currentContent: loc === "en" ? enContent : arContent,
@@ -305,8 +317,6 @@ export default function AdminBlogEditorPage({
       availableTags: allTags.map((t) => t.name).join(", "),
       availableCategories: allCategories.map((c) => c.name).join(", "),
       existingArticles,
-      onApplyFields: handleAiApplyFields,
-      onSwitchLocale: (newLoc) => setLocale(newLoc),
     });
   };
 

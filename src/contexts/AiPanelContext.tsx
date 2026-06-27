@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useRef, type ReactNode } from "react";
 import type { AiFieldUpdates } from "@/lib/ai-providers";
 
 interface AiPanelData {
@@ -12,8 +12,6 @@ interface AiPanelData {
   availableTags: string;
   availableCategories: string;
   existingArticles?: string;
-  onApplyFields: (fields: AiFieldUpdates, targetLocale: "en" | "ar") => void;
-  onSwitchLocale?: (locale: "en" | "ar") => void;
 }
 
 interface AiPanelContextValue {
@@ -22,6 +20,10 @@ interface AiPanelContextValue {
   openPanel: (data: AiPanelData) => void;
   updatePanelData: (updates: Partial<AiPanelData>) => void;
   closePanel: () => void;
+  registerApplyHandler: (handler: (fields: AiFieldUpdates, targetLocale: "en" | "ar") => void) => void;
+  registerSwitchLocaleHandler: (handler: (locale: "en" | "ar") => void) => void;
+  applyHandlerRef: React.MutableRefObject<((fields: AiFieldUpdates, targetLocale: "en" | "ar") => void) | null>;
+  switchLocaleHandlerRef: React.MutableRefObject<((locale: "en" | "ar") => void) | null>;
 }
 
 const AiPanelContext = createContext<AiPanelContextValue | null>(null);
@@ -29,6 +31,8 @@ const AiPanelContext = createContext<AiPanelContextValue | null>(null);
 export function AiPanelProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [panelData, setPanelData] = useState<AiPanelData | null>(null);
+  const applyHandlerRef = useRef<((fields: AiFieldUpdates, targetLocale: "en" | "ar") => void) | null>(null);
+  const switchLocaleHandlerRef = useRef<((locale: "en" | "ar") => void) | null>(null);
 
   const openPanel = useCallback((data: AiPanelData) => {
     setPanelData(data);
@@ -44,8 +48,16 @@ export function AiPanelProvider({ children }: { children: ReactNode }) {
     setPanelData(null);
   }, []);
 
+  const registerApplyHandler = useCallback((handler: (fields: AiFieldUpdates, targetLocale: "en" | "ar") => void) => {
+    applyHandlerRef.current = handler;
+  }, []);
+
+  const registerSwitchLocaleHandler = useCallback((handler: (locale: "en" | "ar") => void) => {
+    switchLocaleHandlerRef.current = handler;
+  }, []);
+
   return (
-    <AiPanelContext.Provider value={{ isOpen, panelData, openPanel, updatePanelData, closePanel }}>
+    <AiPanelContext.Provider value={{ isOpen, panelData, openPanel, updatePanelData, closePanel, registerApplyHandler, registerSwitchLocaleHandler, applyHandlerRef, switchLocaleHandlerRef }}>
       {children}
     </AiPanelContext.Provider>
   );

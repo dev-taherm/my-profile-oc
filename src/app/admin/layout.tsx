@@ -99,8 +99,6 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                 availableTags={panelData.availableTags}
                 availableCategories={panelData.availableCategories}
                 existingArticles={panelData.existingArticles}
-                onApplyFields={panelData.onApplyFields}
-                onSwitchLocale={panelData.onSwitchLocale}
                 onClose={closePanel}
               />
             )}
@@ -132,8 +130,6 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
               availableTags={panelData.availableTags}
               availableCategories={panelData.availableCategories}
               existingArticles={panelData.existingArticles}
-              onApplyFields={panelData.onApplyFields}
-              onSwitchLocale={panelData.onSwitchLocale}
               onClose={closePanel}
             />
           </Panel>

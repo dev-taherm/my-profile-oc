@@ -31,11 +31,12 @@ export async function POST(request: NextRequest) {
         featured,
         status,
         translations: {
-          create: translations.map((t: { locale: string; title: string; description: string; content?: string }) => ({
+          create: translations.map((t: { locale: string; title: string; description: string; content?: string; metaDescription?: string }) => ({
             locale: t.locale,
             title: t.title,
             description: t.description,
             content: t.content,
+            metaDescription: t.metaDescription || null,
           })),
         },
         projectImages: images?.length
@@ -83,11 +84,12 @@ export async function PUT(request: NextRequest) {
         status,
         translations: {
           deleteMany: {},
-          create: translations.map((t: { locale: string; title: string; description: string; content?: string }) => ({
+          create: translations.map((t: { locale: string; title: string; description: string; content?: string; metaDescription?: string }) => ({
             locale: t.locale,
             title: t.title,
             description: t.description,
             content: t.content,
+            metaDescription: t.metaDescription || null,
           })),
         },
         projectImages: {

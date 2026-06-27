@@ -47,13 +47,14 @@ model ProjectImage {
 }
 
 model ProjectTranslation {
-  id            String    @id @default(cuid())
-  locale        String
-  title         String
-  description   String
-  content       String?
-  projectId     String
-  project       Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  id              String    @id @default(cuid())
+  locale          String
+  title           String
+  description     String
+  content         String?
+  metaDescription String?
+  projectId       String
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, locale])
 }
@@ -77,13 +78,14 @@ model BlogPost {
 }
 
 model BlogPostTranslation {
-  id            String    @id @default(cuid())
-  locale        String
-  title         String
-  excerpt       String
-  content       String
-  blogPostId    String
-  blogPost      BlogPost  @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  id              String    @id @default(cuid())
+  locale          String
+  title           String
+  excerpt         String
+  content         String
+  metaDescription String?
+  blogPostId      String
+  blogPost        BlogPost  @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
 
   @@unique([blogPostId, locale])
 }

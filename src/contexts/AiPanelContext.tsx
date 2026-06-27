@@ -11,6 +11,7 @@ interface AiPanelData {
   entityType: "blog" | "project";
   availableTags: string;
   availableCategories: string;
+  existingArticles?: string;
   onApplyFields: (fields: AiFieldUpdates, targetLocale: "en" | "ar") => void;
   onSwitchLocale?: (locale: "en" | "ar") => void;
 }
@@ -19,6 +20,7 @@ interface AiPanelContextValue {
   isOpen: boolean;
   panelData: AiPanelData | null;
   openPanel: (data: AiPanelData) => void;
+  updatePanelData: (updates: Partial<AiPanelData>) => void;
   closePanel: () => void;
 }
 
@@ -33,13 +35,17 @@ export function AiPanelProvider({ children }: { children: ReactNode }) {
     setIsOpen(true);
   }, []);
 
+  const updatePanelData = useCallback((updates: Partial<AiPanelData>) => {
+    setPanelData((prev) => (prev ? { ...prev, ...updates } : null));
+  }, []);
+
   const closePanel = useCallback(() => {
     setIsOpen(false);
     setPanelData(null);
   }, []);
 
   return (
-    <AiPanelContext.Provider value={{ isOpen, panelData, openPanel, closePanel }}>
+    <AiPanelContext.Provider value={{ isOpen, panelData, openPanel, updatePanelData, closePanel }}>
       {children}
     </AiPanelContext.Provider>
   );

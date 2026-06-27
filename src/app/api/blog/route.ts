@@ -47,11 +47,12 @@ export async function POST(request: NextRequest) {
         publishedAt,
         authorId: authorExists ? userId : null,
         translations: {
-          create: translations.map((t: { locale: string; title: string; excerpt: string; content: string }) => ({
+          create: translations.map((t: { locale: string; title: string; excerpt: string; content: string; metaDescription?: string }) => ({
             locale: t.locale,
             title: t.title,
             excerpt: t.excerpt,
             content: t.content,
+            metaDescription: t.metaDescription || null,
           })),
         },
         categories: categoryIds?.length ? { connect: categoryIds.map((id: string) => ({ id })) } : undefined,
@@ -97,11 +98,12 @@ export async function PUT(request: NextRequest) {
         publishedAt,
         translations: {
           deleteMany: {},
-          create: translations.map((t: { locale: string; title: string; excerpt: string; content: string }) => ({
+          create: translations.map((t: { locale: string; title: string; excerpt: string; content: string; metaDescription?: string }) => ({
             locale: t.locale,
             title: t.title,
             excerpt: t.excerpt,
             content: t.content,
+            metaDescription: t.metaDescription || null,
           })),
         },
         categories: { set: categoryIds?.map((id: string) => ({ id })) || [] },

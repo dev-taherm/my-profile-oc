@@ -18,7 +18,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAiStream, type ChatMessage } from "@/hooks/use-ai-stream";
-import { buildSystemPrompt, type AiFieldUpdates, type AiPendingUpdate } from "@/lib/ai-providers";
+import { useAiPanel } from "@/contexts/AiPanelContext";
+import { type AiFieldUpdates, type AiPendingUpdate } from "@/lib/ai-providers";
 
 interface AiChatPanelProps {
   currentContent: string;
@@ -28,6 +29,7 @@ interface AiChatPanelProps {
   entityType: "blog" | "project";
   availableTags: string;
   availableCategories: string;
+  existingArticles?: string;
   onApplyFields: (fields: AiFieldUpdates, targetLocale: "en" | "ar") => void;
   onSwitchLocale?: (locale: "en" | "ar") => void;
   onClose?: () => void;
@@ -40,22 +42,24 @@ const FIELD_LABELS: Record<string, string> = {
   slug: "Slug",
   tags: "Tags",
   categories: "Categories",
+  metaDescription: "Meta Description",
+  relatedArticles: "Related Articles",
 };
 
 const SUGGESTIONS: Record<string, string[]> = {
   blog: [
-    "Translate this to Arabic",
-    "Optimize for SEO",
-    "Create a compelling excerpt",
-    "Improve the writing",
-    "Suggest a better title",
+    "Write an article answering a common Django question",
+    "Add an FAQ section to this article",
+    "Rewrite with personal experience and code examples",
+    "Optimize for SEO and AI citation",
+    "Suggest internal links to related articles",
   ],
   project: [
-    "Translate this to Arabic",
-    "Write a project description",
-    "Optimize for SEO",
-    "Improve the writing",
-    "Suggest tags",
+    "Write a detailed project description with architecture",
+    "Add code examples and tech stack details",
+    "Include challenges and lessons learned",
+    "Suggest related projects for topic clustering",
+    "Optimize project for AI discoverability",
   ],
 };
 
@@ -67,6 +71,7 @@ export function AiChatPanel({
   entityType,
   availableTags,
   availableCategories,
+  existingArticles,
   onApplyFields,
   onSwitchLocale,
   onClose,
@@ -75,6 +80,7 @@ export function AiChatPanel({
   const [autoApply, setAutoApply] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { updatePanelData } = useAiPanel();
   const {
     isGenerating,
     streamedText,
@@ -85,7 +91,7 @@ export function AiChatPanel({
     stopGeneration,
     clearPendingUpdate,
     clearChat,
-  } = useAiStream({ entityType, locale });
+  } = useAiStream();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -101,18 +107,6 @@ export function AiChatPanel({
     }
   }, [pendingUpdate, autoApply]);
 
-  const getSystemPrompt = () => {
-    return buildSystemPrompt(
-      entityType,
-      locale,
-      title,
-      excerpt || "",
-      currentContent,
-      availableTags,
-      availableCategories
-    );
-  };
-
   const handleSend = async (prefix?: string) => {
     const message = input.trim();
     if (!message && !prefix) return;
@@ -121,7 +115,16 @@ export function AiChatPanel({
     const fullMessage = prefix ? `${prefix} ${message}` : message;
 
     setInput("");
-    await sendMessage(fullMessage, getSystemPrompt());
+    await sendMessage({
+      prompt: fullMessage,
+      entityType,
+      locale,
+      title,
+      excerpt: excerpt || "",
+      currentContent,
+      availableTags,
+      availableCategories,
+    });
   };
 
   const handlePlan = () => {
@@ -142,6 +145,25 @@ export function AiChatPanel({
   const handleApplyUpdate = (update: AiPendingUpdate) => {
     onApplyFields(update.fields, update.locale);
     onSwitchLocale?.(update.locale);
+
+    // Sync applied content back to panel context so next AI call sees updated content
+    const updates: Record<string, string> = {};
+    if (update.fields.content !== undefined) {
+      updates.currentContent = update.fields.content;
+    }
+    if (update.fields.title !== undefined) {
+      updates.title = update.fields.title;
+    }
+    if (update.fields.excerpt !== undefined) {
+      updates.excerpt = update.fields.excerpt;
+    }
+    if (update.locale) {
+      updates.locale = update.locale;
+    }
+    if (Object.keys(updates).length > 0) {
+      updatePanelData(updates);
+    }
+
     clearPendingUpdate();
   };
 
@@ -202,6 +224,23 @@ export function AiChatPanel({
                 </button>
               ))}
             </div>
+            {existingArticles && (
+              <div className="mt-6 text-left max-w-sm mx-auto">
+                <p className="text-[11px] font-medium text-muted-foreground mb-2 uppercase tracking-wide">
+                  Existing articles on this site:
+                </p>
+                <div className="space-y-1">
+                  {existingArticles.split("\n").slice(0, 8).map((line, i) => (
+                    <p key={i} className="text-xs text-muted-foreground truncate">{line}</p>
+                  ))}
+                  {existingArticles.split("\n").length > 8 && (
+                    <p className="text-xs text-muted-foreground italic">
+                      +{existingArticles.split("\n").length - 8} more
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -291,6 +330,22 @@ export function AiChatPanel({
                 <div className="flex flex-wrap gap-1 mt-1">
                   {pendingUpdate.fields.categories.map((c) => (
                     <Badge key={c} variant="secondary" className="text-[10px]">{c}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {pendingUpdate.fields.metaDescription && (
+              <div>
+                <span className="font-medium text-muted-foreground">Meta Description:</span>
+                <p className="mt-0.5 line-clamp-2">{pendingUpdate.fields.metaDescription}</p>
+              </div>
+            )}
+            {pendingUpdate.fields.relatedArticles && pendingUpdate.fields.relatedArticles.length > 0 && (
+              <div>
+                <span className="font-medium text-muted-foreground">Related Articles:</span>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {pendingUpdate.fields.relatedArticles.map((a) => (
+                    <Badge key={a} variant="secondary" className="text-[10px]">{a}</Badge>
                   ))}
                 </div>
               </div>

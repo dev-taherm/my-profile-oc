@@ -3,9 +3,15 @@
 import { useState, useRef, useCallback } from "react";
 import { parseAiUpdate, type AiPendingUpdate } from "@/lib/ai-providers";
 
-interface UseAiStreamOptions {
-  entityType?: "blog" | "project";
-  locale?: string;
+interface SendMessageOptions {
+  prompt: string;
+  entityType: string;
+  locale: string;
+  title: string;
+  excerpt: string;
+  currentContent: string;
+  availableTags: string;
+  availableCategories: string;
 }
 
 interface ChatMessage {
@@ -15,7 +21,7 @@ interface ChatMessage {
   pendingUpdate?: AiPendingUpdate;
 }
 
-export function useAiStream(options: UseAiStreamOptions = {}) {
+export function useAiStream() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamedText, setStreamedText] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -23,6 +29,10 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
   const [searchResults, setSearchResults] = useState<string | null>(null);
   const [pendingUpdate, setPendingUpdate] = useState<AiPendingUpdate | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const messagesRef = useRef<ChatMessage[]>([]);
+
+  // Keep ref in sync with state
+  messagesRef.current = messages;
 
   const stopGeneration = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -68,17 +78,19 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
   );
 
   const sendMessage = useCallback(
-    async (
-      prompt: string,
-      systemPrompt?: string,
-      onChunk?: (text: string) => void
-    ): Promise<string | null> => {
+    async (opts: SendMessageOptions): Promise<string | null> => {
       setError(null);
       setIsGenerating(true);
       setStreamedText("");
       setPendingUpdate(null);
 
-      setMessages((prev) => [...prev, { role: "user", content: prompt }]);
+      // Add user message to state
+      setMessages((prev) => [...prev, { role: "user", content: opts.prompt }]);
+
+      // Use ref to get latest messages (including the one we just added)
+      // We need to wait briefly for React to flush the state update
+      await new Promise((r) => setTimeout(r, 0));
+      const currentMessages = messagesRef.current;
 
       const controller = new AbortController();
       abortControllerRef.current = controller;
@@ -88,13 +100,19 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            prompt,
-            systemPrompt,
-            entityType: options.entityType || "blog",
-            locale: options.locale || "en",
-            chatHistory: messages.slice(-10).map((m) => ({
+            prompt: opts.prompt,
+            entityType: opts.entityType,
+            locale: opts.locale,
+            title: opts.title,
+            excerpt: opts.excerpt,
+            currentContent: opts.currentContent,
+            availableTags: opts.availableTags,
+            availableCategories: opts.availableCategories,
+            chatHistory: currentMessages.slice(-10).map((m) => ({
               role: m.role,
-              content: m.content,
+              content: m.role === "assistant"
+                ? m.content.replace(/<ai-update[\s\S]*?<\/ai-update>/g, "").trim()
+                : m.content,
             })),
           }),
           signal: controller.signal,
@@ -130,7 +148,6 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
               if (parsed.text) {
                 fullText += parsed.text;
                 setStreamedText(fullText);
-                onChunk?.(parsed.text);
               }
             } catch {
               // skip malformed chunks
@@ -173,7 +190,7 @@ export function useAiStream(options: UseAiStreamOptions = {}) {
         abortControllerRef.current = null;
       }
     },
-    [options.entityType, options.locale, messages, searchWeb]
+    [searchWeb]
   );
 
   const clearPendingUpdate = useCallback(() => {

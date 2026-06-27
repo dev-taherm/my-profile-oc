@@ -41,9 +41,11 @@ export default function AdminBlogEditorPage({
   const [enTitle, setEnTitle] = useState("");
   const [enExcerpt, setEnExcerpt] = useState("");
   const [enContent, setEnContent] = useState("");
+  const [enMetaDescription, setEnMetaDescription] = useState("");
   const [arTitle, setArTitle] = useState("");
   const [arExcerpt, setArExcerpt] = useState("");
   const [arContent, setArContent] = useState("");
+  const [arMetaDescription, setArMetaDescription] = useState("");
   const [allCategories, setAllCategories] = useState<TaxonomyItem[]>([]);
   const [allTags, setAllTags] = useState<TaxonomyItem[]>([]);
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
@@ -53,6 +55,8 @@ export default function AdminBlogEditorPage({
   const [uploading, setUploading] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [locale, setLocale] = useState<"en" | "ar">("en");
+  const [existingArticles, setExistingArticles] = useState("");
+  const [contentVersion, setContentVersion] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const { openPanel } = useAiPanel();
@@ -62,11 +66,11 @@ export default function AdminBlogEditorPage({
   const snapshotState = useCallback(() => {
     return JSON.stringify({
       slug, coverImage, readingTime, featured, status,
-      enTitle, enExcerpt, enContent,
-      arTitle, arExcerpt, arContent,
+      enTitle, enExcerpt, enContent, enMetaDescription,
+      arTitle, arExcerpt, arContent, arMetaDescription,
       selectedCategoryIds, selectedTagIds,
     });
-  }, [slug, coverImage, readingTime, featured, status, enTitle, enExcerpt, enContent, arTitle, arExcerpt, arContent, selectedCategoryIds, selectedTagIds]);
+  }, [slug, coverImage, readingTime, featured, status, enTitle, enExcerpt, enContent, enMetaDescription, arTitle, arExcerpt, arContent, arMetaDescription, selectedCategoryIds, selectedTagIds]);
 
   useEffect(() => {
     setIsDirty(loadedRef.current !== "" && snapshotState() !== loadedRef.current);
@@ -86,6 +90,16 @@ export default function AdminBlogEditorPage({
     Promise.all([
       fetch("/api/categories").then((r) => r.json()).then(setAllCategories).catch(() => {}),
       fetch("/api/tags").then((r) => r.json()).then(setAllTags).catch(() => {}),
+      fetch("/api/blog").then((r) => r.json()).then((posts) => {
+        const titles = posts
+          .filter((p: { status: string }) => p.status === "PUBLISHED")
+          .map((p: { translations: { locale: string; title: string }[] }) => {
+            const en = p.translations?.find((t: { locale: string }) => t.locale === "en");
+            return en?.title;
+          })
+          .filter(Boolean);
+        setExistingArticles(titles.map((t: string, i: number) => `${i + 1}. ${t}`).join("\n"));
+      }).catch(() => {}),
     ]);
   }, []);
 
@@ -111,8 +125,8 @@ export default function AdminBlogEditorPage({
             setSelectedTagIds(p.tags?.map((t: TaxonomyItem) => t.id) || []);
             const en = p.translations?.find((t: { locale: string }) => t.locale === "en");
             const ar = p.translations?.find((t: { locale: string }) => t.locale === "ar");
-            if (en) { setEnTitle(en.title); setEnExcerpt(en.excerpt); setEnContent(en.content); }
-            if (ar) { setArTitle(ar.title); setArExcerpt(ar.excerpt); setArContent(ar.content); }
+            if (en) { setEnTitle(en.title); setEnExcerpt(en.excerpt); setEnContent(en.content); setEnMetaDescription(en.metaDescription || ""); }
+            if (ar) { setArTitle(ar.title); setArExcerpt(ar.excerpt); setArContent(ar.content); setArMetaDescription(ar.metaDescription || ""); }
           }
           setLoading(false);
         })
@@ -179,8 +193,8 @@ export default function AdminBlogEditorPage({
       categoryIds: selectedCategoryIds,
       tagIds: selectedTagIds,
       translations: [
-        { locale: "en", title: enTitle, excerpt: enExcerpt, content: enContent },
-        { locale: "ar", title: arTitle || enTitle, excerpt: arExcerpt || enExcerpt, content: arContent || enContent },
+        { locale: "en", title: enTitle, excerpt: enExcerpt, content: enContent, metaDescription: enMetaDescription },
+        { locale: "ar", title: arTitle || enTitle, excerpt: arExcerpt || enExcerpt, content: arContent || enContent, metaDescription: arMetaDescription || enMetaDescription },
       ],
     };
 
@@ -228,9 +242,13 @@ export default function AdminBlogEditorPage({
     }
     if (fields.content !== undefined) {
       targetLocale === "en" ? setEnContent(fields.content) : setArContent(fields.content);
+      setContentVersion((v) => v + 1);
     }
     if (fields.slug !== undefined) {
       setSlug(fields.slug);
+    }
+    if (fields.metaDescription !== undefined) {
+      targetLocale === "en" ? setEnMetaDescription(fields.metaDescription) : setArMetaDescription(fields.metaDescription);
     }
     if (fields.tags && fields.tags.length > 0) {
       const newIds: string[] = [];
@@ -286,6 +304,7 @@ export default function AdminBlogEditorPage({
       entityType: "blog",
       availableTags: allTags.map((t) => t.name).join(", "),
       availableCategories: allCategories.map((c) => c.name).join(", "),
+      existingArticles,
       onApplyFields: handleAiApplyFields,
       onSwitchLocale: (newLoc) => setLocale(newLoc),
     });
@@ -351,9 +370,17 @@ export default function AdminBlogEditorPage({
             onChange={(e) => setEnExcerpt(e.target.value)}
             rows={3}
           />
+          <Textarea
+            placeholder="Meta Description (SEO, max 160 chars)"
+            value={enMetaDescription}
+            onChange={(e) => setEnMetaDescription(e.target.value)}
+            rows={2}
+            maxLength={160}
+          />
           <div>
             <p className="text-sm font-medium mb-2">Content (Markdown)</p>
             <MarkdownEditor
+              key={`en-${contentVersion}`}
               value={enContent}
               onChange={setEnContent}
               height={400}
@@ -375,9 +402,18 @@ export default function AdminBlogEditorPage({
             onChange={(e) => setArExcerpt(e.target.value)}
             rows={3}
           />
+          <Textarea
+            placeholder="الوصف الميتا (SEO، حد أقصى 160 حرف)"
+            dir="rtl"
+            value={arMetaDescription}
+            onChange={(e) => setArMetaDescription(e.target.value)}
+            rows={2}
+            maxLength={160}
+          />
           <div>
             <p className="text-sm font-medium mb-2">المحتوى (ماركداون)</p>
             <MarkdownEditor
+              key={`ar-${contentVersion}`}
               value={arContent}
               onChange={setArContent}
               height={400}

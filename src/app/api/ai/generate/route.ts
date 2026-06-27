@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { buildAiRequest, parseProviderChunk, getAiSettings, type AiSettingsData } from "@/lib/ai-providers";
+import { prisma } from "@/lib/prisma";
+import { buildAiRequest, buildSystemPrompt, parseProviderChunk, getAiSettings, type AiSettingsData } from "@/lib/ai-providers";
 import { requestStream } from "@/lib/ipv4-fetch";
 
 export async function POST(request: Request) {
@@ -38,13 +39,36 @@ export async function POST(request: Request) {
     );
   }
 
-  const finalSystemPrompt =
-    systemPrompt ||
-    `You are a professional content writer and editor for a portfolio website.
-Write in markdown format. Be concise and professional.
-The user is editing a ${entityType || "blog post"}.
-The current content language is ${locale || "en"}.
-Respond ONLY with the requested content. Do not include explanations or meta-commentary.`;
+  // Fetch existing articles for topic clustering
+  let existingArticles = "";
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where: { status: "PUBLISHED" },
+      include: { translations: { where: { locale: "en" }, select: { title: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    const titles = posts
+      .map((p) => p.translations[0]?.title)
+      .filter(Boolean);
+    if (titles.length > 0) {
+      existingArticles = titles.map((t, i) => `${i + 1}. ${t}`).join("\n");
+    }
+  } catch {
+    // ignore — proceed without existing articles
+  }
+
+  // Always build system prompt server-side for security
+  const finalSystemPrompt = buildSystemPrompt(
+    entityType || "blog",
+    locale || "en",
+    body.title || "",
+    body.excerpt || "",
+    body.currentContent || "",
+    body.availableTags || "",
+    body.availableCategories || "",
+    existingArticles
+  );
 
   try {
     const req = await buildAiRequest(

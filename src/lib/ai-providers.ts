@@ -2,6 +2,16 @@ import { prisma } from "./prisma";
 
 export type AiProvider = "ollama" | "openai" | "claude" | "google";
 
+export interface AiProfileData {
+  id: string;
+  name: string;
+  provider: AiProvider;
+  apiKey: string | null;
+  baseUrl: string | null;
+  model: string;
+  isDefault: boolean;
+}
+
 export interface AiSettingsData {
   provider: AiProvider;
   apiKey: string | null;
@@ -39,40 +49,165 @@ const PROVIDER_DEFAULTS: Record<AiProvider, { baseUrl: string; model: string }> 
   google: { baseUrl: "https://generativelanguage.googleapis.com/v1beta", model: "gemini-2.5-flash" },
 };
 
-export async function getAiSettings(): Promise<AiSettingsData> {
+// ─── Profile CRUD ────────────────────────────────────────────────
+
+export async function getAllProfiles(): Promise<AiProfileData[]> {
+  const profiles = await prisma.aiProfile.findMany({ orderBy: { createdAt: "asc" } });
+  return profiles.map((p) => ({
+    id: p.id,
+    name: p.name,
+    provider: p.provider as AiProvider,
+    apiKey: p.apiKey,
+    baseUrl: p.baseUrl,
+    model: p.model,
+    isDefault: p.isDefault,
+  }));
+}
+
+export async function getActiveProfile(): Promise<AiSettingsData> {
   const settings = await prisma.aiSettings.findUnique({ where: { id: "default" } });
-  if (!settings) {
-    return { provider: "ollama", apiKey: null, baseUrl: null, model: "llama3", tavilyApiKey: null };
+  const tavilyKey = settings?.tavilyApiKey ?? null;
+
+  if (settings?.activeProfileId) {
+    const profile = await prisma.aiProfile.findUnique({ where: { id: settings.activeProfileId } });
+    if (profile) {
+      return {
+        provider: profile.provider as AiProvider,
+        apiKey: profile.apiKey,
+        baseUrl: profile.baseUrl,
+        model: profile.model,
+        tavilyApiKey: tavilyKey,
+      };
+    }
   }
+
+  // Fallback: first profile, or hardcoded defaults
+  const first = await prisma.aiProfile.findFirst({ orderBy: { createdAt: "asc" } });
+  if (first) {
+    return {
+      provider: first.provider as AiProvider,
+      apiKey: first.apiKey,
+      baseUrl: first.baseUrl,
+      model: first.model,
+      tavilyApiKey: tavilyKey,
+    };
+  }
+
+  return { provider: "ollama", apiKey: null, baseUrl: null, model: "llama3", tavilyApiKey: tavilyKey };
+}
+
+export async function createProfile(data: {
+  name: string;
+  provider: AiProvider;
+  apiKey?: string;
+  baseUrl?: string;
+  model?: string;
+}): Promise<AiProfileData> {
+  const count = await prisma.aiProfile.count();
+  const isFirst = count === 0;
+
+  const profile = await prisma.aiProfile.create({
+    data: {
+      name: data.name,
+      provider: data.provider,
+      apiKey: data.apiKey || null,
+      baseUrl: data.baseUrl || PROVIDER_DEFAULTS[data.provider].baseUrl,
+      model: data.model || PROVIDER_DEFAULTS[data.provider].model,
+      isDefault: isFirst,
+    },
+  });
+
+  // If first profile, auto-activate it
+  if (isFirst) {
+    await prisma.aiSettings.upsert({
+      where: { id: "default" },
+      create: { id: "default", activeProfileId: profile.id },
+      update: { activeProfileId: profile.id },
+    });
+  }
+
   return {
-    provider: settings.provider as AiProvider,
-    apiKey: settings.apiKey,
-    baseUrl: settings.baseUrl,
-    model: settings.model,
-    tavilyApiKey: settings.tavilyApiKey,
+    id: profile.id,
+    name: profile.name,
+    provider: profile.provider as AiProvider,
+    apiKey: profile.apiKey,
+    baseUrl: profile.baseUrl,
+    model: profile.model,
+    isDefault: profile.isDefault,
   };
 }
 
-export async function saveAiSettings(data: AiSettingsData): Promise<void> {
+export async function updateProfile(
+  id: string,
+  data: {
+    name?: string;
+    provider?: AiProvider;
+    apiKey?: string | undefined;
+    baseUrl?: string;
+    model?: string;
+  }
+): Promise<AiProfileData> {
+  const updateData: Record<string, unknown> = {};
+  if (data.name !== undefined) updateData.name = data.name;
+  if (data.provider !== undefined) updateData.provider = data.provider;
+  if (data.baseUrl !== undefined) updateData.baseUrl = data.baseUrl;
+  if (data.model !== undefined) updateData.model = data.model;
+  // Only overwrite apiKey if explicitly provided (not undefined)
+  if (data.apiKey !== undefined) updateData.apiKey = data.apiKey || null;
+
+  const profile = await prisma.aiProfile.update({ where: { id }, data: updateData });
+  return {
+    id: profile.id,
+    name: profile.name,
+    provider: profile.provider as AiProvider,
+    apiKey: profile.apiKey,
+    baseUrl: profile.baseUrl,
+    model: profile.model,
+    isDefault: profile.isDefault,
+  };
+}
+
+export async function deleteProfile(id: string): Promise<void> {
+  const settings = await prisma.aiSettings.findUnique({ where: { id: "default" } });
+  if (settings?.activeProfileId === id) {
+    throw new Error("Cannot delete the active profile. Activate another profile first.");
+  }
+  await prisma.aiProfile.delete({ where: { id } });
+}
+
+export async function setActiveProfile(id: string): Promise<void> {
+  const profile = await prisma.aiProfile.findUnique({ where: { id } });
+  if (!profile) throw new Error("Profile not found");
+
   await prisma.aiSettings.upsert({
     where: { id: "default" },
-    create: {
-      id: "default",
-      provider: data.provider,
-      apiKey: data.apiKey,
-      baseUrl: data.baseUrl,
-      model: data.model,
-      tavilyApiKey: data.tavilyApiKey,
-    },
-    update: {
-      provider: data.provider,
-      apiKey: data.apiKey,
-      baseUrl: data.baseUrl,
-      model: data.model,
-      tavilyApiKey: data.tavilyApiKey,
-    },
+    create: { id: "default", activeProfileId: id },
+    update: { activeProfileId: id },
+  });
+
+  // Clear isDefault on all profiles, set on the active one
+  await prisma.aiProfile.updateMany({ data: { isDefault: false } });
+  await prisma.aiProfile.update({ where: { id }, data: { isDefault: true } });
+}
+
+// ─── Tavily Key ──────────────────────────────────────────────────
+
+export async function getTavilyKey(): Promise<string | null> {
+  const settings = await prisma.aiSettings.findUnique({ where: { id: "default" } });
+  return settings?.tavilyApiKey ?? null;
+}
+
+export async function setTavilyKey(key: string | null): Promise<void> {
+  await prisma.aiSettings.upsert({
+    where: { id: "default" },
+    create: { id: "default", tavilyApiKey: key },
+    update: { tavilyApiKey: key },
   });
 }
+
+// ─── Backward compat (used by generate route) ────────────────────
+
+export { getActiveProfile as getAiSettings };
 
 export function maskApiKey(key: string | null): string | null {
   if (!key) return null;
@@ -276,7 +411,7 @@ export async function buildAiRequest(
   params: AiGenerateParams,
   overrideSettings?: AiSettingsData
 ): Promise<{ url: string; headers: Record<string, string>; body: object }> {
-  const settings = overrideSettings || await getAiSettings();
+  const settings = overrideSettings || await getActiveProfile();
   const provider = settings.provider;
   const baseUrl = settings.baseUrl || PROVIDER_DEFAULTS[provider].baseUrl;
   const model = settings.model || PROVIDER_DEFAULTS[provider].model;

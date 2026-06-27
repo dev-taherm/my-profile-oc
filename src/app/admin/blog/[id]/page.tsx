@@ -111,7 +111,7 @@ export default function AdminBlogEditorPage({
     params.then(({ id: blogId }) => {
       setId(blogId);
       if (blogId === "new") {
-        setIsNew(false);
+        setIsNew(true);
         setLoading(false);
         return;
       }

@@ -179,14 +179,25 @@ model PageView {
   @@index([sessionId])
 }
 
+model AiProfile {
+  id        String      @id @default(cuid())
+  name      String
+  provider  String      @default("ollama")
+  apiKey    String?
+  baseUrl   String?
+  model     String      @default("llama3")
+  isDefault Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  activeIn  AiSettings?
+}
+
 model AiSettings {
-  id            String   @id @default("default")
-  provider      String   @default("ollama")
-  apiKey        String?
-  baseUrl       String?
-  model         String   @default("llama3")
-  tavilyApiKey  String?
-  updatedAt     DateTime @updatedAt
+  id              String    @id @default("default")
+  tavilyApiKey    String?
+  activeProfileId String?   @unique
+  activeProfile   AiProfile? @relation(fields: [activeProfileId], references: [id], onDelete: SetNull)
+  updatedAt       DateTime  @updatedAt
 }
 
 

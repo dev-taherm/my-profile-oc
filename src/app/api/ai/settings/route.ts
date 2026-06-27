@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { getAiSettings, saveAiSettings, maskApiKey, type AiProvider } from "@/lib/ai-providers";
+import { getTavilyKey, setTavilyKey, getActiveProfile, maskApiKey } from "@/lib/ai-providers";
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -9,15 +9,13 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const settings = await getAiSettings();
+  const tavilyKey = await getTavilyKey();
+  const activeProfile = await getActiveProfile();
+
   return NextResponse.json({
-    provider: settings.provider,
-    apiKey: maskApiKey(settings.apiKey),
-    apiKeySet: !!settings.apiKey,
-    baseUrl: settings.baseUrl,
-    model: settings.model,
-    tavilyApiKey: maskApiKey(settings.tavilyApiKey),
-    tavilyKeySet: !!settings.tavilyApiKey,
+    tavilyApiKey: maskApiKey(tavilyKey),
+    tavilyKeySet: !!tavilyKey,
+    activeProfileId: activeProfile.provider ? null : null, // client reads profiles separately
   });
 }
 
@@ -28,20 +26,12 @@ export async function PUT(request: Request) {
   }
 
   const body = await request.json();
-  const { provider, apiKey, baseUrl, model, tavilyApiKey } = body;
+  const { tavilyApiKey } = body;
 
-  const validProviders: AiProvider[] = ["ollama", "openai", "claude", "google"];
-  if (!validProviders.includes(provider)) {
-    return NextResponse.json({ error: "Invalid provider" }, { status: 400 });
+  // Only update Tavily key if explicitly provided
+  if ("tavilyApiKey" in body) {
+    await setTavilyKey(tavilyApiKey || null);
   }
-
-  await saveAiSettings({
-    provider,
-    apiKey: apiKey || null,
-    baseUrl: baseUrl || null,
-    model: model || undefined,
-    tavilyApiKey: tavilyApiKey || null,
-  });
 
   return NextResponse.json({ success: true });
 }

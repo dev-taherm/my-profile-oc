@@ -4,7 +4,6 @@ import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SessionProvider } from "next-auth/react";
-import { Group as PanelGroup, Panel, Separator } from "react-resizable-panels";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
 import { AiPanelProvider, useAiPanel } from "@/contexts/AiPanelContext";
 import { AiChatPanel } from "@/components/admin/AiChatPanel";
@@ -79,7 +78,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
     closePanel();
   }, [pathname, closePanel]);
 
-  // Mobile: AI panel opens as full-screen Sheet overlay
+  // Mobile: AI panel opens as Sheet overlay
   if (isMobile) {
     return (
       <div className="min-h-screen flex">
@@ -108,43 +107,35 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Desktop with AI panel open: resizable split view
-  if (isOpen && panelData) {
-    return (
-      <div className="h-screen flex">
-        <AdminSidebar collapsed />
-        <PanelGroup orientation="horizontal" className="flex-1 h-full">
-          <Panel defaultSize={50} minSize={30}>
-            <main className="h-full overflow-auto p-6 md:p-8">
-              {children}
-            </main>
-          </Panel>
-          <Separator className="w-2 bg-border hover:bg-primary/20 transition-colors" />
-          <Panel defaultSize={50} minSize={30}>
-            <AiChatPanel
-              currentContent={panelData.currentContent}
-              title={panelData.title}
-              excerpt={panelData.excerpt}
-              locale={panelData.locale}
-              entityType={panelData.entityType}
-              availableTags={panelData.availableTags}
-              availableCategories={panelData.availableCategories}
-              existingArticles={panelData.existingArticles}
-              onClose={closePanel}
-            />
-          </Panel>
-        </PanelGroup>
-      </div>
-    );
-  }
-
-  // Desktop normal: sidebar + main
+  // Desktop: <main> is always at the same DOM depth (second child of root div).
+  // AI panel is a conditional sibling — its mount/unmount does not affect <main>.
   return (
-    <div className="min-h-screen flex">
-      <AdminSidebar />
-      <main className="flex-1 p-6 md:p-8 overflow-auto">
+    <div className={isOpen ? "h-screen flex" : "min-h-screen flex"}>
+      <AdminSidebar collapsed={isOpen} />
+      <main
+        className={
+          isOpen
+            ? "w-1/2 h-full overflow-auto p-6 md:p-8"
+            : "flex-1 overflow-auto p-6 md:p-8"
+        }
+      >
         {children}
       </main>
+      {isOpen && panelData && (
+        <div className="w-1/2 h-screen overflow-auto border-l">
+          <AiChatPanel
+            currentContent={panelData.currentContent}
+            title={panelData.title}
+            excerpt={panelData.excerpt}
+            locale={panelData.locale}
+            entityType={panelData.entityType}
+            availableTags={panelData.availableTags}
+            availableCategories={panelData.availableCategories}
+            existingArticles={panelData.existingArticles}
+            onClose={closePanel}
+          />
+        </div>
+      )}
     </div>
   );
 }

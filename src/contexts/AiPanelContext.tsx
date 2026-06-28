@@ -12,6 +12,7 @@ interface AiPanelData {
   availableTags: string;
   availableCategories: string;
   existingArticles?: string;
+  storageKey?: string;
 }
 
 interface AiPanelContextValue {
@@ -22,8 +23,10 @@ interface AiPanelContextValue {
   closePanel: () => void;
   registerApplyHandler: (handler: (fields: AiFieldUpdates, targetLocale: "en" | "ar") => void) => void;
   registerSwitchLocaleHandler: (handler: (locale: "en" | "ar") => void) => void;
+  registerUndoHandler: (handler: () => void) => void;
   applyHandlerRef: React.MutableRefObject<((fields: AiFieldUpdates, targetLocale: "en" | "ar") => void) | null>;
   switchLocaleHandlerRef: React.MutableRefObject<((locale: "en" | "ar") => void) | null>;
+  undoHandlerRef: React.MutableRefObject<(() => void) | null>;
 }
 
 const AiPanelContext = createContext<AiPanelContextValue | null>(null);
@@ -33,6 +36,7 @@ export function AiPanelProvider({ children }: { children: ReactNode }) {
   const [panelData, setPanelData] = useState<AiPanelData | null>(null);
   const applyHandlerRef = useRef<((fields: AiFieldUpdates, targetLocale: "en" | "ar") => void) | null>(null);
   const switchLocaleHandlerRef = useRef<((locale: "en" | "ar") => void) | null>(null);
+  const undoHandlerRef = useRef<(() => void) | null>(null);
 
   const openPanel = useCallback((data: AiPanelData) => {
     setPanelData(data);
@@ -56,8 +60,12 @@ export function AiPanelProvider({ children }: { children: ReactNode }) {
     switchLocaleHandlerRef.current = handler;
   }, []);
 
+  const registerUndoHandler = useCallback((handler: () => void) => {
+    undoHandlerRef.current = handler;
+  }, []);
+
   return (
-    <AiPanelContext.Provider value={{ isOpen, panelData, openPanel, updatePanelData, closePanel, registerApplyHandler, registerSwitchLocaleHandler, applyHandlerRef, switchLocaleHandlerRef }}>
+    <AiPanelContext.Provider value={{ isOpen, panelData, openPanel, updatePanelData, closePanel, registerApplyHandler, registerSwitchLocaleHandler, registerUndoHandler, applyHandlerRef, switchLocaleHandlerRef, undoHandlerRef }}>
       {children}
     </AiPanelContext.Provider>
   );

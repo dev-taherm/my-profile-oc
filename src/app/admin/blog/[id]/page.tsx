@@ -63,6 +63,7 @@ export default function AdminBlogEditorPage({
     openPanel,
     registerApplyHandler,
     registerSwitchLocaleHandler,
+    registerUndoHandler,
   } = useAiPanel();
 
   const loadedRef = useRef<string>("");
@@ -302,10 +303,42 @@ export default function AdminBlogEditorPage({
   const handleAiApplyFieldsRef = useRef(handleAiApplyFields);
   handleAiApplyFieldsRef.current = handleAiApplyFields;
 
+  // Snapshot captured just before AI apply, used for undo
+  const preApplySnapshotRef = useRef<string>("");
+
+  // Register undo handler — restores editor state from pre-apply snapshot
   useEffect(() => {
-    registerApplyHandler((fields, targetLocale) => handleAiApplyFieldsRef.current(fields, targetLocale));
+    registerUndoHandler(() => {
+      const snap = preApplySnapshotRef.current;
+      if (!snap) return;
+      try {
+        const s = JSON.parse(snap);
+        setSlug(s.slug ?? "");
+        setCoverImage(s.coverImage ?? "");
+        setReadingTime(s.readingTime ?? 5);
+        setFeatured(s.featured ?? false);
+        setStatus(s.status ?? "DRAFT");
+        setEnTitle(s.enTitle ?? "");
+        setEnExcerpt(s.enExcerpt ?? "");
+        setEnContent(s.enContent ?? "");
+        setEnMetaDescription(s.enMetaDescription ?? "");
+        setArTitle(s.arTitle ?? "");
+        setArExcerpt(s.arExcerpt ?? "");
+        setArContent(s.arContent ?? "");
+        setArMetaDescription(s.arMetaDescription ?? "");
+        setSelectedCategoryIds(s.selectedCategoryIds ?? []);
+        setSelectedTagIds(s.selectedTagIds ?? []);
+      } catch { /* ignore invalid snapshot */ }
+    });
+  }, [registerUndoHandler]);
+
+  useEffect(() => {
+    registerApplyHandler((fields, targetLocale) => {
+      preApplySnapshotRef.current = snapshotState();
+      handleAiApplyFieldsRef.current(fields, targetLocale);
+    });
     registerSwitchLocaleHandler((newLoc) => setLocale(newLoc));
-  }, [registerApplyHandler, registerSwitchLocaleHandler]);
+  }, [registerApplyHandler, registerSwitchLocaleHandler, snapshotState]);
 
   const openAiPanel = (loc: "en" | "ar") => {
     openPanel({
@@ -317,6 +350,7 @@ export default function AdminBlogEditorPage({
       availableTags: allTags.map((t) => t.name).join(", "),
       availableCategories: allCategories.map((c) => c.name).join(", "),
       existingArticles,
+      storageKey: `blog-${id}`,
     });
   };
 

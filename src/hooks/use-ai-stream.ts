@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
-import { parseAiUpdate, type AiPendingUpdate } from "@/lib/ai-providers";
+import { useState, useRef, useCallback, useEffect } from "react";
+import { parseAiUpdate, type AiPendingUpdate, type AiFieldUpdates } from "@/lib/ai-providers";
 
 interface SendMessageOptions {
   prompt: string;
@@ -12,6 +12,7 @@ interface SendMessageOptions {
   currentContent: string;
   availableTags: string;
   availableCategories: string;
+  webSearchContext?: string;
 }
 
 interface ChatMessage {
@@ -21,18 +22,55 @@ interface ChatMessage {
   pendingUpdate?: AiPendingUpdate;
 }
 
-export function useAiStream() {
+const MAX_STORED_MESSAGES = 50;
+
+function loadMessages(storageKey: string): ChatMessage[] {
+  try {
+    const raw = localStorage.getItem(`ai-chat-${storageKey}`);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.slice(-MAX_STORED_MESSAGES);
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMessages(storageKey: string, messages: ChatMessage[]) {
+  try {
+    localStorage.setItem(
+      `ai-chat-${storageKey}`,
+      JSON.stringify(messages.slice(-MAX_STORED_MESSAGES))
+    );
+  } catch { /* quota exceeded — silently ignore */ }
+}
+
+function clearStoredMessages(storageKey: string) {
+  try {
+    localStorage.removeItem(`ai-chat-${storageKey}`);
+  } catch { /* ignore */ }
+}
+
+export function useAiStream(storageKey?: string) {
   const [isGenerating, setIsGenerating] = useState(false);
   const [streamedText, setStreamedText] = useState("");
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() =>
+    storageKey ? loadMessages(storageKey) : []
+  );
   const [error, setError] = useState<string | null>(null);
   const [searchResults, setSearchResults] = useState<string | null>(null);
   const [pendingUpdate, setPendingUpdate] = useState<AiPendingUpdate | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesRef = useRef<ChatMessage[]>([]);
 
-  // Keep ref in sync with state
   messagesRef.current = messages;
+
+  // Persist messages to localStorage when they change
+  useEffect(() => {
+    if (storageKey && messages.length > 0) {
+      saveMessages(storageKey, messages);
+    }
+  }, [storageKey, messages]);
 
   const stopGeneration = useCallback(() => {
     abortControllerRef.current?.abort();
@@ -84,11 +122,8 @@ export function useAiStream() {
       setStreamedText("");
       setPendingUpdate(null);
 
-      // Add user message to state
       setMessages((prev) => [...prev, { role: "user", content: opts.prompt }]);
 
-      // Use ref to get latest messages (including the one we just added)
-      // We need to wait briefly for React to flush the state update
       await new Promise((r) => setTimeout(r, 0));
       const currentMessages = messagesRef.current;
 
@@ -108,6 +143,7 @@ export function useAiStream() {
             currentContent: opts.currentContent,
             availableTags: opts.availableTags,
             availableCategories: opts.availableCategories,
+            webSearchContext: opts.webSearchContext,
             chatHistory: currentMessages.slice(-10).map((m) => ({
               role: m.role,
               content: m.role === "assistant"
@@ -155,7 +191,6 @@ export function useAiStream() {
           }
         }
 
-        // Parse <ai-update> tags from the response
         const { cleanText, update } = parseAiUpdate(fullText);
 
         if (update) {
@@ -193,6 +228,27 @@ export function useAiStream() {
     [searchWeb]
   );
 
+  const regenerateLast = useCallback(() => {
+    // Find the last user message and remove everything after it
+    const lastUserIdx = [...messagesRef.current].findLastIndex((m) => m.role === "user");
+    if (lastUserIdx === -1) return;
+
+    const userMessage = messagesRef.current[lastUserIdx];
+    setMessages((prev) => prev.slice(0, lastUserIdx));
+    setPendingUpdate(null);
+    return userMessage.content;
+  }, []);
+
+  const editMessage = useCallback((index: number, newContent: string) => {
+    setMessages((prev) =>
+      prev.map((m, i) => (i === index ? { ...m, content: newContent } : m))
+    );
+  }, []);
+
+  const removeMessage = useCallback((index: number) => {
+    setMessages((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   const clearPendingUpdate = useCallback(() => {
     setPendingUpdate(null);
   }, []);
@@ -203,7 +259,8 @@ export function useAiStream() {
     setError(null);
     setSearchResults(null);
     setPendingUpdate(null);
-  }, []);
+    if (storageKey) clearStoredMessages(storageKey);
+  }, [storageKey]);
 
   return {
     isGenerating,
@@ -214,10 +271,13 @@ export function useAiStream() {
     pendingUpdate,
     sendMessage,
     stopGeneration,
+    regenerateLast,
+    editMessage,
+    removeMessage,
     clearPendingUpdate,
     clearChat,
     searchWeb,
   };
 }
 
-export type { ChatMessage };
+export type { ChatMessage, SendMessageOptions };

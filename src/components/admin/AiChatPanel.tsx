@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   X,
@@ -14,12 +14,18 @@ import {
   Check,
   XCircle,
   Sparkles,
+  Copy,
+  RefreshCw,
+  Pencil,
+  CheckCheck,
+  Search,
+  Undo2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAiStream, type ChatMessage } from "@/hooks/use-ai-stream";
 import { useAiPanel } from "@/contexts/AiPanelContext";
-import { type AiPendingUpdate } from "@/lib/ai-providers";
+import { type AiPendingUpdate, type AiFieldUpdates } from "@/lib/ai-providers";
 
 interface AiChatPanelProps {
   currentContent: string;
@@ -30,6 +36,7 @@ interface AiChatPanelProps {
   availableTags: string;
   availableCategories: string;
   existingArticles?: string;
+  storageKey?: string;
   onClose: () => void;
 }
 
@@ -44,22 +51,62 @@ const FIELD_LABELS: Record<string, string> = {
   relatedArticles: "Related Articles",
 };
 
-const SUGGESTIONS: Record<string, string[]> = {
-  blog: [
-    "Write an article answering a common Django question",
-    "Add an FAQ section to this article",
-    "Rewrite with personal experience and code examples",
-    "Optimize for SEO and AI citation",
-    "Suggest internal links to related articles",
-  ],
-  project: [
-    "Write a detailed project description with architecture",
-    "Add code examples and tech stack details",
-    "Include challenges and lessons learned",
-    "Suggest related projects for topic clustering",
-    "Optimize project for AI discoverability",
-  ],
-};
+function getSmartSuggestions(
+  entityType: string,
+  title: string,
+  excerpt: string,
+  content: string,
+  tags: string,
+  locale: string,
+): string[] {
+  const suggestions: string[] = [];
+
+  if (!content || content.length < 50) {
+    if (entityType === "blog") {
+      suggestions.push("Write an article answering a common developer question");
+      suggestions.push("Plan the article structure with headings and sections");
+    } else {
+      suggestions.push("Write a detailed project description with architecture");
+      suggestions.push("Plan the project documentation structure");
+    }
+  } else {
+    if (entityType === "blog") {
+      if (!content.toLowerCase().includes("faq")) {
+        suggestions.push("Add an FAQ section to this article");
+      }
+      if (!content.includes("```")) {
+        suggestions.push("Add code examples with explanations");
+      }
+      suggestions.push("Rewrite with personal experience and opinions");
+      suggestions.push("Optimize for SEO and AI citation");
+      suggestions.push("Suggest internal links to related articles");
+    } else {
+      if (!content.includes("```")) {
+        suggestions.push("Add code examples and tech stack details");
+      }
+      suggestions.push("Include challenges and lessons learned");
+      suggestions.push("Suggest related projects for topic clustering");
+      suggestions.push("Optimize project for AI discoverability");
+    }
+  }
+
+  if (!tags) {
+    suggestions.push("Generate relevant tags for this content");
+  }
+
+  if (!excerpt) {
+    suggestions.push("Write a compelling excerpt/summary");
+  }
+
+  // Always include one general suggestion
+  if (locale === "ar") {
+    suggestions.push("Translate this content to English");
+  } else {
+    suggestions.push("Translate this content to Arabic");
+  }
+
+  return suggestions.slice(0, 6);
+}
 
 export function AiChatPanel({
   currentContent,
@@ -70,13 +117,22 @@ export function AiChatPanel({
   availableTags,
   availableCategories,
   existingArticles,
+  storageKey,
   onClose,
 }: AiChatPanelProps) {
   const [input, setInput] = useState("");
   const [autoApply, setAutoApply] = useState(false);
+  const [webSearch, setWebSearch] = useState(false);
+  const [webSearchLoading, setWebSearchLoading] = useState(false);
+  const [undoVisible, setUndoVisible] = useState(false);
+  const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const { applyHandlerRef, switchLocaleHandlerRef } = useAiPanel();
+  const { applyHandlerRef, switchLocaleHandlerRef, undoHandlerRef } = useAiPanel();
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const {
     isGenerating,
     streamedText,
@@ -85,9 +141,13 @@ export function AiChatPanel({
     pendingUpdate,
     sendMessage,
     stopGeneration,
+    regenerateLast,
+    editMessage,
+    removeMessage,
     clearPendingUpdate,
     clearChat,
-  } = useAiStream();
+    searchWeb,
+  } = useAiStream(storageKey);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -103,14 +163,32 @@ export function AiChatPanel({
     }
   }, [pendingUpdate, autoApply]);
 
-  const handleSend = async (prefix?: string) => {
+  // Cleanup undo timer on unmount
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    };
+  }, []);
+
+  const handleSend = useCallback(async (prefix?: string) => {
     const message = input.trim();
     if (!message && !prefix) return;
     if (isGenerating) return;
 
     const fullMessage = prefix ? `${prefix} ${message}` : message;
-
     setInput("");
+    setWebSearchLoading(false);
+
+    let webSearchCtx: string | undefined;
+
+    // If web search is enabled, search first
+    if (webSearch && !prefix?.startsWith("[PLAN]") && !prefix?.startsWith("[BUILD]")) {
+      setWebSearchLoading(true);
+      const results = await searchWeb(message);
+      setWebSearchLoading(false);
+      if (results) webSearchCtx = results;
+    }
+
     await sendMessage({
       prompt: fullMessage,
       entityType,
@@ -120,8 +198,9 @@ export function AiChatPanel({
       currentContent,
       availableTags,
       availableCategories,
+      webSearchContext: webSearchCtx,
     });
-  };
+  }, [input, isGenerating, webSearch, searchWeb, entityType, locale, title, excerpt, currentContent, availableTags, availableCategories, sendMessage]);
 
   const handlePlan = () => {
     handleSend("[PLAN]");
@@ -139,10 +218,20 @@ export function AiChatPanel({
   };
 
   const handleApplyUpdate = (update: AiPendingUpdate) => {
-    // Use refs to always call the LATEST handler from the current editor instance
     applyHandlerRef.current?.(update.fields, update.locale);
     switchLocaleHandlerRef.current?.(update.locale);
     clearPendingUpdate();
+
+    // Show undo button for 10 seconds
+    setUndoVisible(true);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = setTimeout(() => setUndoVisible(false), 10000);
+  };
+
+  const handleUndo = () => {
+    undoHandlerRef.current?.();
+    setUndoVisible(false);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
   };
 
   const handleDiscardUpdate = () => {
@@ -154,7 +243,62 @@ export function AiChatPanel({
     setTimeout(() => inputRef.current?.focus(), 50);
   };
 
-  const suggestions = SUGGESTIONS[entityType] || SUGGESTIONS.blog;
+  const handleCopyMessage = async (content: string, idx: number) => {
+    await navigator.clipboard.writeText(content);
+    setCopiedId(idx);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleRegenerate = () => {
+    const userPrompt = regenerateLast();
+    if (userPrompt) {
+      // Remove the [PLAN]/[BUILD] prefix if present for re-sending
+      const cleanPrompt = userPrompt.replace(/^\[(PLAN|BUILD|SEARCH)\]\s*/, "");
+      setInput(cleanPrompt);
+      // Slight delay so state updates
+      setTimeout(() => {
+        if (userPrompt.startsWith("[PLAN]")) handleSend("[PLAN]");
+        else if (userPrompt.startsWith("[BUILD]")) handleSend("[BUILD]");
+        else handleSend();
+      }, 50);
+    }
+  };
+
+  const handleStartEdit = (idx: number, content: string) => {
+    setEditingIdx(idx);
+    setEditText(content);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingIdx === null) return;
+    editMessage(editingIdx, editText);
+    const editedMsg = messages[editingIdx];
+    setEditingIdx(null);
+    setEditText("");
+
+    // If it was a user message, re-send it
+    if (editedMsg.role === "user") {
+      // Remove all messages after this one
+      removeMessage(editingIdx);
+      // Wait for state to settle, then send
+      await new Promise((r) => setTimeout(r, 50));
+      setInput(editText);
+      setTimeout(() => handleSend(), 50);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingIdx(null);
+    setEditText("");
+  };
+
+  // Strip <ai-update> tags from streamed text for clean display
+  const cleanStreamedText = streamedText.replace(/<ai-update[\s\S]*$/, "").trim();
+
+  // Detect if AI is generating the update portion
+  const isGeneratingUpdate = streamedText.includes("<ai-update");
+
+  const suggestions = getSmartSuggestions(entityType, title, excerpt, currentContent, availableTags, locale);
 
   return (
     <div className="h-full flex flex-col bg-background">
@@ -168,6 +312,11 @@ export function AiChatPanel({
           </Badge>
         </div>
         <div className="flex items-center gap-1">
+          {undoVisible && (
+            <Button variant="ghost" size="icon-xs" onClick={handleUndo} title="Undo last apply">
+              <Undo2 className="h-3 w-3" />
+            </Button>
+          )}
           {messages.length > 0 && (
             <Button variant="ghost" size="icon-xs" onClick={clearChat} title="Clear chat">
               <Trash2 className="h-3 w-3" />
@@ -223,9 +372,24 @@ export function AiChatPanel({
         )}
 
         {messages.map((msg, i) => (
-          <MessageBubble key={i} message={msg} />
+          <MessageBubble
+            key={i}
+            message={msg}
+            index={i}
+            isLast={i === messages.length - 1 && msg.role === "assistant"}
+            editingIdx={editingIdx}
+            editText={editText}
+            copiedId={copiedId}
+            onCopy={handleCopyMessage}
+            onRegenerate={handleRegenerate}
+            onStartEdit={handleStartEdit}
+            onSaveEdit={handleSaveEdit}
+            onCancelEdit={handleCancelEdit}
+            onEditTextChange={setEditText}
+          />
         ))}
 
+        {/* Streaming indicator */}
         {streamedText && (
           <div className="flex gap-2">
             <div className="shrink-0 mt-1">
@@ -233,9 +397,29 @@ export function AiChatPanel({
             </div>
             <div className="rounded-lg px-3 py-2 text-sm bg-muted/50 border border-primary/20 max-w-[85%]">
               <div className="prose prose-xs max-w-none dark:prose-invert">
-                {streamedText}
+                {cleanStreamedText || <span className="text-muted-foreground italic">Thinking...</span>}
                 <span className="inline-block w-1.5 h-3.5 bg-primary/70 animate-pulse ml-0.5 align-text-bottom" />
               </div>
+              {isGeneratingUpdate && (
+                <p className="text-[10px] text-muted-foreground mt-1 italic">
+                  Generating changes...
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Web search loading indicator */}
+        {webSearchLoading && (
+          <div className="flex gap-2">
+            <div className="shrink-0 mt-1">
+              <Search className="h-4 w-4 text-blue-500" />
+            </div>
+            <div className="rounded-lg px-3 py-2 text-sm bg-blue-500/5 border border-blue-500/20 text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Searching the web...
+              </span>
             </div>
           </div>
         )}
@@ -249,107 +433,13 @@ export function AiChatPanel({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Pending Update Banner */}
+      {/* Pending Update Banner — Diff Preview */}
       {pendingUpdate && !autoApply && (
-        <div className="mx-3 mb-2 rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Check className="h-4 w-4 text-green-500" />
-            <span className="text-sm font-medium">Ready to apply</span>
-          </div>
-
-          <div className="space-y-2 text-xs">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <span>Target:</span>
-              <Badge variant="outline" className="text-[10px]">
-                {pendingUpdate.locale === "en" ? "English" : "Arabic"}
-              </Badge>
-            </div>
-
-            {pendingUpdate.fields.title && (
-              <div>
-                <span className="font-medium text-muted-foreground">Title:</span>
-                <p className="mt-0.5 truncate">{pendingUpdate.fields.title}</p>
-              </div>
-            )}
-            {pendingUpdate.fields.excerpt && (
-              <div>
-                <span className="font-medium text-muted-foreground">Excerpt:</span>
-                <p className="mt-0.5 line-clamp-2">{pendingUpdate.fields.excerpt}</p>
-              </div>
-            )}
-            {pendingUpdate.fields.content && (
-              <div>
-                <span className="font-medium text-muted-foreground">Content:</span>
-                <p className="mt-0.5 line-clamp-3">
-                  {pendingUpdate.fields.content.slice(0, 300)}
-                  {pendingUpdate.fields.content.length > 300 ? "..." : ""}
-                </p>
-              </div>
-            )}
-            {pendingUpdate.fields.slug && (
-              <div>
-                <span className="font-medium text-muted-foreground">Slug:</span>
-                <p className="mt-0.5 font-mono">{pendingUpdate.fields.slug}</p>
-              </div>
-            )}
-            {pendingUpdate.fields.tags && pendingUpdate.fields.tags.length > 0 && (
-              <div>
-                <span className="font-medium text-muted-foreground">Tags:</span>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {pendingUpdate.fields.tags.map((t) => (
-                    <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {pendingUpdate.fields.categories && pendingUpdate.fields.categories.length > 0 && (
-              <div>
-                <span className="font-medium text-muted-foreground">Categories:</span>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {pendingUpdate.fields.categories.map((c) => (
-                    <Badge key={c} variant="secondary" className="text-[10px]">{c}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {pendingUpdate.fields.metaDescription && (
-              <div>
-                <span className="font-medium text-muted-foreground">Meta Description:</span>
-                <p className="mt-0.5 line-clamp-2">{pendingUpdate.fields.metaDescription}</p>
-              </div>
-            )}
-            {pendingUpdate.fields.relatedArticles && pendingUpdate.fields.relatedArticles.length > 0 && (
-              <div>
-                <span className="font-medium text-muted-foreground">Related Articles:</span>
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {pendingUpdate.fields.relatedArticles.map((a) => (
-                    <Badge key={a} variant="secondary" className="text-[10px]">{a}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="flex gap-2 pt-1">
-            <Button
-              size="sm"
-              onClick={() => handleApplyUpdate(pendingUpdate)}
-              className="h-8"
-            >
-              <Check className="h-3.5 w-3.5 me-1" />
-              Apply to {pendingUpdate.locale === "en" ? "EN" : "AR"}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleDiscardUpdate}
-              className="h-8"
-            >
-              <XCircle className="h-3.5 w-3.5 me-1" />
-              Discard
-            </Button>
-          </div>
-        </div>
+        <PendingUpdateBanner
+          update={pendingUpdate}
+          onApply={() => handleApplyUpdate(pendingUpdate)}
+          onDiscard={handleDiscardUpdate}
+        />
       )}
 
       {/* Input Area */}
@@ -412,25 +502,36 @@ export function AiChatPanel({
           </Button>
         </div>
 
-        <div className="flex items-center justify-between mt-2">
-          <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
-            <input
-              type="checkbox"
-              checked={autoApply}
-              onChange={(e) => setAutoApply(e.target.checked)}
-              className="rounded"
-            />
-            Auto-apply
-          </label>
-          {messages.some((m) => m.role === "assistant") && (
+        {/* Bottom toggles */}
+        <div className="flex items-center justify-between mt-2 gap-2">
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={autoApply}
+                onChange={(e) => setAutoApply(e.target.checked)}
+                className="rounded"
+              />
+              Auto-apply
+            </label>
+            <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={webSearch}
+                onChange={(e) => setWebSearch(e.target.checked)}
+                className="rounded"
+              />
+              <Search className="h-3 w-3" />
+              Web search
+            </label>
+          </div>
+          {undoVisible && (
             <button
-              onClick={() => {
-                const last = [...messages].reverse().find((m) => m.role === "assistant");
-                if (last) navigator.clipboard.writeText(last.cleanContent || last.content);
-              }}
-              className="text-[11px] text-muted-foreground hover:text-foreground"
+              onClick={handleUndo}
+              className="text-[11px] text-primary hover:underline flex items-center gap-1"
             >
-              Copy last
+              <Undo2 className="h-3 w-3" />
+              Undo
             </button>
           )}
         </div>
@@ -439,11 +540,162 @@ export function AiChatPanel({
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
-  const isUser = message.role === "user";
+// ─── Pending Update Banner with Diff ────────────────────────────────
+
+function PendingUpdateBanner({
+  update,
+  onApply,
+  onDiscard,
+}: {
+  update: AiPendingUpdate;
+  onApply: () => void;
+  onDiscard: () => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const fields = update.fields;
 
   return (
-    <div className="flex gap-2">
+    <div className="mx-3 mb-2 rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Check className="h-4 w-4 text-green-500" />
+          <span className="text-sm font-medium">Ready to apply</span>
+        </div>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-[11px] text-muted-foreground hover:text-foreground"
+        >
+          {expanded ? "Collapse" : "Expand"}
+        </button>
+      </div>
+
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <span>Target:</span>
+        <Badge variant="outline" className="text-[10px]">
+          {update.locale === "en" ? "English" : "Arabic"}
+        </Badge>
+      </div>
+
+      {expanded && (
+        <div className="space-y-2 text-xs max-h-60 overflow-y-auto">
+          {fields.title && (
+            <FieldDiff label="Title" value={fields.title} />
+          )}
+          {fields.excerpt && (
+            <FieldDiff label="Excerpt" value={fields.excerpt} maxLines={2} />
+          )}
+          {fields.content && (
+            <FieldDiff label="Content" value={fields.content} maxLines={4} />
+          )}
+          {fields.slug && (
+            <FieldDiff label="Slug" value={fields.slug} mono />
+          )}
+          {fields.tags && fields.tags.length > 0 && (
+            <div>
+              <span className="font-medium text-muted-foreground">Tags:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {fields.tags.map((t) => (
+                  <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          {fields.categories && fields.categories.length > 0 && (
+            <div>
+              <span className="font-medium text-muted-foreground">Categories:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {fields.categories.map((c) => (
+                  <Badge key={c} variant="secondary" className="text-[10px]">{c}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          {fields.metaDescription && (
+            <FieldDiff label="Meta Description" value={fields.metaDescription} maxLines={2} />
+          )}
+          {fields.relatedArticles && fields.relatedArticles.length > 0 && (
+            <div>
+              <span className="font-medium text-muted-foreground">Related Articles:</span>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {fields.relatedArticles.map((a) => (
+                  <Badge key={a} variant="secondary" className="text-[10px]">{a}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex gap-2 pt-1">
+        <Button size="sm" onClick={onApply} className="h-8">
+          <Check className="h-3.5 w-3.5 me-1" />
+          Apply to {update.locale === "en" ? "EN" : "AR"}
+        </Button>
+        <Button size="sm" variant="outline" onClick={onDiscard} className="h-8">
+          <XCircle className="h-3.5 w-3.5 me-1" />
+          Discard
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function FieldDiff({
+  label,
+  value,
+  maxLines = 3,
+  mono = false,
+}: {
+  label: string;
+  value: string;
+  maxLines?: number;
+  mono?: boolean;
+}) {
+  return (
+    <div>
+      <span className="font-medium text-muted-foreground">{label}:</span>
+      <p className={`mt-0.5 ${mono ? "font-mono" : ""} line-clamp-${maxLines}`}>
+        {value.length > 300 ? value.slice(0, 300) + "..." : value}
+      </p>
+    </div>
+  );
+}
+
+// ─── Message Bubble with Actions ────────────────────────────────────
+
+function MessageBubble({
+  message,
+  index,
+  isLast,
+  editingIdx,
+  editText,
+  copiedId,
+  onCopy,
+  onRegenerate,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onEditTextChange,
+}: {
+  message: ChatMessage;
+  index: number;
+  isLast: boolean;
+  editingIdx: number | null;
+  editText: string;
+  copiedId: number | null;
+  onCopy: (content: string, idx: number) => void;
+  onRegenerate: () => void;
+  onStartEdit: (idx: number, content: string) => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onEditTextChange: (text: string) => void;
+}) {
+  const isUser = message.role === "user";
+  const isEditing = editingIdx === index;
+  const content = message.cleanContent || message.content;
+
+  return (
+    <div className="group relative flex gap-2">
       <div className="shrink-0 mt-1">
         {isUser ? (
           <User className="h-4 w-4 text-muted-foreground" />
@@ -451,26 +703,83 @@ function MessageBubble({ message }: { message: ChatMessage }) {
           <Bot className="h-4 w-4 text-primary" />
         )}
       </div>
-      <div
-        className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${
-          isUser
-            ? "bg-primary text-primary-foreground ml-auto"
-            : "bg-muted/50 border"
-        }`}
-      >
-        {isUser ? (
-          <div className="whitespace-pre-wrap break-words text-xs leading-relaxed">
-            {message.content}
+      <div className="flex-1 min-w-0">
+        {isEditing ? (
+          <div className="space-y-1">
+            <textarea
+              value={editText}
+              onChange={(e) => onEditTextChange(e.target.value)}
+              rows={3}
+              className="w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+              autoFocus
+            />
+            <div className="flex gap-1">
+              <Button size="sm" className="h-6 text-[10px]" onClick={onSaveEdit}>
+                <Check className="h-3 w-3 me-0.5" /> Send
+              </Button>
+              <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={onCancelEdit}>
+                Cancel
+              </Button>
+            </div>
           </div>
         ) : (
-          <div className="prose prose-xs max-w-none dark:prose-invert">
-            <ReactMarkdown>{message.cleanContent || message.content}</ReactMarkdown>
+          <div
+            className={`rounded-lg px-3 py-2 text-sm max-w-[85%] ${
+              isUser
+                ? "bg-primary text-primary-foreground ml-auto"
+                : "bg-muted/50 border"
+            }`}
+          >
+            {isUser ? (
+              <div className="whitespace-pre-wrap break-words text-xs leading-relaxed">
+                {message.content}
+              </div>
+            ) : (
+              <div className="prose prose-xs max-w-none dark:prose-invert">
+                <ReactMarkdown>{content}</ReactMarkdown>
+              </div>
+            )}
+            {message.pendingUpdate && (
+              <Badge variant="outline" className="text-[10px] mt-1">
+                Updates for {message.pendingUpdate.locale === "en" ? "EN" : "AR"}
+              </Badge>
+            )}
           </div>
         )}
-        {message.pendingUpdate && (
-          <Badge variant="outline" className="text-[10px] mt-1">
-            Updates for {message.pendingUpdate.locale === "en" ? "EN" : "AR"}
-          </Badge>
+
+        {/* Message actions (visible on hover) */}
+        {!isEditing && (
+          <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => onCopy(message.content, index)}
+              className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+              title="Copy"
+            >
+              {copiedId === index ? (
+                <CheckCheck className="h-3 w-3 text-green-500" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
+            {isUser && (
+              <button
+                onClick={() => onStartEdit(index, message.content)}
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                title="Edit & resend"
+              >
+                <Pencil className="h-3 w-3" />
+              </button>
+            )}
+            {isLast && !isUser && (
+              <button
+                onClick={onRegenerate}
+                className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
+                title="Regenerate"
+              >
+                <RefreshCw className="h-3 w-3" />
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

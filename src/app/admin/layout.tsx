@@ -98,6 +98,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
                 availableTags={panelData.availableTags}
                 availableCategories={panelData.availableCategories}
                 existingArticles={panelData.existingArticles}
+                storageKey={panelData.storageKey}
                 onClose={closePanel}
               />
             )}
@@ -132,6 +133,7 @@ function AdminLayoutShell({ children }: { children: React.ReactNode }) {
             availableTags={panelData.availableTags}
             availableCategories={panelData.availableCategories}
             existingArticles={panelData.existingArticles}
+            storageKey={panelData.storageKey}
             onClose={closePanel}
           />
         </div>

@@ -270,6 +270,25 @@ A dedicated settings page in the admin dashboard:
 - **Locale-Setter Script** -- Client-side script prevents FOUC (Flash of Unstyled Content) for RTL layouts
 - **Arabic Font** -- Noto Sans Arabic bundled for OG image generation and Arabic text rendering
 
+### AI Content Agent
+
+Multi-provider AI assistant built into the admin panel:
+
+- **Multi-provider Support** -- Ollama (local/cloud), OpenAI-compatible, Claude, Google AI Studio
+- **Named Profiles** -- Save, switch, and manage multiple provider configurations
+- **Plan/Build Workflow** -- Plan outlines or build full content with two buttons
+- **Web Search Integration** -- Tavily-powered search for SEO research and context enrichment
+- **Smart Suggestions** -- Context-aware suggestions based on entity state (empty content, missing FAQ, no tags, etc.)
+- **Chat History Persistence** -- Messages saved to localStorage per entity (last 50 messages)
+- **Diff Preview + Undo** -- Preview all field changes before applying; 10-second undo window
+- **Message Actions** -- Copy, regenerate, or edit & resend individual messages
+- **Clean Streaming** -- No raw tags shown during generation
+- **Auto-Apply Mode** -- Instant updates without confirmation
+- **Structured Output** -- `<ai-update>` XML tags for multi-field editing
+- **Content Strategy Engine** -- 12 SEO/quality rules for bilingual content
+- **Topic Clustering** -- Context from existing published articles
+- **Locale-Aware** -- Writes to the correct EN/AR field based on current locale
+
 ---
 
 ## Tech Stack
@@ -300,6 +319,9 @@ A dedicated settings page in the admin dashboard:
 | Base Components | @base-ui/react | 1.5.0 |
 | Package Manager | pnpm | -- |
 | Deployment | Docker / PM2 | -- |
+| AI/LLM | Multi-provider (Ollama, OpenAI, Claude, Google) | -- |
+| Web Search | Tavily API | -- |
+| Split Panels | react-resizable-panels | 4.11.2 |
 
 ---
 
@@ -492,6 +514,7 @@ The dashboard displays a welcome message with your name and quick-action buttons
 - **Create/Edit** -- Full editor with:
   - **Settings card** -- Slug, GitHub URL, Live URL, Featured checkbox, Status dropdown (Draft/Published/Archived), category checkboxes, tag checkboxes
   - **Translation tabs** -- Switch between English and Arabic editors, each with title, description, and Markdown content fields
+  - **SEO meta description** -- Per-locale meta description field (EN/AR) for search engine optimization
   - **RTL support** -- Arabic content fields automatically switch to right-to-left text direction
 - **Delete** -- Confirmation dialog before permanent deletion
 
@@ -501,6 +524,7 @@ The dashboard displays a welcome message with your name and quick-action buttons
 - **Create/Edit** -- Full editor with:
   - **Settings card** -- Slug, Featured checkbox, Reading time, Status dropdown (Draft/Published/Archived), category checkboxes, tag checkboxes
   - **Translation tabs** -- English and Arabic editors with title, excerpt, and Markdown content fields
+  - **SEO meta description** -- Per-locale meta description field (EN/AR) for search engine optimization
   - **Auto-publish date** -- `publishedAt` is automatically set when status changes to Published
 - **Delete** -- Confirmation dialog before permanent deletion
 
@@ -533,6 +557,17 @@ A full-featured media library for managing uploaded files:
 
 - **Profile Management** -- Edit name, email, and password directly from the settings page
 - **Resume/CV Management** -- Upload, replace, or delete resume PDF file
+
+### AI Settings
+
+Dedicated settings page for managing the AI content agent:
+
+- **Named Profiles** -- Create, edit, and delete provider profiles (Ollama, OpenAI, Claude, Google)
+- **API Key Management** -- Store and mask API keys per provider; never exposed to client
+- **Base URL & Model** -- Configure custom base URLs and model selection per provider
+- **Active Profile** -- Set one profile as the default; all editors use the active profile
+- **Tavily Web Search** -- Global Tavily API key for web search integration in the AI chat
+- **Test Connection** -- Verify provider connectivity and Tavily search from the settings page
 
 ### Analytics Dashboard
 
@@ -651,6 +686,20 @@ All API routes are under `/api/`. Authentication is required for write operation
 | `/api/user/profile` | PUT | Yes | Update user name, email, password, and resumeUrl |
 | `/api/resume` | GET | No | Get the resume PDF URL |
 
+### AI Content Agent
+
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/ai/generate` | POST | Yes | Streaming AI content generation via SSE |
+| `/api/ai/settings` | GET | Yes | Get Tavily key status |
+| `/api/ai/settings` | PUT | Yes | Save Tavily API key |
+| `/api/ai/web-search` | POST | Yes | Tavily web search |
+| `/api/ai/profiles` | GET | Yes | List all AI profiles |
+| `/api/ai/profiles` | POST | Yes | Create AI profile |
+| `/api/ai/profiles/{id}` | PUT | Yes | Update AI profile |
+| `/api/ai/profiles/{id}` | DELETE | Yes | Delete AI profile |
+| `/api/ai/profiles/{id}/activate` | POST | Yes | Set active profile |
+
 ---
 
 ## Project Structure
@@ -696,7 +745,8 @@ All API routes are under `/api/`. Authentication is required for write operation
 │   │   │   ├── categories/        # Category management
 │   │   │   ├── tags/              # Tag management
 │   │   │   ├── media/             # Media library (folders, upload, bulk ops)
-│   │   │   └── settings/          # Profile and resume settings
+│   │   │   ├── settings/          # Profile and resume settings
+│   │   │   └── ai-settings/       # AI provider profile management
 │   │   │
 │   │   ├── api/                   # REST API routes
 │   │   │   ├── auth/              # NextAuth.js authentication
@@ -712,7 +762,12 @@ All API routes are under `/api/`. Authentication is required for write operation
 │   │   │   ├── og/                # Dynamic OG image generation
 │   │   │   ├── indexnow/          # IndexNow integration (instant indexing)
 │   │   │   ├── resume/            # Resume URL endpoint
-│   │   │   └── user/profile/      # Update user credentials and resume
+│   │   │   ├── user/profile/      # Update user credentials and resume
+│   │   │   └── ai/                # AI content agent
+│   │   │       ├── generate/       # Streaming AI generation (SSE)
+│   │   │       ├── settings/       # Tavily key management
+│   │   │       ├── web-search/     # Tavily web search
+│   │   │       └── profiles/       # AI profile CRUD + activate
 │   │   │
 │   │   ├── uploads/[...path]/     # Static file serving for uploaded media
 │   │   ├── rss.xml/               # RSS feed endpoint
@@ -732,6 +787,7 @@ All API routes are under `/api/`. Authentication is required for write operation
 │   │   ├── resume/                # ResumeView
 │   │   ├── shared/                # AnimatedSection, PageHeader, ProfileImage, Icons, Breadcrumb, JsonLd
 │   │   ├── admin/                 # AdminSidebar (with Services, Media, Settings links)
+│   │   │   └── AiChatPanel.tsx   # AI chat panel (streaming, suggestions, diff preview)
 │   │   └── ui/                    # shadcn/ui components
 │   │
 │   ├── i18n/
@@ -741,9 +797,17 @@ All API routes are under `/api/`. Authentication is required for write operation
 │   │       ├── en.json            # English translations
 │   │       └── ar.json            # Arabic translations
 │   │
+│   ├── hooks/
+│   │   └── use-ai-stream.ts      # SSE streaming hook with localStorage persistence
+│   │
+│   ├── contexts/
+│   │   └── AiPanelContext.tsx     # AI panel state management
+│   │
 │   ├── lib/
 │   │   ├── constants.ts           # Site config, navigation, locale definitions
 │   │   ├── prisma.ts              # Singleton Prisma client
+│   │   ├── ai-providers.ts       # Multi-provider abstraction, profile CRUD, system prompt
+│   │   ├── ipv4-fetch.ts         # IPv4-compatible HTTP client for AI APIs
 │   │   └── utils.ts               # cn() utility (clsx + tailwind-merge)
 │   │
 │   ├── types/
@@ -1158,6 +1222,25 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - **سكربت تعيين اللغة** -- سكربت عميل يمنع FOUC (وميض محتوى غير مُنسّق) للتخطيطات RTL
 - **خط عربي** -- Noto Sans Arabic مضمن لتوليد صور OG وعرض النص العربي
 
+### وكيل محتوى الذكاء الاصطناعي
+
+مساعد ذكاء اصطناعي متعدد المزودين مدمج في لوحة التحكم:
+
+- **دعم متعدد المزودين** -- Ollama (محلي/سحابي)، OpenAI متوافق، Claude، Google AI Studio
+- **ملفات شخصية معنية** -- حفظ وتبديل وإدارة تكوينات المزودين المتعددة
+- **سير عمل التخطيط/البناء** -- تخطيط المخططات أو بناء المحتوى الكامل
+- **بحث الويب** -- تكامل Tavily لأبحاث SEO في البحث
+- **اقتراحات ذكية** -- اقتراحات سياقية بناءً على حالة الكيان (محتوى فارغ، لا FAQ، إلخ)
+- **حفظ سجل الدردشة** -- حفظ المحادثات في localStorage لكل كيان (آخر 50 رسالة)
+- **معاينة الفروقات مع التراجع** -- معاينة التغييرات مع زر تراجع لمدة 10 ثوانٍ
+- **إجراءات الرسائل** -- نسخ، إعادة توليد، تعديل وإعادة إرسال
+- **عرض نظيف** -- لا عرض وسوم خام أثناء التوليد
+- **وضع التطبيق التلقائي** -- تحديثات فورية عند التفعيل
+- **بروتوكول الإخراج المنظم** -- وسوم `<ai-update>` لتحرير الحقول المتعددة
+- **محرك استراتيجية المحتوى** -- 12 قاعدة SEO/جودة
+- **تجميع المواضيع** -- سياق المقالات المنشورة الحالية
+- **دعم اللغتين** -- توليد واعٍ باللغة (EN/AR) يكتب إلى الحقل الصحيح
+
 ---
 
 ## مجموعة التقنيات
@@ -1188,6 +1271,9 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 | المكونات الأساسية | @base-ui/react | 1.5.0 |
 | مدير الحزم | pnpm | -- |
 | النشر | Docker / PM2 | -- |
+| الذكاء الاصطناعي | متعدد المزودين (Ollama، OpenAI، Claude، Google) | -- |
+| بحث الويب | Tavily API | -- |
+| الألواح المنقسمة | react-resizable-panels | 4.11.2 |
 
 ---
 
@@ -1421,6 +1507,37 @@ pnpm dev
 - **إدارة الملف الشخصي** -- تعديل الاسم والبريد الإلكتروني وكلمة المرور مباشرة من صفحة الإعدادات
 - **إدارة السيرة الذاتية** -- رفع واستبدال أو حذف ملف PDF للسيرة الذاتية
 
+### إعدادات الذكاء الاصطناعي
+
+صفحة إعدادات مخصصة لإدارة وكيل المحتوى بالذكاء الاصطناعي:
+
+- **الملفات الشخصية المعنية** -- إنشاء وتعديل وحذف ملفات مزودي الذكاء الاصطناعي (Ollama، OpenAI، Claude، Google)
+- **إدارة مفاتيح API** -- تخزين وإخفاء مفاتيح API لكل مزود؛ لا يتم كشفها أبداً للعميل
+- **الرابط الأساسي والنموذج** -- تكوين الروابط الأساسية المخصصة واختيار النموذج لكل مزود
+- **الملف الشخصي النشط** -- تعيين ملف واحد كافتراضي؛ جميع المحررين يستخدمون الملف الشخصي النشط
+- **بحث Tavily** -- مفتاح Tavily العام للبحث في الويب داخل الدردشة
+- **اختبار الاتصال** -- التحقق من اتصال المزود وبحث Tavily من صفحة الإعدادات
+
+### إدارة المشاريع
+
+- **عرض القائمة** -- جدول يعرض جميع المشاريع مع العنوان وشارة الحالة وعلامة المميزة وأزرار الإجراءات (تعديل/حذف)
+- **إنشاء/تعديل** -- محرر كامل مع:
+  - **بطاقة الإعدادات** -- الرابط المختصر، رابط GitHub، رابط الموقع، خيار مميز، قائمة الحالة (مسودة/منشور/مؤرشف)، خيارات التصنيفات، وخيارات الوسوم
+  - **تبويبات الترجمة** -- التبديل بين محرري الإنجليزية والعربية، لكل منهما حقول العنوان والوصف ومحتوى Markdown
+  - **وصف SEO** -- حقل وصف meta لكل لغة (EN/AR) لتحسين محركات البحث
+  - **دعم RTL** -- حقول المحتوى العربي تتحول تلقائياً إلى اتجاه النص من اليمين إلى اليسار
+- **حذف** -- مربع حوار تأكيد قبل الحذف الدائم
+
+### إدارة المدونة
+
+- **عرض القائمة** -- جدول يعرض جميع المقالات مع العنوان وشارة الحالة ووقت القراءة وأزرار الإجراءات (تعديل/حذف)
+- **إنشاء/تعديل** -- محرر كامل مع:
+  - **بطاقة الإعدادات** -- الرابط المختصر، خيار مميز، وقت القراءة، قائمة الحالة (مسودة/منشور/مؤرشف)، خيارات التصنيفات، وخيارات الوسوم
+  - **تبويبات الترجمة** -- محرري الإنجليزية والعربية مع حقول العنوان والم摘要有 ومحتوى Markdown
+  - **وصف SEO** -- حقل وصف meta لكل لغة (EN/AR) لتحسين محركات البحث
+  - **تاريخ النشر التلقائي** -- يتم تعيين `publishedAt` تلقائياً عند تغيير الحالة إلى منشور
+- **حذف** -- مربع حوار تأكيد قبل الحذف الدائم
+
 ### لوحة تحليلات
 
 - **نظرة عامة** -- إجمالي المشاهدات والزوار الفريدين ورسوم بيانية يومية
@@ -1538,6 +1655,20 @@ pnpm dev
 | `/api/user/profile` | PUT | نعم | تحديث الاسم والبريد الإلكتروني وكلمة المرور و resumeUrl |
 | `/api/resume` | GET | لا | جلب رابط ملف PDF للسيرة الذاتية |
 
+### وكيل محتوى الذكاء الاصطناعي
+
+| النقطة النهائية | الطريقة | مصادقة | الوصف |
+|---|---|---|---|
+| `/api/ai/generate` | POST | نعم | توليد محتوى AI عبر SSE |
+| `/api/ai/settings` | GET | نعم | جلب حالة مفتاح Tavily |
+| `/api/ai/settings` | PUT | نعم | حفظ مفتاح Tavily |
+| `/api/ai/web-search` | POST | نعم | بحث Tavily |
+| `/api/ai/profiles` | GET | نعم | عرض جميع ملفات AI الشخصية |
+| `/api/ai/profiles` | POST | نعم | إنشاء ملف AI شخصي |
+| `/api/ai/profiles/{id}` | PUT | نعم | تعديل ملف AI شخصي |
+| `/api/ai/profiles/{id}` | DELETE | نعم | حذف ملف AI شخصي |
+| `/api/ai/profiles/{id}/activate` | POST | نعم | تعيين الملف الشخصي النشط |
+
 ---
 
 ## هيكل المشروع
@@ -1583,7 +1714,8 @@ pnpm dev
 │   │   │   ├── categories/        # إدارة التصنيفات
 │   │   │   ├── tags/              # إدارة الوسوم
 │   │   │   ├── media/             # مكتبة الوسائط (مجلدات، رفع، عمليات مجمعة)
-│   │   │   └── settings/          # إعدادات الملف الشخصي والسيرة الذاتية
+│   │   │   ├── settings/          # إعدادات الملف الشخصي والسيرة الذاتية
+│   │   │   └── ai-settings/       # إدارة ملفات مزودي الذكاء الاصطناعي
 │   │   │
 │   │   ├── api/                   # مسارات API
 │   │   │   ├── auth/              # مصادقة NextAuth.js
@@ -1599,7 +1731,12 @@ pnpm dev
 │   │   │   ├── og/                # إنشاء صور OG ديناميكي
 │   │   │   ├── indexnow/          # تكامل IndexNow (فهرسة فورية)
 │   │   │   ├── resume/            # نقطة نهاية رابط السيرة الذاتية
-│   │   │   └── user/profile/      # تحديث بيانات الاعتماد والسيرة الذاتية
+│   │   │   ├── user/profile/      # تحديث بيانات الاعتماد والسيرة الذاتية
+│   │   │   └── ai/                # وكيل محتوى AI
+│   │   │       ├── generate/       # توليد AI عبر SSE
+│   │   │       ├── settings/       # إدارة مفتاح Tavily
+│   │   │       ├── web-search/     # بحث Tavily
+│   │   │       └── profiles/       # CRUD ملفات AI الشخصية + تفعيل
 │   │   │
 │   │   ├── uploads/[...path]      # تقديم الملفات الثابتة للوسائط المرفوعة
 │   │   ├── rss.xml/               # نقطة نهاية تغذية RSS
@@ -1619,6 +1756,7 @@ pnpm dev
 │   │   ├── resume/                # عرض السيرة الذاتية
 │   │   ├── shared/                # الأقسام المتحركة، رأس الصفحة، صورة الملف الشخصي، الأيقونات، القائمة المتنقلة، JsonLd
 │   │   ├── admin/                 # الشريط الجانبي للإدارة (مع روابط الخدمات والوسائط والإعدادات)
+│   │   │   └── AiChatPanel.tsx   # لوحة دردشة AI (بث، اقتراحات، معاينة الفروقات)
 │   │   └── ui/                    # مكونات shadcn/ui
 │   │
 │   ├── i18n/
@@ -1628,9 +1766,17 @@ pnpm dev
 │   │       ├── en.json            # ترجمات الإنجليزية
 │   │       └── ar.json            # ترجمات العربية
 │   │
+│   ├── hooks/
+│   │   └── use-ai-stream.ts      # خطاف SSE للبث مع بقاء في localStorage
+│   │
+│   ├── contexts/
+│   │   └── AiPanelContext.tsx     # إدارة حالة لوحة AI
+│   │
 │   ├── lib/
 │   │   ├── constants.ts           # إعدادات الموقع والتنقل وتعريفات اللغة
 │   │   ├── prisma.ts              # عميل Prisma أحادي
+│   │   ├── ai-providers.ts       # تجريد متعدد المزودين، إدارة الملفات الشخصية، نظام الأوامر
+│   │   ├── ipv4-fetch.ts         # عميل HTTP متوافق مع IPv4 لـ APIs الذكاء الاصطناعي
 │   │   └── utils.ts               # أداة cn() (clsx + tailwind-merge)
 │   │
 │   ├── types/

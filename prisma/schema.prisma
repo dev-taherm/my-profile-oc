@@ -200,4 +200,31 @@ model AiSettings {
   updatedAt       DateTime  @updatedAt
 }
 
+model SocialAccount {
+  id                String        @id @default(cuid())
+  provider          String        // "telegram"
+  providerAccountId String        // Telegram chat_id
+  name              String        // Display name (e.g. "Telegram Bot")
+  accessToken       String        // AES-256-GCM encrypted bot token
+  refreshToken      String?       // Unused (kept for schema compatibility)
+  tokenExpiry       DateTime?     // Unused (kept for schema compatibility)
+  isActive          Boolean       @default(true)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  posts             SocialPost[]
+}
+
+model SocialPost {
+  id             String        @id @default(cuid())
+  content        String        // The post text
+  platform       String        // "telegram"
+  status         String        @default("DRAFT") // DRAFT | SENT | FAILED
+  platformPostId String?       // Telegram message_id
+  errorMessage   String?       // Error details if failed
+  publishedAt    DateTime?
+  createdAt      DateTime      @default(now())
+  accountId      String
+  account        SocialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
+}
+
 

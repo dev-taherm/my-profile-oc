@@ -5,12 +5,15 @@ import { buildAiRequest } from "@/lib/ai-providers";
 import { prisma } from "@/lib/prisma";
 import { searchTrends } from "@/lib/social-trends";
 
+const SITE_URL = "https://taher.pixovagency.com";
+
 function buildSystemPrompt(
   platform: string,
   locale: string,
   tone: string,
   trendContext: string,
-  audienceHint: string
+  audienceHint: string,
+  linksContext: string
 ): string {
   const lang = locale === "ar" ? "Arabic" : "English";
 
@@ -19,14 +22,16 @@ function buildSystemPrompt(
       ? `## Platform: LinkedIn
 - Max length: ~1300 characters (posts get truncated in feed beyond this)
 - Use line breaks for scannability
-- Include 3-5 relevant hashtags at the end
-- Emojis: minimal, none in the first line`
+- Include 8-15 relevant hashtags at the end — mix broad and niche (e.g. #RAG #LangChain #Python #AI #BackendDevelopment #Django #MachineLearning #SoftwareEngineering #TechInnovation)
+- Emojis: minimal, none in the first line
+- Links go directly in the post body`
       : `## Platform: Facebook
 - Use short paragraphs (1-2 lines)
 - Emojis: natural use, 3-5 max
 - Include a clear call-to-action
-- 1-2 hashtags at most (or none)
-- End with a question to drive comments`;
+- 3-5 relevant hashtags at the end
+- End with a question to drive comments
+- Main link in the post, additional links go in "🔗 Links in first comment:"`;
 
   const toneRules =
     tone === "professional"
@@ -67,6 +72,16 @@ ${trendContext}`
 ${audienceHint}`
     : "";
 
+  const linksSection = linksContext
+    ? `## Links to Include
+Include these links naturally in the post. Don't just dump them — weave them into the story or add them at the end.
+On LinkedIn: put all links directly in the post.
+On Facebook: put the main page link in the post body. For additional links (GitHub, live demo), add them at the very end like:
+"🔗 Links in first comment:" and list them there.
+
+${linksContext}`
+    : "";
+
   const menaSection =
     locale === "ar"
       ? `## MENA-Specific (Arabic posts ONLY)
@@ -88,6 +103,8 @@ ${toneRules}
 ${trendSection}
 
 ${audienceSection}
+
+${linksSection}
 
 ${menaSection}
 
@@ -133,10 +150,14 @@ export async function POST(request: NextRequest) {
     let prompt: string;
     let trendQuery: string;
     let audienceHint: string;
+    let linksContext = "";
 
     if (sourceType && sourceId) {
       let entity: {
         id: string;
+        slug?: string;
+        githubUrl?: string | null;
+        liveUrl?: string | null;
         translations: Record<string, unknown>[];
       } | null = null;
 
@@ -182,6 +203,19 @@ ${bodyContent ? `Full content:\n${bodyContent.substring(0, 2000)}` : ""}`;
 
       trendQuery = `${translation.title} ${resolvedPlatform} trends ${new Date().getFullYear()}`;
       audienceHint = `This is a ${entityType.toLowerCase()} post. The audience is people interested in: ${translation.title}. Tailor the language and references to match this topic's community.`;
+
+      // Build links context
+      const links: string[] = [];
+      if (entity.slug) {
+        const pagePath = sourceType === "project" ? "projects" : "blog";
+        links.push(`- Page: ${SITE_URL}/${resolvedLocale}/${pagePath}/${entity.slug}`);
+      }
+      if (sourceType === "project") {
+        const project = entity as { githubUrl?: string | null; liveUrl?: string | null };
+        if (project.githubUrl) links.push(`- GitHub: ${project.githubUrl}`);
+        if (project.liveUrl) links.push(`- Live Demo: ${project.liveUrl}`);
+      }
+      linksContext = links.join("\n");
     } else if (content) {
       if (!searchTopic) {
         return new Response(
@@ -207,13 +241,16 @@ ${bodyContent ? `Full content:\n${bodyContent.substring(0, 2000)}` : ""}`;
       resolvedLocale,
       resolvedTone,
       trendContext,
-      audienceHint
+      audienceHint,
+      linksContext
     );
 
     const { url, headers, body } = await buildAiRequest({
       prompt,
       systemPrompt,
     });
+
+    console.log("[social/generate] Calling AI:", url.split("?")[0], "provider:", resolvedPlatform);
 
     const res = await fetch(url, {
       method: "POST",
@@ -223,6 +260,7 @@ ${bodyContent ? `Full content:\n${bodyContent.substring(0, 2000)}` : ""}`;
 
     if (!res.ok) {
       const err = await res.text();
+      console.error("[social/generate] AI provider error:", res.status, err);
       return new Response(
         JSON.stringify({ error: `AI provider error: ${err}` }),
         { status: 502, headers: { "Content-Type": "application/json" } }
@@ -295,7 +333,9 @@ ${bodyContent ? `Full content:\n${bodyContent.substring(0, 2000)}` : ""}`;
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
+    const cause = err instanceof Error && err.cause ? String(err.cause) : "";
+    console.error("[social/generate] Unhandled error:", message, cause);
+    return new Response(JSON.stringify({ error: message + (cause ? `: ${cause}` : "") }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });

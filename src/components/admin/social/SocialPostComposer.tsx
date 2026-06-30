@@ -28,6 +28,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
   const [locale, setLocale] = useState<"en" | "ar">("en");
   const [content, setContent] = useState("");
   const [sourceId, setSourceId] = useState<string | null>(null);
+  const [searchTopic, setSearchTopic] = useState("");
 
   const [projects, setProjects] = useState<ContentItem[]>([]);
   const [blogPosts, setBlogPosts] = useState<ContentItem[]>([]);
@@ -81,6 +82,11 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
       return;
     }
 
+    if (sourceType === "custom" && !searchTopic.trim()) {
+      setError("Please enter a search topic so AI can find trending context");
+      return;
+    }
+
     if (sourceType !== "custom" && !sourceId) {
       setError(`Please select a ${sourceType}`);
       return;
@@ -97,6 +103,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
 
       if (sourceType === "custom") {
         body.content = content;
+        body.searchTopic = searchTopic;
       } else {
         body.sourceType = sourceType;
         body.sourceId = sourceId!;
@@ -298,6 +305,23 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
           </div>
         )}
 
+        {/* Search Topic (for custom content) */}
+        {sourceType === "custom" && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Search Topic</label>
+            <input
+              type="text"
+              value={searchTopic}
+              onChange={(e) => setSearchTopic(e.target.value)}
+              placeholder="e.g. RAG AI systems, Next.js performance, Django REST"
+              className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Helps AI find current trends for your post
+            </p>
+          </div>
+        )}
+
         {/* Content Input Area */}
         {sourceType === "custom" ? (
           <Textarea
@@ -388,6 +412,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
             disabled={
               generating ||
               (sourceType === "custom" && !content.trim()) ||
+              (sourceType === "custom" && !searchTopic.trim()) ||
               (sourceType !== "custom" && !sourceId)
             }
           >

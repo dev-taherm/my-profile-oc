@@ -3,8 +3,15 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { buildAiRequest } from "@/lib/ai-providers";
 import { prisma } from "@/lib/prisma";
+import { searchTrends } from "@/lib/social-trends";
 
-function buildSystemPrompt(platform: string, locale: string, tone: string): string {
+function buildSystemPrompt(
+  platform: string,
+  locale: string,
+  tone: string,
+  trendContext: string,
+  audienceHint: string
+): string {
   const lang = locale === "ar" ? "Arabic" : "English";
 
   const platformRules =
@@ -23,17 +30,17 @@ function buildSystemPrompt(platform: string, locale: string, tone: string): stri
 
   const toneRules =
     tone === "professional"
-      ? `## Tone: Professional
-- Thought leadership, data-driven
-- Formal but approachable, no hype
+      ? `## Tone: Professional (but human)
+- Like a respected community member sharing hard-won lessons
+- Data + story, not data alone
+- "Here's what I learned building this" not "Here's a thought leadership piece"
 - Use specific metrics and evidence ("reduced load time by 40%", not "made it faster")
-- Structure: Bold Hook → Key Insight → Evidence → Takeaway
-- End with a thought-provoking question or call-to-action
-- Write from first-person perspective (Taher's voice)`
-
+- Structure: Hook → Story/Experience → Evidence → Takeaway
+- End with a genuine question you actually want answered`
       : tone === "viral"
-      ? `## Tone: Viral
-- Open with a pattern interrupt (something unexpected or counterintuitive)
+      ? `## Tone: Viral (tech influencer style)
+- Open with a pattern interrupt — something unexpected or counterintuitive
+- "Unpopular opinion:" or "Nobody talks about this but..." or "I was wrong about..."
 - Use emotional triggers: curiosity, surprise, FOMO, debate
 - Specific numbers over vague claims ("3 years" not "many years")
 - Bold or slightly controversial angle — make people want to respond
@@ -41,32 +48,65 @@ function buildSystemPrompt(platform: string, locale: string, tone: string): stri
 - Create tension or story arc
 - End with a polarizing question that triggers comments/debate
 - Structure: Shocking Hook → Story/Tension → Resolution → Debate Question`
-
       : `## Tone: Mix (Professional + Viral)
-- Professional credibility with viral hooks
+- Bold hook + professional body
+- Credibility + shareability
 - Data-driven BUT presented as storytelling
 - Bold claims backed by evidence
 - Pattern interrupt opening + professional body
 - Use specific metrics AND emotional triggers
 - Structure: Bold Hook → Evidence → Insight → Provocative Question`;
 
-  return `You are an expert social media content strategist for Taher Mahram, a software engineer specializing in backend systems, AI/LLM integration, and full-stack web development based in Sana'a, Yemen.
+  const trendSection = trendContext
+    ? `## Current Trends (use these naturally, don't force them)
+${trendContext}`
+    : "";
 
-## Your Task
-Generate a social media post. The post will be sent to the user via Telegram for review before manually posting to their social media accounts.
+  const audienceSection = audienceHint
+    ? `## Target Audience
+${audienceHint}`
+    : "";
+
+  const menaSection =
+    locale === "ar"
+      ? `## MENA-Specific (Arabic posts ONLY)
+- Reference the Yemen/Saudi/Gulf tech ecosystem specifically
+- Mention local challenges: infrastructure, remote work, internet stability, Arabic dev community growth
+- Use Arabic tech community language and slang — not MSA textbook Arabic
+- Reference local context: Sana'a, Riyadh, Dubai tech scenes, MENA startups
+- Speak to Arabic-speaking developers as peers, not an audience`
+      : "";
+
+  return `You are Taher — a real software engineer sharing what you actually built. You're not a marketer. You're not writing a press release. You're telling a friend about something cool you made.
+
+Write like a real human, not a chatbot. Use contractions. Start sentences with "And" or "But" or "So". Share specific moments. Be casual, confident, and authentic.
 
 ${platformRules}
 
 ${toneRules}
 
-## General Rules
-- No generic filler — every sentence must add value
+${trendSection}
+
+${audienceSection}
+
+${menaSection}
+
+## Writing Style Rules (CRITICAL — follow these exactly)
+- Use contractions: don't, it's, I've, can't, won't, isn't
+- Start sentences with And, But, So — humans do this constantly
+- Share specific moments: "I was debugging at 2am when..." or "After 3 weeks of trying..."
+- Use numbers, not vague claims: "37% faster" not "significantly faster"
+- Break grammar rules intentionally for emphasis
+- Banned words — NEVER use these: leverage, synergy, streamline, utilize, facilitate, empower, unlock, revolutionize, cutting-edge, seamless, holistic, robust, scalable, innovative
+- No corporate buzzwords — say what you actually mean
+- Write like you're texting a friend who works in tech
 - Use emojis for emphasis where natural (💪, 🔥, etc.) — no HTML tags or markdown formatting
 - Make the first line irresistible — it determines if anyone reads the rest
+- No generic filler — every sentence must add value
 
 ## CRITICAL: Language
 You MUST write the ENTIRE post in ${lang}. Do NOT use any other language.
-If ${lang} is Arabic, write fluent, natural Arabic — not machine translation.
+If ${lang} is Arabic, write fluent, natural Arabic — not machine translation. Use colloquial Arabic that real people speak, not formal MSA.
 If ${lang} is English, write natural, conversational English.
 
 ## Response Format
@@ -83,13 +123,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { content, sourceType, sourceId, platform, locale, tone } = await request.json();
+    const { content, sourceType, sourceId, platform, locale, tone, searchTopic } =
+      await request.json();
 
     const resolvedPlatform = platform === "facebook" ? "facebook" : "linkedin";
     const resolvedLocale = locale === "ar" ? "ar" : "en";
     const resolvedTone = ["professional", "viral", "mix"].includes(tone) ? tone : "professional";
 
     let prompt: string;
+    let trendQuery: string;
+    let audienceHint: string;
 
     if (sourceType && sourceId) {
       let entity: {
@@ -136,8 +179,20 @@ export async function POST(request: NextRequest) {
 Title: "${translation.title}"
 Description: ${description || "(none)"}
 ${bodyContent ? `Full content:\n${bodyContent.substring(0, 2000)}` : ""}`;
+
+      trendQuery = `${translation.title} ${resolvedPlatform} trends ${new Date().getFullYear()}`;
+      audienceHint = `This is a ${entityType.toLowerCase()} post. The audience is people interested in: ${translation.title}. Tailor the language and references to match this topic's community.`;
     } else if (content) {
+      if (!searchTopic) {
+        return new Response(
+          JSON.stringify({ error: "searchTopic is required when using custom content" }),
+          { status: 400, headers: { "Content-Type": "application/json" } }
+        );
+      }
+
       prompt = `Create a ${resolvedPlatform} post based on the following content:\n\n${content}`;
+      trendQuery = `${searchTopic} ${resolvedPlatform} trends ${new Date().getFullYear()}`;
+      audienceHint = `The topic is: ${searchTopic}. Tailor the language and references to match this topic's community.`;
     } else {
       return new Response(
         JSON.stringify({ error: "content or sourceType+sourceId is required" }),
@@ -145,7 +200,16 @@ ${bodyContent ? `Full content:\n${bodyContent.substring(0, 2000)}` : ""}`;
       );
     }
 
-    const systemPrompt = buildSystemPrompt(resolvedPlatform, resolvedLocale, resolvedTone);
+    const trendContext = await searchTrends(trendQuery);
+
+    const systemPrompt = buildSystemPrompt(
+      resolvedPlatform,
+      resolvedLocale,
+      resolvedTone,
+      trendContext,
+      audienceHint
+    );
+
     const { url, headers, body } = await buildAiRequest({
       prompt,
       systemPrompt,

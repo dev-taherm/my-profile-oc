@@ -9,6 +9,7 @@ interface PostHistoryItem {
   id: string;
   content: string;
   platform: string;
+  tone: string | null;
   status: string;
   platformPostId: string | null;
   errorMessage: string | null;
@@ -102,6 +103,20 @@ export function SocialPostHistory() {
                 <div className="mt-0.5">{getStatusIcon(post.status)}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
+                    <span className="inline-flex items-center rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 capitalize">
+                      {post.platform}
+                    </span>
+                    {post.tone && (
+                      <span className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium capitalize ${
+                        post.tone === "viral"
+                          ? "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                          : post.tone === "mix"
+                            ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400"
+                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                      }`}>
+                        {post.tone}
+                      </span>
+                    )}
                     <span
                       className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${getStatusBadge(post.status)}`}
                     >

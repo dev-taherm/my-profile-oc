@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { content } = await request.json();
+    const { content, platform, tone } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -20,6 +20,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    const targetPlatform = platform === "facebook" ? "facebook" : "linkedin";
+    const targetTone = ["professional", "viral", "mix"].includes(tone) ? tone : "professional";
 
     const account = await prisma.socialAccount.findFirst({
       where: { provider: "telegram", isActive: true },
@@ -40,7 +43,8 @@ export async function POST(request: NextRequest) {
     const post = await prisma.socialPost.create({
       data: {
         content,
-        platform: "telegram",
+        platform: targetPlatform,
+        tone: targetTone,
         status: "SENT",
         platformPostId: String(result.messageId),
         publishedAt: new Date(),
@@ -56,8 +60,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
 
-    // Save failed post record
-    const { content } = await request.json().catch(() => ({}));
+    const { content, platform, tone } = await request.json().catch(() => ({}));
     if (content) {
       const account = await prisma.socialAccount.findFirst({
         where: { provider: "telegram", isActive: true },
@@ -66,7 +69,8 @@ export async function POST(request: NextRequest) {
         await prisma.socialPost.create({
           data: {
             content,
-            platform: "telegram",
+            platform: platform === "facebook" ? "facebook" : "linkedin",
+            tone: ["professional", "viral", "mix"].includes(tone) ? tone : "professional",
             status: "FAILED",
             errorMessage: message,
             accountId: account.id,

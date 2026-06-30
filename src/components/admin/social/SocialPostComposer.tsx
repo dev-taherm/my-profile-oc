@@ -1,10 +1,20 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Sparkles, Send, Loader2, Copy, Check } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Sparkles, Send, Loader2, Copy, Check, FileText, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+
+interface ContentItem {
+  id: string;
+  slug: string;
+  status: string;
+  featured: boolean;
+  coverImage?: string;
+  projectImages?: { url: string; order: number }[];
+  translations: { locale: string; title: string; description?: string; excerpt?: string }[];
+}
 
 interface SocialPostComposerProps {
   hasTelegram: boolean;
@@ -12,7 +22,17 @@ interface SocialPostComposerProps {
 }
 
 export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostComposerProps) {
+  const [sourceType, setSourceType] = useState<"custom" | "project" | "blog">("custom");
+  const [platform, setPlatform] = useState<"linkedin" | "facebook">("linkedin");
+  const [tone, setTone] = useState<"professional" | "viral" | "mix">("professional");
+  const [locale, setLocale] = useState<"en" | "ar">("en");
   const [content, setContent] = useState("");
+  const [sourceId, setSourceId] = useState<string | null>(null);
+
+  const [projects, setProjects] = useState<ContentItem[]>([]);
+  const [blogPosts, setBlogPosts] = useState<ContentItem[]>([]);
+  const [loadingItems, setLoadingItems] = useState(false);
+
   const [generating, setGenerating] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
@@ -20,21 +40,72 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
   const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Fetch content when sourceType changes to project or blog
+  useEffect(() => {
+    if (sourceType === "custom") return;
+
+    setLoadingItems(true);
+    setSourceId(null);
+
+    const endpoint = sourceType === "project" ? "/api/projects?status=PUBLISHED" : "/api/blog?status=PUBLISHED";
+
+    fetch(endpoint)
+      .then((r) => r.json())
+      .then((data) => {
+        if (sourceType === "project") {
+          setProjects(data);
+        } else {
+          setBlogPosts(data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoadingItems(false));
+  }, [sourceType]);
+
+  const items = sourceType === "project" ? projects : blogPosts;
+  const selectedItem = items.find((i) => i.id === sourceId);
+
+  const getTranslation = (item: ContentItem) => {
+    return (
+      item.translations.find((t) => t.locale === locale) ||
+      item.translations[0]
+    );
+  };
+
   const handleGenerate = async () => {
-    if (!content.trim()) {
+    setError("");
+    setSuccess("");
+
+    if (sourceType === "custom" && !content.trim()) {
       setError("Please enter some content first");
       return;
     }
 
+    if (sourceType !== "custom" && !sourceId) {
+      setError(`Please select a ${sourceType}`);
+      return;
+    }
+
     setGenerating(true);
-    setError("");
-    setSuccess("");
 
     try {
+      const body: Record<string, string> = {
+        platform,
+        locale,
+        tone,
+      };
+
+      if (sourceType === "custom") {
+        body.content = content;
+      } else {
+        body.sourceType = sourceType;
+        body.sourceId = sourceId!;
+      }
+
       const res = await fetch("/api/social/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -93,7 +164,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
       const res = await fetch("/api/social/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({ content, platform, tone }),
       });
 
       const data = await res.json();
@@ -103,8 +174,9 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
         return;
       }
 
-      setSuccess("Sent to Telegram! Check your bot for the post.");
+      setSuccess(`Sent to Telegram! Ready to post on ${platform === "linkedin" ? "LinkedIn" : "Facebook"}.`);
       setContent("");
+      setSourceId(null);
       onPostSent?.();
     } catch {
       setError("Failed to send. Please try again.");
@@ -126,30 +198,198 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Create Post</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Textarea
-          ref={textareaRef}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Write your social media post here, or describe what you want to post and let AI generate it..."
-          className="min-h-[200px] resize-y"
-        />
+      <CardContent className="pt-6 space-y-5">
+        {/* Source Type */}
+        <div>
+          <label className="text-sm font-medium mb-2 block">Content Source</label>
+          <div className="flex gap-2">
+            {[
+              { value: "custom" as const, label: "Custom", icon: FileText },
+              { value: "project" as const, label: "Project", icon: FolderOpen },
+              { value: "blog" as const, label: "Blog Post", icon: FileText },
+            ].map(({ value, label, icon: Icon }) => (
+              <Button
+                key={value}
+                variant={sourceType === value ? "default" : "outline"}
+                size="sm"
+                onClick={() => {
+                  setSourceType(value);
+                  setContent("");
+                  setSourceId(null);
+                }}
+              >
+                <Icon className="h-3.5 w-3.5 me-1.5" />
+                {label}
+              </Button>
+            ))}
+          </div>
+        </div>
 
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
-        {success && (
-          <p className="text-sm text-green-600 dark:text-green-400">{success}</p>
+        {/* Platform + Tone */}
+        <div className="flex flex-wrap gap-6">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Target Platform</label>
+            <div className="flex gap-2">
+              <Button
+                variant={platform === "linkedin" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPlatform("linkedin")}
+              >
+                LinkedIn
+              </Button>
+              <Button
+                variant={platform === "facebook" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setPlatform("facebook")}
+              >
+                Facebook
+              </Button>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2 block">Tone</label>
+            <div className="flex gap-2">
+              <Button
+                variant={tone === "professional" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTone("professional")}
+              >
+                Professional
+              </Button>
+              <Button
+                variant={tone === "viral" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTone("viral")}
+              >
+                Viral
+              </Button>
+              <Button
+                variant={tone === "mix" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setTone("mix")}
+              >
+                Mix
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Locale (when project or blog selected) */}
+        {sourceType !== "custom" && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Language</label>
+            <div className="flex gap-2">
+              <Button
+                variant={locale === "en" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setLocale("en")}
+              >
+                English
+              </Button>
+              <Button
+                variant={locale === "ar" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setLocale("ar")}
+              >
+                العربية
+              </Button>
+            </div>
+          </div>
         )}
 
+        {/* Content Input Area */}
+        {sourceType === "custom" ? (
+          <Textarea
+            ref={textareaRef}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Write your content or idea here, then click AI Generate..."
+            className="min-h-[150px] resize-y"
+          />
+        ) : (
+          <div className="space-y-3">
+            {loadingItems ? (
+              <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+                <Loader2 className="h-4 w-4 me-2 animate-spin" />
+                Loading {sourceType === "project" ? "projects" : "blog posts"}...
+              </div>
+            ) : items.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No published {sourceType === "project" ? "projects" : "blog posts"} found
+              </p>
+            ) : (
+              <>
+                <select
+                  value={sourceId || ""}
+                  onChange={(e) => setSourceId(e.target.value || null)}
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Select a {sourceType}...</option>
+                  {items.map((item) => {
+                    const t = getTranslation(item);
+                    return (
+                      <option key={item.id} value={item.id}>
+                        {t?.title || item.slug}
+                      </option>
+                    );
+                  })}
+                </select>
+
+                {selectedItem && (
+                  <div className="rounded-lg border p-3 bg-muted/30">
+                    <div className="flex items-start gap-3">
+                      {(selectedItem.coverImage || selectedItem.projectImages?.[0]?.url) && (
+                        <img
+                          src={selectedItem.coverImage || selectedItem.projectImages?.[0]?.url}
+                          alt=""
+                          className="h-12 w-12 rounded object-cover shrink-0"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm line-clamp-1">
+                          {getTranslation(selectedItem)?.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground line-clamp-2">
+                          {getTranslation(selectedItem)?.description ||
+                            getTranslation(selectedItem)?.excerpt ||
+                            "No description"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Generated / Editable Output */}
+        {content && sourceType !== "custom" && (
+          <div>
+            <label className="text-sm font-medium mb-2 block">Generated Post (editable)</label>
+            <Textarea
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="min-h-[150px] resize-y"
+            />
+          </div>
+        )}
+
+        {/* Error / Success */}
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {success && <p className="text-sm text-green-600 dark:text-green-400">{success}</p>}
+
+        {/* Actions */}
         <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             onClick={handleGenerate}
-            disabled={generating || !content.trim()}
+            disabled={
+              generating ||
+              (sourceType === "custom" && !content.trim()) ||
+              (sourceType !== "custom" && !sourceId)
+            }
           >
             {generating ? (
               <Loader2 className="h-4 w-4 me-1.5 animate-spin" />
@@ -159,11 +399,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
             AI Generate
           </Button>
 
-          <Button
-            variant="outline"
-            onClick={handleCopy}
-            disabled={!content.trim()}
-          >
+          <Button variant="outline" onClick={handleCopy} disabled={!content.trim()}>
             {copied ? (
               <Check className="h-4 w-4 me-1.5" />
             ) : (

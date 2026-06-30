@@ -217,7 +217,8 @@ model SocialAccount {
 model SocialPost {
   id             String        @id @default(cuid())
   content        String        // The post text
-  platform       String        // "telegram"
+  platform       String        // "linkedin" | "facebook"
+  tone           String?       // "professional" | "viral" | "mix"
   status         String        @default("DRAFT") // DRAFT | SENT | FAILED
   platformPostId String?       // Telegram message_id
   errorMessage   String?       // Error details if failed

@@ -7,6 +7,7 @@ import { pingIndexNow } from "@/app/api/indexnow/route";
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
+  const status = searchParams.get("status");
 
   if (id) {
     const post = await prisma.blogPost.findUnique({
@@ -16,7 +17,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(post);
   }
 
+  const where = status ? { status } : {};
+
   const posts = await prisma.blogPost.findMany({
+    where,
     include: { translations: true, categories: true, tags: true, author: { select: { name: true, email: true } } },
     orderBy: { createdAt: "desc" },
   });

@@ -4,8 +4,14 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { pingIndexNow } from "@/app/api/indexnow/route";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const status = searchParams.get("status");
+
+  const where = status ? { status } : {};
+
   const projects = await prisma.project.findMany({
+    where,
     include: { translations: true, categories: true, tags: true, projectImages: { orderBy: { order: "asc" } } },
     orderBy: { order: "asc" },
   });

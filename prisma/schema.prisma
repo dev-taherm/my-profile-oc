@@ -229,4 +229,108 @@ model SocialPost {
   account        SocialAccount @relation(fields: [accountId], references: [id], onDelete: Cascade)
 }
 
+model SiteProfile {
+  id              String   @id @default("default")
+  name            String
+  title           String
+  description     String
+  url             String
+  email           String
+  phone           String?
+  whatsapp        String?
+  location        String?
+  github          String?
+  linkedin        String?
+  instagram       String?
+  facebook        String?
+  twitterHandle   String?
+  heroGreeting    String?
+  heroSubtitle    String?
+  heroDescription String?
+  aboutSummary    String?
+  aboutMission    String?
+  resumeSummary   String?
+  statsExperience String?
+  statsProjects   String?
+  statsTech       String?
+  statsCerts      String?
+  updatedAt       DateTime  @updatedAt
+  experiences     ExperienceEntry[]
+  educations      EducationEntry[]
+  skillCategories SkillCategory[]
+  certifications  Certification[]
+  languages       Language[]
+}
+
+model ExperienceEntry {
+  id         String      @id @default(cuid())
+  company    String
+  role       String
+  period     String
+  highlights String
+  order      Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  profileId  String
+  profile    SiteProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model EducationEntry {
+  id          String      @id @default(cuid())
+  degree      String
+  institution String
+  location    String?
+  period      String
+  order       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  profileId   String
+  profile     SiteProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model SkillCategory {
+  id         String      @id @default(cuid())
+  title      String
+  icon       String?
+  skills     String
+  order      Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  profileId  String
+  profile    SiteProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Certification {
+  id         String      @id @default(cuid())
+  title      String
+  issuer     String?
+  year       String?
+  order      Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  profileId  String
+  profile    SiteProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Language {
+  id         String      @id @default(cuid())
+  name       String
+  level      String
+  order      Int         @default(0)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  profileId  String
+  profile    SiteProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
 

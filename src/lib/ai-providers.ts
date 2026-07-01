@@ -245,7 +245,6 @@ export function buildSystemPrompt(
   webSearchContext?: string
 ): string {
   const lang = locale === "ar" ? "Arabic" : "English";
-  const isArabic = locale === "ar";
 
   const webContext = webSearchContext
     ? `\n\n## Web Search Results\n${webSearchContext}`

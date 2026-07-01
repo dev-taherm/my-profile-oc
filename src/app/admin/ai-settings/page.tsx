@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import {
   Bot, Save, TestTube, CheckCircle, XCircle, Loader2, Search,
-  Plus, Trash2, Star, Pencil,
+  Plus, Trash2, Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,31 +78,33 @@ export default function AdminAiSettingsPage() {
   const [searchTestResult, setSearchTestResult] = useState<{ ok: boolean; message: string } | null>(null);
 
   // ── Load profiles ──
-  const loadProfiles = useCallback(async () => {
-    try {
-      const res = await fetch("/api/ai/profiles");
-      if (res.ok) {
-        const data = await res.json();
-        setProfiles(data);
-      }
-    } finally {
-      setLoadingProfiles(false);
-    }
-  }, []);
-
   useEffect(() => {
-    loadProfiles();
-    fetch("/api/ai/settings")
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.tavilyKeySet) setTavilyKeySet(data.tavilyKeySet);
-      });
-  }, [loadProfiles]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/ai/profiles");
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          setProfiles(data);
+        }
+      } finally {
+        if (!cancelled) setLoadingProfiles(false);
+      }
+    })();
+    (async () => {
+      const res = await fetch("/api/ai/settings");
+      const data = await res.json();
+      if (!cancelled && data.tavilyKeySet) setTavilyKeySet(data.tavilyKeySet);
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Auto-select first profile after load
   useEffect(() => {
     if (!loadingProfiles && !selectedId && profiles.length > 0) {
-      setSelectedId(profiles[0].id);
+      // Defer state update to avoid cascading renders
+      const id = requestAnimationFrame(() => setSelectedId(profiles[0].id));
+      return () => cancelAnimationFrame(id);
     }
   }, [loadingProfiles, selectedId, profiles]);
 
@@ -110,21 +112,24 @@ export default function AdminAiSettingsPage() {
   useEffect(() => {
     if (isCreating) return;
     const p = profiles.find((x) => x.id === selectedId);
-    if (!p) {
-      setEditName("");
-      setEditProvider("ollama");
+    const id = requestAnimationFrame(() => {
+      if (!p) {
+        setEditName("");
+        setEditProvider("ollama");
+        setEditApiKey("");
+        setEditApiKeySet(false);
+        setEditBaseUrl(PROVIDER_INFO.ollama.defaultBaseUrl);
+        setEditModel(PROVIDER_INFO.ollama.models[0]);
+        return;
+      }
+      setEditName(p.name);
+      setEditProvider(p.provider);
       setEditApiKey("");
-      setEditApiKeySet(false);
-      setEditBaseUrl(PROVIDER_INFO.ollama.defaultBaseUrl);
-      setEditModel(PROVIDER_INFO.ollama.models[0]);
-      return;
-    }
-    setEditName(p.name);
-    setEditProvider(p.provider);
-    setEditApiKey("");
-    setEditApiKeySet(p.apiKeySet);
-    setEditBaseUrl(p.baseUrl || PROVIDER_INFO[p.provider].defaultBaseUrl);
-    setEditModel(p.model);
+      setEditApiKeySet(p.apiKeySet);
+      setEditBaseUrl(p.baseUrl || PROVIDER_INFO[p.provider].defaultBaseUrl);
+      setEditModel(p.model);
+    });
+    return () => cancelAnimationFrame(id);
   }, [selectedId, profiles, isCreating]);
 
   // ── New profile ──

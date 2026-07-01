@@ -21,23 +21,24 @@ export function SocialAccounts({ onRefresh }: { onRefresh?: () => void }) {
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState<string | null>(null);
-
-  const fetchAccounts = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/social/accounts");
-      const data = await res.json();
-      setAccounts(data.accounts || []);
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetchAccounts();
-  }, []);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/social/accounts");
+        const data = await res.json();
+        if (!cancelled) setAccounts(data.accounts || []);
+      } catch {
+        // silent
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [refreshKey]);
 
   const handleConnect = (provider: string) => {
     setConnecting(provider);
@@ -48,7 +49,7 @@ export function SocialAccounts({ onRefresh }: { onRefresh?: () => void }) {
     if (!confirm("Disconnect this account?")) return;
     try {
       await fetch(`/api/social/accounts/${id}`, { method: "DELETE" });
-      await fetchAccounts();
+      setRefreshKey((k) => k + 1);
       onRefresh?.();
     } catch {
       // silent
@@ -62,7 +63,7 @@ export function SocialAccounts({ onRefresh }: { onRefresh?: () => void }) {
         const data = await res.json();
         alert(data.error || "Refresh failed");
       }
-      await fetchAccounts();
+      setRefreshKey((k) => k + 1);
     } catch {
       alert("Refresh failed");
     }

@@ -8,20 +8,21 @@ import { SocialPostHistory } from "@/components/admin/social/SocialPostHistory";
 export default function AdminSocialPage() {
   const [hasTelegram, setHasTelegram] = useState(false);
   const [historyKey, setHistoryKey] = useState(0);
-
-  const checkTelegram = async () => {
-    try {
-      const res = await fetch("/api/social/accounts");
-      const data = await res.json();
-      setHasTelegram(!!data.account);
-    } catch {
-      setHasTelegram(false);
-    }
-  };
+  const [configKey, setConfigKey] = useState(0);
 
   useEffect(() => {
-    checkTelegram();
-  }, []);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/social/accounts");
+        const data = await res.json();
+        if (!cancelled) setHasTelegram(!!data.account);
+      } catch {
+        if (!cancelled) setHasTelegram(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [configKey]);
 
   const handlePostSent = () => {
     setHistoryKey((k) => k + 1);
@@ -38,7 +39,7 @@ export default function AdminSocialPage() {
 
       <section>
         <h2 className="text-lg font-semibold mb-3">Telegram Bot</h2>
-        <TelegramConfig onRefresh={checkTelegram} />
+        <TelegramConfig onRefresh={() => setConfigKey((k) => k + 1)} />
       </section>
 
       <section>

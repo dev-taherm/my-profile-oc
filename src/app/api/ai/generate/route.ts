@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { prompt, systemPrompt, entityType, locale, providerConfig, chatHistory } = body;
+  const { prompt, entityType, locale, providerConfig, chatHistory } = body;
 
   if (!prompt) {
     return NextResponse.json({ error: "Prompt is required" }, { status: 400 });

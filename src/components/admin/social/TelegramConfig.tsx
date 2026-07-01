@@ -23,26 +23,27 @@ export function TelegramConfig({ onRefresh }: { onRefresh?: () => void }) {
   const [chatId, setChatId] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  const fetchConfig = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/social/accounts");
-      const data = await res.json();
-      if (data.account) {
-        setConfig(data.account);
-        setChatId(data.account.chatId);
-      }
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    fetchConfig();
-  }, []);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/social/accounts");
+        const data = await res.json();
+        if (!cancelled && data.account) {
+          setConfig(data.account);
+          setChatId(data.account.chatId);
+        }
+      } catch {
+        // silent
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [refreshKey]);
 
   const handleSave = async () => {
     if (!botToken || !chatId) {
@@ -70,7 +71,7 @@ export function TelegramConfig({ onRefresh }: { onRefresh?: () => void }) {
 
       setSuccess("Telegram bot configured successfully!");
       setBotToken("");
-      await fetchConfig();
+      setRefreshKey((k) => k + 1);
       onRefresh?.();
     } catch {
       setError("Failed to save configuration");

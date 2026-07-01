@@ -4,9 +4,16 @@ import { request } from "./ipv4-fetch";
 
 const TELEGRAM_API = "https://api.telegram.org";
 
+interface TelegramResponse {
+  ok: boolean;
+  description?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  result?: any;
+}
+
 // ─── IPv4-safe helpers ───────────────────────────────────────────
 
-async function readJson(res: { body: ReadableStream<Uint8Array> }): Promise<any> {
+async function readJson(res: { body: ReadableStream<Uint8Array> }): Promise<TelegramResponse> {
   const reader = res.body.getReader();
   const chunks: Uint8Array[] = [];
   while (true) {

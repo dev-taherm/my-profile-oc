@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAiStream, type ChatMessage } from "@/hooks/use-ai-stream";
 import { useAiPanel } from "@/contexts/AiPanelContext";
-import { type AiPendingUpdate, type AiFieldUpdates } from "@/lib/ai-providers";
+import { type AiPendingUpdate } from "@/lib/ai-providers";
 
 interface AiChatPanelProps {
   currentContent: string;
@@ -39,17 +39,6 @@ interface AiChatPanelProps {
   storageKey?: string;
   onClose: () => void;
 }
-
-const FIELD_LABELS: Record<string, string> = {
-  title: "Title",
-  excerpt: "Excerpt",
-  content: "Content",
-  slug: "Slug",
-  tags: "Tags",
-  categories: "Categories",
-  metaDescription: "Meta Description",
-  relatedArticles: "Related Articles",
-};
 
 function getSmartSuggestions(
   entityType: string,
@@ -157,11 +146,24 @@ export function AiChatPanel({
     setTimeout(() => inputRef.current?.focus(), 200);
   }, []);
 
+  const handleApplyUpdate = (update: AiPendingUpdate) => {
+    applyHandlerRef.current?.(update.fields, update.locale);
+    switchLocaleHandlerRef.current?.(update.locale);
+    clearPendingUpdate();
+
+    // Show undo button for 10 seconds
+    setUndoVisible(true);
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = setTimeout(() => setUndoVisible(false), 10000);
+  };
+
   useEffect(() => {
     if (pendingUpdate && autoApply) {
-      handleApplyUpdate(pendingUpdate);
+      // Defer to avoid synchronous setState in effect
+      const id = requestAnimationFrame(() => handleApplyUpdate(pendingUpdate));
+      return () => cancelAnimationFrame(id);
     }
-  }, [pendingUpdate, autoApply]);
+  }, [pendingUpdate, autoApply, handleApplyUpdate]);
 
   // Cleanup undo timer on unmount
   useEffect(() => {
@@ -215,17 +217,6 @@ export function AiChatPanel({
       e.preventDefault();
       handleSend();
     }
-  };
-
-  const handleApplyUpdate = (update: AiPendingUpdate) => {
-    applyHandlerRef.current?.(update.fields, update.locale);
-    switchLocaleHandlerRef.current?.(update.locale);
-    clearPendingUpdate();
-
-    // Show undo button for 10 seconds
-    setUndoVisible(true);
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-    undoTimerRef.current = setTimeout(() => setUndoVisible(false), 10000);
   };
 
   const handleUndo = () => {

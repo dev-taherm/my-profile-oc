@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Upload,
   Search,
@@ -11,7 +11,7 @@ import {
   ExternalLink,
   FolderOpen,
   FolderPlus,
-  ChevronRight,
+
   Check,
   X,
   Folder as FolderIcon,
@@ -60,26 +60,32 @@ export default function AdminMediaPage() {
   const [editFolderName, setEditFolderName] = useState("");
   const [folderMenu, setFolderMenu] = useState<string | null>(null);
   const [moveMenuOpen, setMoveMenuOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchMedia = useCallback(async () => {
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (activeFolder !== undefined) {
-      if (activeFolder === null) params.set("folderId", "null");
-      else if (activeFolder) params.set("folderId", activeFolder);
-    }
-    const res = await fetch(`/api/media?${params}`);
-    if (res.ok) setMedia(await res.json());
-  }, [search, activeFolder]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (activeFolder !== undefined) {
+        if (activeFolder === null) params.set("folderId", "null");
+        else if (activeFolder) params.set("folderId", activeFolder);
+      }
+      const res = await fetch(`/api/media?${params}`);
+      if (!cancelled && res.ok) setMedia(await res.json());
+    })();
+    return () => { cancelled = true; };
+  }, [search, activeFolder, refreshKey]);
 
-  const fetchFolders = useCallback(async () => {
-    const res = await fetch("/api/media/folders");
-    if (res.ok) setFolders(await res.json());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res = await fetch("/api/media/folders");
+      if (!cancelled && res.ok) setFolders(await res.json());
+    })();
+    return () => { cancelled = true; };
   }, []);
-
-  useEffect(() => { fetchMedia(); }, [fetchMedia]);
-  useEffect(() => { fetchFolders(); }, [fetchFolders]);
 
   const handleUpload = async (files: FileList | File[], folderId?: string | null) => {
     if (!files || files.length === 0) return;
@@ -181,7 +187,7 @@ export default function AdminMediaPage() {
     if (res.ok) {
       setSelectedIds(new Set());
       setMoveMenuOpen(false);
-      fetchMedia();
+      setRefreshKey((k) => k + 1);
     }
   };
 
@@ -245,7 +251,7 @@ export default function AdminMediaPage() {
       setFolders((prev) => prev.filter((f) => f.id !== id));
       if (activeFolder === id) setActiveFolder(undefined);
       setFolderMenu(null);
-      fetchMedia();
+      setRefreshKey((k) => k + 1);
     }
   };
 
@@ -446,7 +452,7 @@ export default function AdminMediaPage() {
               placeholder="Search media..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && fetchMedia()}
+              onKeyDown={(e) => e.key === "Enter" && setRefreshKey((k) => k + 1)}
               className="ps-9"
             />
           </div>

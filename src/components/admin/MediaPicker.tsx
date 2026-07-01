@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Upload, Search, FileText, Check, ImageIcon, FolderIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,32 +56,36 @@ export function MediaPicker({
   const [selectedUrls, setSelectedUrls] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchMedia = useCallback(async () => {
-    const params = new URLSearchParams();
-    if (search) params.set("search", search);
-    if (accept === "image") params.set("mimeType", "image");
-    if (accept === "document") params.set("mimeType", "application");
-    if (activeFolder !== undefined) {
-      if (activeFolder === null) params.set("folderId", "null");
-      else if (activeFolder) params.set("folderId", activeFolder);
-    }
-    const res = await fetch(`/api/media?${params}`);
-    if (res.ok) setMedia(await res.json());
-  }, [search, accept, activeFolder]);
-
-  const fetchFolders = useCallback(async () => {
-    const res = await fetch("/api/media/folders");
-    if (res.ok) setFolders(await res.json());
-  }, []);
-
   useEffect(() => {
     if (open) {
-      fetchMedia();
-      fetchFolders();
-      setSelectedUrls(new Set());
-      setActiveFolder(undefined);
+      let cancelled = false;
+      (async () => {
+        const params = new URLSearchParams();
+        if (search) params.set("search", search);
+        if (accept === "image") params.set("mimeType", "image");
+        if (accept === "document") params.set("mimeType", "application");
+        if (activeFolder !== undefined) {
+          if (activeFolder === null) params.set("folderId", "null");
+          else if (activeFolder) params.set("folderId", activeFolder);
+        }
+        const res = await fetch(`/api/media?${params}`);
+        if (!cancelled && res.ok) setMedia(await res.json());
+      })();
+      (async () => {
+        const res = await fetch("/api/media/folders");
+        if (!cancelled && res.ok) setFolders(await res.json());
+      })();
+      // Defer state resets to avoid synchronous setState in effect
+      const id = requestAnimationFrame(() => {
+        setSelectedUrls(new Set());
+        setActiveFolder(undefined);
+      });
+      return () => {
+        cancelled = true;
+        cancelAnimationFrame(id);
+      };
     }
-  }, [open, fetchMedia, fetchFolders]);
+  }, [open, search, accept, activeFolder]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;

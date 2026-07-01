@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { CheckCircle, XCircle, Clock, Copy, Check, Image } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,25 +30,28 @@ export function SocialPostHistory() {
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [loading, setLoading] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  const fetchPosts = async (page = 1) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ page: String(page), limit: "10" });
-      const res = await fetch(`/api/social/history?${params}`);
-      const data = await res.json();
-      setPosts(data.posts || []);
-      setPagination(data.pagination);
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ page: String(page), limit: "10" });
+        const res = await fetch(`/api/social/history?${params}`);
+        const data = await res.json();
+        if (!cancelled) {
+          setPosts(data.posts || []);
+          setPagination(data.pagination);
+        }
+      } catch {
+        // silent
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [page]);
 
   const handleCopy = async (content: string, id: string) => {
     try {
@@ -166,7 +169,7 @@ export function SocialPostHistory() {
                   variant="outline"
                   size="sm"
                   disabled={pagination.page <= 1}
-                  onClick={() => fetchPosts(pagination.page - 1)}
+                  onClick={() => setPage((p) => p - 1)}
                 >
                   Previous
                 </Button>
@@ -177,7 +180,7 @@ export function SocialPostHistory() {
                   variant="outline"
                   size="sm"
                   disabled={pagination.page >= pagination.totalPages}
-                  onClick={() => fetchPosts(pagination.page + 1)}
+                  onClick={() => setPage((p) => p + 1)}
                 >
                   Next
                 </Button>

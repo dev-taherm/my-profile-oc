@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { siteConfig, locales } from "@/lib/constants";
+import { siteConfig } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 

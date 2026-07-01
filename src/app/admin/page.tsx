@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
@@ -44,18 +44,18 @@ export default function AdminDashboard() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchDashboard = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/analytics/dashboard?period=${period}`);
-      if (res.ok) setData(await res.json());
-    } catch {}
-    setLoading(false);
-  }, [period]);
-
   useEffect(() => {
-    fetchDashboard();
-  }, [fetchDashboard]);
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/analytics/dashboard?period=${period}`);
+        if (!cancelled && res.ok) setData(await res.json());
+      } catch {}
+      if (!cancelled) setLoading(false);
+    })();
+    return () => { cancelled = true; };
+  }, [period]);
 
   const deviceIcon = (name: string) => {
     if (name === "Mobile") return <Smartphone className="h-4 w-4" />;

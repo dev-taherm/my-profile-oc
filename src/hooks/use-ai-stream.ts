@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { parseAiUpdate, type AiPendingUpdate, type AiFieldUpdates } from "@/lib/ai-providers";
+import { parseAiUpdate, type AiPendingUpdate } from "@/lib/ai-providers";
 
 interface SendMessageOptions {
   prompt: string;
@@ -63,7 +63,9 @@ export function useAiStream(storageKey?: string) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const messagesRef = useRef<ChatMessage[]>([]);
 
-  messagesRef.current = messages;
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   // Persist messages to localStorage when they change
   useEffect(() => {

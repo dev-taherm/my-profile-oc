@@ -48,22 +48,30 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
   useEffect(() => {
     if (sourceType === "custom") return;
 
-    setLoadingItems(true);
-    setSourceId(null);
+    let cancelled = false;
+    (async () => {
+      setLoadingItems(true);
+      setSourceId(null);
 
-    const endpoint = sourceType === "project" ? "/api/projects?status=PUBLISHED" : "/api/blog?status=PUBLISHED";
+      const endpoint = sourceType === "project" ? "/api/projects?status=PUBLISHED" : "/api/blog?status=PUBLISHED";
 
-    fetch(endpoint)
-      .then((r) => r.json())
-      .then((data) => {
-        if (sourceType === "project") {
-          setProjects(data);
-        } else {
-          setBlogPosts(data);
+      try {
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        if (!cancelled) {
+          if (sourceType === "project") {
+            setProjects(data);
+          } else {
+            setBlogPosts(data);
+          }
         }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingItems(false));
+      } catch {
+        // ignored
+      } finally {
+        if (!cancelled) setLoadingItems(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [sourceType]);
 
   const items = sourceType === "project" ? projects : blogPosts;

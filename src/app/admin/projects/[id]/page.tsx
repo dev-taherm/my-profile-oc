@@ -318,7 +318,9 @@ export default function AdminProjectEditorPage({
   };
 
   const handleAiApplyFieldsRef = useRef(handleAiApplyFields);
-  handleAiApplyFieldsRef.current = handleAiApplyFields;
+  useEffect(() => {
+    handleAiApplyFieldsRef.current = handleAiApplyFields;
+  }, [handleAiApplyFields]);
 
   // Snapshot captured just before AI apply, used for undo
   const preApplySnapshotRef = useRef<string>("");

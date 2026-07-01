@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -13,7 +14,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
 
   const titles: Record<Locale, string> = {
     en: "Terms of Service — Taher Mahram",
@@ -60,8 +62,9 @@ export default async function TermsPage({
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
+  const profile = await getSiteProfile();
 
-  const baseUrl = siteConfig.url;
+  const baseUrl = profile.url;
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -98,7 +101,7 @@ export default async function TermsPage({
           </div>
         </div>
       </main>
-      <Footer locale={locale} dict={dict} />
+      <Footer locale={locale} dict={dict} profile={profile} />
     </>
   );
 }

@@ -3,7 +3,8 @@ export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { prisma } from "@/lib/prisma";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -17,7 +18,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
 
   const titles: Record<Locale, string> = {
     en: "Services — Software Engineering by Taher Mahram",
@@ -64,6 +66,7 @@ export default async function ServicesPage({
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
+  const profile = await getSiteProfile();
 
   let services: React.ComponentProps<typeof ServicesList>["services"] = [];
   try {
@@ -89,7 +92,7 @@ export default async function ServicesPage({
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: locale === "ar" ? "الرئيسية" : "Home", item: `${siteConfig.url}/${locale}` },
+          { "@type": "ListItem", position: 1, name: locale === "ar" ? "الرئيسية" : "Home", item: `${profile.url}/${locale}` },
           { "@type": "ListItem", position: 2, name: dict.services.title },
         ],
       }) }} />
@@ -107,7 +110,7 @@ export default async function ServicesPage({
           <ServicesList services={services} locale={locale} dict={dict} />
         </div>
       </main>
-      <Footer locale={locale} dict={dict} />
+      <Footer locale={locale} dict={dict} profile={profile} />
     </>
   );
 }

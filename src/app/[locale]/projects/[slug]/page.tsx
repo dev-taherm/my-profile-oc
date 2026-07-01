@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { prisma } from "@/lib/prisma";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
@@ -17,7 +18,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale, slug } = await params;
   const locale = rawLocale as Locale;
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
 
   const project = await prisma.project.findUnique({
     where: { slug },
@@ -66,6 +68,7 @@ export default async function ProjectDetailPage({
   const { locale: rawLocale, slug } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
+  const profile = await getSiteProfile();
 
   const project = await prisma.project.findUnique({
     where: { slug },
@@ -92,7 +95,7 @@ export default async function ProjectDetailPage({
     translation,
   };
 
-  const baseUrl = siteConfig.url;
+  const baseUrl = profile.url;
   const projectSchema = {
     "@context": "https://schema.org",
     "@type": "CreativeWork",
@@ -101,7 +104,7 @@ export default async function ProjectDetailPage({
     url: `${baseUrl}/${locale}/projects/${slug}`,
     author: {
       "@type": "Person",
-      name: siteConfig.name,
+      name: profile.name,
       url: baseUrl,
     },
     dateModified: project.updatedAt.toISOString(),
@@ -136,7 +139,7 @@ export default async function ProjectDetailPage({
           <ProjectDetail project={serializedProject} locale={locale} dict={dict} />
         </div>
       </main>
-      <Footer locale={locale} dict={dict} />
+      <Footer locale={locale} dict={dict} profile={profile} />
     </>
   );
 }

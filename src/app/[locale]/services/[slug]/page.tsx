@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { prisma } from "@/lib/prisma";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
@@ -15,7 +16,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale, slug } = await params;
   const locale = rawLocale as Locale;
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
 
   const service = await prisma.service.findUnique({
     where: { slug },
@@ -63,6 +65,7 @@ export default async function ServiceDetailPage({
   const { locale: rawLocale, slug } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
+  const profile = await getSiteProfile();
 
   const service = await prisma.service.findUnique({
     where: { slug },
@@ -75,7 +78,7 @@ export default async function ServiceDetailPage({
 
   if (!translation) notFound();
 
-  const baseUrl = siteConfig.url;
+  const baseUrl = profile.url;
   const serviceSchema = {
     "@context": "https://schema.org",
     "@type": "Service",
@@ -84,7 +87,7 @@ export default async function ServiceDetailPage({
     url: `${baseUrl}/${locale}/services/${slug}`,
     provider: {
       "@type": "Person",
-      name: siteConfig.name,
+      name: profile.name,
       url: baseUrl,
     },
     inLanguage: locale,
@@ -127,10 +130,11 @@ export default async function ServiceDetailPage({
             }}
             locale={locale}
             dict={dict}
+            profile={profile}
           />
         </div>
       </main>
-      <Footer locale={locale} dict={dict} />
+      <Footer locale={locale} dict={dict} profile={profile} />
     </>
   );
 }

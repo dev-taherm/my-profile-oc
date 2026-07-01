@@ -19,9 +19,12 @@ function request(
     const isHttps = parsed.protocol === "https:";
     const mod = isHttps ? https : http;
 
+    const port = parsed.port ? Number(parsed.port) : (isHttps ? 443 : 80);
+
     const req = mod.request(
       {
         hostname: parsed.hostname,
+        port,
         path: parsed.pathname + parsed.search,
         method: options.method || "POST",
         headers: options.headers,
@@ -75,9 +78,12 @@ function requestStream(
     const isHttps = parsed.protocol === "https:";
     const mod = isHttps ? https : http;
 
+    const port = parsed.port ? Number(parsed.port) : (isHttps ? 443 : 80);
+
     const req = mod.request(
       {
         hostname: parsed.hostname,
+        port,
         path: parsed.pathname + parsed.search,
         method: options.method || "POST",
         headers: options.headers,

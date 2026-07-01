@@ -1,27 +1,31 @@
-import { siteConfig } from "@/lib/constants";
+import { type SiteProfileData } from "@/lib/profile";
 
-export function JsonLd() {
+interface JsonLdProps {
+  profile?: SiteProfileData;
+}
+
+export function JsonLd({ profile }: JsonLdProps) {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: siteConfig.name,
-    url: siteConfig.url,
-    logo: `${siteConfig.url}/images/logo.png`,
-    description: siteConfig.description,
+    name: profile?.name || "Taher Mahram",
+    url: profile?.url || "https://taher.pixovagency.com",
+    logo: `${profile?.url || "https://taher.pixovagency.com"}/images/logo.png`,
+    description: profile?.description || "Software Engineer",
     founder: {
       "@type": "Person",
-      name: siteConfig.name,
+      name: profile?.name || "Taher Mahram",
     },
     sameAs: [
-      siteConfig.github,
-      siteConfig.linkedin,
-      siteConfig.instagram,
-      siteConfig.facebook,
-    ],
+      profile?.github,
+      profile?.linkedin,
+      profile?.instagram,
+      profile?.facebook,
+    ].filter(Boolean),
     contactPoint: {
       "@type": "ContactPoint",
       contactType: "customer service",
-      email: siteConfig.email,
+      email: profile?.email || "tahermahram0@gmail.com",
       availableLanguage: ["English", "Arabic"],
     },
   };
@@ -29,13 +33,13 @@ export function JsonLd() {
   const searchActionSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: siteConfig.name,
-    url: siteConfig.url,
+    name: profile?.name || "Taher Mahram",
+    url: profile?.url || "https://taher.pixovagency.com",
     potentialAction: {
       "@type": "SearchAction",
       target: {
         "@type": "EntryPoint",
-        urlTemplate: `${siteConfig.url}/en/search?q={search_term_string}`,
+        urlTemplate: `${profile?.url || "https://taher.pixovagency.com"}/en/search?q={search_term_string}`,
       },
       "query-input": "required name=search_term_string",
     },
@@ -44,56 +48,48 @@ export function JsonLd() {
   const personSchema = {
     "@context": "https://schema.org",
     "@type": "Person",
-    name: siteConfig.name,
-    url: siteConfig.url,
-    jobTitle: "Software Engineer",
-    description: siteConfig.description,
-    email: siteConfig.email,
-    address: {
+    name: profile?.name || "Taher Mahram",
+    url: profile?.url || "https://taher.pixovagency.com",
+    jobTitle: profile?.title || "Software Engineer",
+    description: profile?.description || "Software Engineer",
+    email: profile?.email || "tahermahram0@gmail.com",
+    address: profile?.location ? {
       "@type": "PostalAddress",
-      addressLocality: "Sana'a",
-      addressCountry: "YE",
-    },
-    knowsAbout: [
-      "Python",
-      "Django",
-      "JavaScript",
-      "TypeScript",
-      "Node.js",
-      "PostgreSQL",
-      "SQLite",
-      "REST APIs",
-      "Microservices",
-      "LLMs",
-      "AI Systems",
-      "RAG Pipelines",
-      "LangChain",
-      "Docker",
-      "Linux",
-      "Git",
+      addressLocality: profile.location,
+    } : undefined,
+    knowsAbout: profile?.skillCategories.flatMap((sc) => sc.skills) || [
+      "Python", "Django", "JavaScript", "TypeScript", "PostgreSQL", "REST APIs", "Microservices", "LLMs", "AI Systems", "Docker",
     ],
-    alumniOf: {
+    hasOccupation: profile?.experiences.map((exp) => ({
+      "@type": "Occupation",
+      name: exp.role,
+      occupationLocation: { "@type": "Organization", name: exp.company },
+    })),
+    alumniOf: profile?.educations.map((edu) => ({
+      "@type": "CollegeOrUniversity",
+      name: edu.institution,
+      educationalCredentialAward: edu.degree,
+    }))[0] || {
       "@type": "CollegeOrUniversity",
       name: "Universiti Teknikal Malaysia Melaka (UTeM)",
-      department: "Faculty of Information and Communication Technology",
     },
     sameAs: [
-      siteConfig.github,
-      siteConfig.linkedin,
-      siteConfig.instagram,
-      siteConfig.facebook,
-    ],
+      profile?.github,
+      profile?.linkedin,
+      profile?.instagram,
+      profile?.facebook,
+    ].filter(Boolean),
   };
 
   const websiteSchema = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: siteConfig.name,
-    url: siteConfig.url,
-    description: siteConfig.description,
+    name: profile?.name || "Taher Mahram",
+    url: profile?.url || "https://taher.pixovagency.com",
+    description: profile?.description || "Software Engineer",
     author: {
       "@type": "Person",
-      name: siteConfig.name,
+      name: profile?.name || "Taher Mahram",
     },
     speakable: {
       "@type": "SpeakableSpecification",

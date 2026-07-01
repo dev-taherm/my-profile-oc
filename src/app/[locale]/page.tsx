@@ -2,7 +2,8 @@ export const dynamic = "force-dynamic";
 
 import type { Metadata } from "next";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 import { prisma } from "@/lib/prisma";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
@@ -23,7 +24,8 @@ export async function generateMetadata({
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
 
   const titles: Record<Locale, string> = {
     en: `${dict.hero.name} — Software Engineer | Backend & AI Systems`,
@@ -70,6 +72,7 @@ export default async function HomePage({
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
+  const profile = await getSiteProfile();
 
   let services: React.ComponentProps<typeof FeaturedServices>["services"] = [];
   let projects: React.ComponentProps<typeof FeaturedProjects>["projects"] = [];
@@ -147,15 +150,15 @@ export default async function HomePage({
           items={[{ label: dict.breadcrumbs.home }]}
           locale={locale}
         />
-        <Hero locale={locale} dict={dict} />
-        <Stats dict={dict} />
-        <FeaturedTech dict={dict} />
+        <Hero locale={locale} dict={dict} profile={profile} />
+        <Stats dict={dict} profile={profile} />
+        <FeaturedTech dict={dict} profile={profile} />
         <FeaturedServices services={services} locale={locale} dict={dict} />
         <FeaturedProjects projects={projects} locale={locale} dict={dict} />
         <LatestBlog posts={blogPosts} locale={locale} dict={dict} />
-        <CTA locale={locale} dict={dict} />
+        <CTA locale={locale} dict={dict} profile={profile} />
       </main>
-      <Footer locale={locale} dict={dict} />
+      <Footer locale={locale} dict={dict} profile={profile} />
     </>
   );
 }

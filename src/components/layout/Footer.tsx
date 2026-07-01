@@ -2,7 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { Mail } from "lucide-react";
 import { GithubIcon, LinkedinIcon, InstagramIcon, FacebookIcon } from "@/components/shared/Icons";
-import { siteConfig, type Locale } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { type SiteProfileData } from "@/lib/profile";
 
 interface FooterProps {
   locale: Locale;
@@ -13,9 +14,10 @@ interface FooterProps {
       terms: string;
     };
   };
+  profile: SiteProfileData;
 }
 
-export function Footer({ locale, dict }: FooterProps) {
+export function Footer({ locale, dict, profile }: FooterProps) {
   const year = new Date().getFullYear();
 
   return (
@@ -28,7 +30,7 @@ export function Footer({ locale, dict }: FooterProps) {
               <Image src="/images/logoForDarckTheme.png" alt="Taher Mahram" width={56} height={56} className="hidden dark:block" />
             </Link>
             <p className="text-sm text-muted-foreground">
-              © {year} {siteConfig.author}. {dict.footer.copyright}
+              © {year} {profile.name}. {dict.footer.copyright}
             </p>
           </div>
 
@@ -43,7 +45,7 @@ export function Footer({ locale, dict }: FooterProps) {
 
           <div className="flex items-center gap-1">
             <Link
-              href={siteConfig.github}
+              href={profile.github || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -52,7 +54,7 @@ export function Footer({ locale, dict }: FooterProps) {
               <span className="sr-only">GitHub</span>
             </Link>
             <Link
-              href={siteConfig.linkedin}
+              href={profile.linkedin || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -61,7 +63,7 @@ export function Footer({ locale, dict }: FooterProps) {
               <span className="sr-only">LinkedIn</span>
             </Link>
             <Link
-              href={siteConfig.instagram}
+              href={profile.instagram || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -70,7 +72,7 @@ export function Footer({ locale, dict }: FooterProps) {
               <span className="sr-only">Instagram</span>
             </Link>
             <Link
-              href={siteConfig.facebook}
+              href={profile.facebook || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -79,7 +81,7 @@ export function Footer({ locale, dict }: FooterProps) {
               <span className="sr-only">Facebook</span>
             </Link>
             <Link
-              href={`mailto:${siteConfig.email}`}
+              href={`mailto:${profile.email}`}
               className="p-2 text-muted-foreground hover:text-foreground transition-colors"
             >
               <Mail className="h-5 w-5" />

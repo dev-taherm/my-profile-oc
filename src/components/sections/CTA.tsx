@@ -3,7 +3,8 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { WhatsappIcon } from "@/components/shared/Icons";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { type SiteProfileData } from "@/lib/profile";
 
 interface CTAProps {
   locale: Locale;
@@ -12,9 +13,10 @@ interface CTAProps {
       cta: { title: string; subtitle: string; button: string };
     };
   };
+  profile: SiteProfileData;
 }
 
-export function CTA({ locale, dict }: CTAProps) {
+export function CTA({ locale, dict, profile }: CTAProps) {
   return (
     <section className="py-20 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
@@ -46,7 +48,7 @@ export function CTA({ locale, dict }: CTAProps) {
             size="lg"
             render={
               <a
-                href={`https://wa.me/${siteConfig.whatsapp.replace(/[^0-9]/g, "")}`}
+                href={`https://wa.me/${profile.whatsapp?.replace(/[^0-9]/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
               />

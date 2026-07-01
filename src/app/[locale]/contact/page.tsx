@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -15,7 +16,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
 
   const titles: Record<Locale, string> = {
     en: "Contact Taher Mahram — Hire a Software Engineer",
@@ -62,8 +64,9 @@ export default async function ContactPage({
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
+  const profile = await getSiteProfile();
 
-  const baseUrl = siteConfig.url;
+  const baseUrl = profile.url;
   const descriptions: Record<Locale, string> = {
     en: "Get in touch with Taher Mahram for software engineering projects, backend development, AI integration, or freelance opportunities.",
     ar: "تواصل مع طاهر محرم لمشاريع هندسة البرمجيات أو تطوير الأنظمة الخلفية أو دمج الذكاء الاصطناعي أو الفرص الحرة.",
@@ -85,18 +88,18 @@ export default async function ContactPage({
     url: `${baseUrl}/${locale}/contact`,
     mainEntity: {
       "@type": "Person",
-      name: siteConfig.name,
+      name: profile.name,
       url: baseUrl,
       contactPoint: [
         {
           "@type": "ContactPoint",
           contactType: "email",
-          email: siteConfig.email,
+          email: profile.email,
         },
         {
           "@type": "ContactPoint",
           contactType: "customer service",
-          telephone: siteConfig.whatsapp,
+          telephone: profile.whatsapp,
           contactOption: "WhatsApp",
           availableLanguage: ["English", "Arabic"],
         },
@@ -121,11 +124,11 @@ export default async function ContactPage({
           />
           <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-12">
             <ContactForm dict={dict} />
-            <ContactInfo dict={dict} />
+            <ContactInfo dict={dict} profile={profile} />
           </div>
         </div>
       </main>
-      <Footer locale={locale} dict={dict} />
+      <Footer locale={locale} dict={dict} profile={profile} />
     </>
   );
 }

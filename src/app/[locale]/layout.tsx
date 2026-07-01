@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import { locales, localeConfig, type Locale } from "@/lib/constants";
-import { siteConfig } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LocaleSetter } from "@/components/shared/LocaleSetter";
@@ -30,7 +30,8 @@ export async function generateMetadata({
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
   const geo = localeConfig[locale];
 
   return {
@@ -67,7 +68,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: "summary_large_image",
-      site: "@dev_taher",
+      site: profile.twitterHandle,
       title: `${dict.hero.name} — ${dict.hero.title}`,
       description: dict.hero.subtitle,
       images: [`${baseUrl}/api/og?title=${encodeURIComponent(dict.hero.name)}&subtitle=${encodeURIComponent(dict.hero.title)}&locale=${locale}`],

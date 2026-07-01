@@ -4,7 +4,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/i18n/get-dictionary";
 import { prisma } from "@/lib/prisma";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Breadcrumb } from "@/components/shared/Breadcrumb";
@@ -17,7 +18,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale, slug } = await params;
   const locale = rawLocale as Locale;
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
 
   const post = await prisma.blogPost.findUnique({
     where: { slug },
@@ -68,6 +70,7 @@ export default async function BlogPostPage({
   const { locale: rawLocale, slug } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
+  const profile = await getSiteProfile();
 
   const post = await prisma.blogPost.findUnique({
     where: { slug },
@@ -95,7 +98,7 @@ export default async function BlogPostPage({
     translation,
   };
 
-  const baseUrl = siteConfig.url;
+  const baseUrl = profile.url;
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -106,12 +109,12 @@ export default async function BlogPostPage({
     url: `${baseUrl}/${locale}/blog/${slug}`,
     author: {
       "@type": "Person",
-      name: post.author?.name || siteConfig.name,
+      name: post.author?.name || profile.name,
       url: baseUrl,
     },
     publisher: {
       "@type": "Organization",
-      name: siteConfig.name,
+      name: profile.name,
       url: baseUrl,
     },
     image: post.coverImage || `${baseUrl}/images/profile.jpg`,
@@ -146,7 +149,7 @@ export default async function BlogPostPage({
           <BlogPostDetail post={serializedPost} locale={locale} dict={dict} />
         </div>
       </main>
-      <Footer locale={locale} dict={dict} />
+      <Footer locale={locale} dict={dict} profile={profile} />
     </>
   );
 }

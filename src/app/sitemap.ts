@@ -1,11 +1,13 @@
 import { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
-import { siteConfig, locales, localeConfig } from "@/lib/constants";
+import { locales, localeConfig } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
   const staticPages = ["", "/about", "/services", "/projects", "/blog", "/resume", "/contact", "/privacy", "/terms"];
   const staticDates: Record<string, string> = {
     "": "2025-06-23",

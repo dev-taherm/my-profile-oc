@@ -1,7 +1,56 @@
 import { prisma } from "./prisma";
 import { decryptToken } from "./social-crypto";
+import { request } from "./ipv4-fetch";
 
 const TELEGRAM_API = "https://api.telegram.org";
+
+// ─── IPv4-safe helpers ───────────────────────────────────────────
+
+async function readJson(res: { body: ReadableStream<Uint8Array> }): Promise<any> {
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  const text = new TextDecoder().decode(Buffer.concat(chunks.map((c) => Buffer.from(c))));
+  return JSON.parse(text);
+}
+
+async function readBuffer(res: { body: ReadableStream<Uint8Array> }): Promise<Buffer> {
+  const reader = res.body.getReader();
+  const chunks: Uint8Array[] = [];
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+  }
+  return Buffer.concat(chunks.map((c) => Buffer.from(c)));
+}
+
+function buildMultipartBody(
+  fields: Record<string, string>,
+  fileField: string,
+  fileBuffer: Buffer,
+  fileName: string
+): { body: Buffer; contentType: string } {
+  const boundary = `----TGFormBoundary${Date.now()}`;
+  const parts: Buffer[] = [];
+
+  for (const [key, value] of Object.entries(fields)) {
+    parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${key}"\r\n\r\n${value}\r\n`));
+  }
+
+  parts.push(Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${fileField}"; filename="${fileName}"\r\nContent-Type: image/jpeg\r\n\r\n`));
+  parts.push(fileBuffer);
+  parts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+
+  return {
+    body: Buffer.concat(parts),
+    contentType: `multipart/form-data; boundary=${boundary}`,
+  };
+}
 
 // ─── Telegram Helpers ────────────────────────────────────────────
 
@@ -12,7 +61,7 @@ export async function sendToTelegram(
 ): Promise<{ messageId: number }> {
   const url = `${TELEGRAM_API}/bot${botToken}/sendMessage`;
 
-  const res = await fetch(url, {
+  const res = await request(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -22,7 +71,7 @@ export async function sendToTelegram(
     }),
   });
 
-  const data = await res.json();
+  const data = await readJson(res);
 
   if (!data.ok) {
     throw new Error(data.description || "Telegram send failed");
@@ -37,38 +86,39 @@ export async function sendPhotoToTelegram(
   photoUrl: string,
   caption: string
 ): Promise<{ messageId: number }> {
-  // 1. Download image server-side
-  const imageRes = await fetch(photoUrl);
+  // 1. Download image server-side (IPv4)
+  const imageRes = await request(photoUrl, { method: "GET", timeout: 15000 });
   if (!imageRes.ok) {
-    throw new Error(`Failed to download image: ${imageRes.status} ${imageRes.statusText}`);
+    throw new Error(`Failed to download image: ${imageRes.status}`);
   }
-  const imageBuffer = await imageRes.arrayBuffer();
-  const imageBlob = new Blob([imageBuffer]);
+  const imageBuffer = await readBuffer(imageRes);
 
   // 2. Send photo with short caption (max 100 chars)
   const shortCaption = caption.length > 100
     ? caption.substring(0, 100).trim() + "..."
     : caption;
 
-  const photoForm = new FormData();
-  photoForm.append("chat_id", chatId);
-  photoForm.append("photo", imageBlob, "post-image.jpg");
-  photoForm.append("caption", shortCaption);
-  photoForm.append("parse_mode", "HTML");
+  const { body: multipartBody, contentType } = buildMultipartBody(
+    { chat_id: chatId, caption: shortCaption, parse_mode: "HTML" },
+    "photo",
+    imageBuffer,
+    "post-image.jpg"
+  );
 
-  const photoRes = await fetch(`${TELEGRAM_API}/bot${botToken}/sendPhoto`, {
+  const photoRes = await request(`${TELEGRAM_API}/bot${botToken}/sendPhoto`, {
     method: "POST",
-    body: photoForm,
+    headers: { "Content-Type": contentType },
+    body: multipartBody,
   });
 
-  const photoData = await photoRes.json();
+  const photoData = await readJson(photoRes);
 
   if (!photoData.ok) {
     throw new Error(photoData.description || "Telegram sendPhoto failed");
   }
 
-  // 3. Send full text as separate message
-  const textRes = await fetch(`${TELEGRAM_API}/bot${botToken}/sendMessage`, {
+  // 3. Send full text as separate message (IPv4)
+  const textRes = await request(`${TELEGRAM_API}/bot${botToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -78,7 +128,7 @@ export async function sendPhotoToTelegram(
     }),
   });
 
-  const textData = await textRes.json();
+  const textData = await readJson(textRes);
 
   if (!textData.ok) {
     throw new Error(textData.description || "Telegram sendMessage failed");
@@ -91,16 +141,16 @@ export async function testTelegramConnection(
   botToken: string,
   chatId: string
 ): Promise<{ botName: string; chatValid: boolean }> {
-  // Verify bot token
-  const botRes = await fetch(`${TELEGRAM_API}/bot${botToken}/getMe`);
-  const botData = await botRes.json();
+  // Verify bot token (IPv4)
+  const botRes = await request(`${TELEGRAM_API}/bot${botToken}/getMe`, { method: "GET" });
+  const botData = await readJson(botRes);
 
   if (!botData.ok) {
     throw new Error("Invalid bot token");
   }
 
-  // Test sending a message
-  const testRes = await fetch(`${TELEGRAM_API}/bot${botToken}/sendMessage`, {
+  // Test sending a message (IPv4)
+  const testRes = await request(`${TELEGRAM_API}/bot${botToken}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -109,7 +159,7 @@ export async function testTelegramConnection(
     }),
   });
 
-  const testData = await testRes.json();
+  const testData = await readJson(testRes);
 
   if (!testData.ok) {
     throw new Error(`Bot token valid but cannot send to this chat: ${testData.description}`);

@@ -68,26 +68,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
 
-    const { content, platform, tone, imageUrl } = await request.json().catch(() => ({}));
-    if (content) {
-      const account = await prisma.socialAccount.findFirst({
-        where: { provider: "telegram", isActive: true },
-      });
-      if (account) {
-        await prisma.socialPost.create({
-          data: {
-            content,
-            imageUrl: imageUrl || null,
-            platform: platform === "facebook" ? "facebook" : "linkedin",
-            tone: ["professional", "viral", "mix"].includes(tone) ? tone : "professional",
-            status: "FAILED",
-            errorMessage: message,
-            accountId: account.id,
-          },
-        }).catch(() => {});
-      }
-    }
-
+    // Re-parse failed — body already consumed above. Log error only.
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

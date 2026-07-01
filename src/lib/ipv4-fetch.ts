@@ -5,7 +5,7 @@ import { URL } from "url";
 interface FetchOptions {
   method?: string;
   headers?: Record<string, string>;
-  body?: string;
+  body?: string | Buffer;
   signal?: AbortSignal;
   timeout?: number;
 }

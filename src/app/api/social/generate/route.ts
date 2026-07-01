@@ -5,7 +5,7 @@ import { buildAiRequest } from "@/lib/ai-providers";
 import { prisma } from "@/lib/prisma";
 import { searchTrends } from "@/lib/social-trends";
 
-const SITE_URL = "https://taher.pixovagency.com";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 function buildSystemPrompt(
   platform: string,

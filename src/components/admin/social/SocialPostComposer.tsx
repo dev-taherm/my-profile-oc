@@ -32,6 +32,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
   const [searchTopic, setSearchTopic] = useState("");
   const [includeImage, setIncludeImage] = useState(true);
   const [customImageUrl, setCustomImageUrl] = useState("");
+  const [useCustomImage, setUseCustomImage] = useState(false);
 
   const [projects, setProjects] = useState<ContentItem[]>([]);
   const [blogPosts, setBlogPosts] = useState<ContentItem[]>([]);
@@ -77,6 +78,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
 
   const getImageUrl = (): string | null => {
     if (!includeImage) return null;
+    if (useCustomImage && customImageUrl) return customImageUrl;
     if (sourceType === "custom") return customImageUrl || null;
     if (!selectedItem) return null;
     return selectedItem.projectImages?.[0]?.url || selectedItem.coverImage || null;
@@ -195,6 +197,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
       setContent("");
       setSourceId(null);
       setCustomImageUrl("");
+      setUseCustomImage(false);
       onPostSent?.();
     } catch {
       setError("Failed to send. Please try again.");
@@ -232,12 +235,13 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
                 key={value}
                 variant={sourceType === value ? "default" : "outline"}
                 size="sm"
-                onClick={() => {
-                  setSourceType(value);
-                  setContent("");
-                  setSourceId(null);
-                  setCustomImageUrl("");
-                }}
+                  onClick={() => {
+                    setSourceType(value);
+                    setContent("");
+                    setSourceId(null);
+                    setCustomImageUrl("");
+                    setUseCustomImage(false);
+                  }}
               >
                 <Icon className="h-3.5 w-3.5 me-1.5" />
                 {label}
@@ -427,36 +431,8 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
         {/* Image Picker / Preview */}
         {includeImage && (
           <div className="space-y-2">
-            {sourceType === "custom" ? (
-              <div className="flex items-center gap-3">
-                {customImageUrl ? (
-                  <div className="relative">
-                    <img
-                      src={customImageUrl}
-                      alt=""
-                      className="h-20 w-20 rounded object-cover"
-                    />
-                    <button
-                      onClick={() => setCustomImageUrl("")}
-                      className="absolute -top-1.5 -right-1.5 bg-destructive text-white rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <MediaPicker
-                    accept="image"
-                    onSelect={(url) => setCustomImageUrl(url)}
-                    trigger={
-                      <Button variant="outline" size="sm">
-                        <Image className="h-3.5 w-3.5 me-1.5" />
-                        Pick Image from Media
-                      </Button>
-                    }
-                  />
-                )}
-              </div>
-            ) : selectedItem && imageUrl ? (
+            {/* Show entity default image preview (if exists and not overridden) */}
+            {!useCustomImage && sourceType !== "custom" && selectedItem && imageUrl && (
               <div className="rounded-lg border p-2 bg-muted/30">
                 <img
                   src={imageUrl}
@@ -464,14 +440,49 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
                   className="h-32 w-full rounded object-cover"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Image will be attached to Telegram post
+                  Default {sourceType} image — pick a different one below
                 </p>
               </div>
-            ) : selectedItem ? (
+            )}
+
+            {/* Show custom picked image preview */}
+            {useCustomImage && customImageUrl && (
+              <div className="relative inline-block">
+                <img
+                  src={customImageUrl}
+                  alt=""
+                  className="h-32 w-32 rounded object-cover"
+                />
+                <button
+                  onClick={() => { setCustomImageUrl(""); setUseCustomImage(false); }}
+                  className="absolute -top-1.5 -right-1.5 bg-destructive text-white rounded-full p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Custom image selected
+                </p>
+              </div>
+            )}
+
+            {/* No entity image and no custom image */}
+            {!useCustomImage && sourceType !== "custom" && selectedItem && !imageUrl && !customImageUrl && (
               <p className="text-xs text-muted-foreground">
                 No image available for this {sourceType}
               </p>
-            ) : null}
+            )}
+
+            {/* MediaPicker button — always shown when includeImage is true */}
+            <MediaPicker
+              accept="image"
+              onSelect={(url) => { setCustomImageUrl(url); setUseCustomImage(true); }}
+              trigger={
+                <Button variant="outline" size="sm">
+                  <Image className="h-3.5 w-3.5 me-1.5" />
+                  {useCustomImage ? "Change Image" : "Pick from Media"}
+                </Button>
+              }
+            />
           </div>
         )}
 

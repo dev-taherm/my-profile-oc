@@ -40,7 +40,8 @@ export async function POST(request: NextRequest) {
 
     let result;
     if (imageUrl) {
-      const fullUrl = imageUrl.startsWith("http") ? imageUrl : `https://taher.pixovagency.com${imageUrl}`;
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+      const fullUrl = imageUrl.startsWith("http") ? imageUrl : `${siteUrl}${imageUrl}`;
       result = await sendPhotoToTelegram(chatId, botToken, fullUrl, content);
     } else {
       result = await sendToTelegram(chatId, botToken, content);

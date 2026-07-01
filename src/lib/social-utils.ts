@@ -37,26 +37,54 @@ export async function sendPhotoToTelegram(
   photoUrl: string,
   caption: string
 ): Promise<{ messageId: number }> {
-  const url = `${TELEGRAM_API}/bot${botToken}/sendPhoto`;
+  // 1. Download image server-side
+  const imageRes = await fetch(photoUrl);
+  if (!imageRes.ok) {
+    throw new Error(`Failed to download image: ${imageRes.status} ${imageRes.statusText}`);
+  }
+  const imageBuffer = await imageRes.arrayBuffer();
+  const imageBlob = new Blob([imageBuffer]);
 
-  const formData = new FormData();
-  formData.append("chat_id", chatId);
-  formData.append("photo", photoUrl);
-  formData.append("caption", caption);
-  formData.append("parse_mode", "HTML");
+  // 2. Send photo with short caption (max 100 chars)
+  const shortCaption = caption.length > 100
+    ? caption.substring(0, 100).trim() + "..."
+    : caption;
 
-  const res = await fetch(url, {
+  const photoForm = new FormData();
+  photoForm.append("chat_id", chatId);
+  photoForm.append("photo", imageBlob, "post-image.jpg");
+  photoForm.append("caption", shortCaption);
+  photoForm.append("parse_mode", "HTML");
+
+  const photoRes = await fetch(`${TELEGRAM_API}/bot${botToken}/sendPhoto`, {
     method: "POST",
-    body: formData,
+    body: photoForm,
   });
 
-  const data = await res.json();
+  const photoData = await photoRes.json();
 
-  if (!data.ok) {
-    throw new Error(data.description || "Telegram sendPhoto failed");
+  if (!photoData.ok) {
+    throw new Error(photoData.description || "Telegram sendPhoto failed");
   }
 
-  return { messageId: data.result.message_id };
+  // 3. Send full text as separate message
+  const textRes = await fetch(`${TELEGRAM_API}/bot${botToken}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: caption,
+      parse_mode: "HTML",
+    }),
+  });
+
+  const textData = await textRes.json();
+
+  if (!textData.ok) {
+    throw new Error(textData.description || "Telegram sendMessage failed");
+  }
+
+  return { messageId: textData.result.message_id };
 }
 
 export async function testTelegramConnection(

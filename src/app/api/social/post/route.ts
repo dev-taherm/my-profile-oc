@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { decryptToken } from "@/lib/social-crypto";
-import { sendToTelegram } from "@/lib/social-utils";
+import { sendToTelegram, sendPhotoToTelegram } from "@/lib/social-utils";
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { content, platform, tone } = await request.json();
+    const { content, platform, tone, imageUrl } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -38,11 +38,18 @@ export async function POST(request: NextRequest) {
     const botToken = decryptToken(account.accessToken);
     const chatId = account.providerAccountId;
 
-    const result = await sendToTelegram(chatId, botToken, content);
+    let result;
+    if (imageUrl) {
+      const fullUrl = imageUrl.startsWith("http") ? imageUrl : `https://taher.pixovagency.com${imageUrl}`;
+      result = await sendPhotoToTelegram(chatId, botToken, fullUrl, content);
+    } else {
+      result = await sendToTelegram(chatId, botToken, content);
+    }
 
     const post = await prisma.socialPost.create({
       data: {
         content,
+        imageUrl: imageUrl || null,
         platform: targetPlatform,
         tone: targetTone,
         status: "SENT",
@@ -60,7 +67,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
 
-    const { content, platform, tone } = await request.json().catch(() => ({}));
+    const { content, platform, tone, imageUrl } = await request.json().catch(() => ({}));
     if (content) {
       const account = await prisma.socialAccount.findFirst({
         where: { provider: "telegram", isActive: true },
@@ -69,6 +76,7 @@ export async function POST(request: NextRequest) {
         await prisma.socialPost.create({
           data: {
             content,
+            imageUrl: imageUrl || null,
             platform: platform === "facebook" ? "facebook" : "linkedin",
             tone: ["professional", "viral", "mix"].includes(tone) ? tone : "professional",
             status: "FAILED",

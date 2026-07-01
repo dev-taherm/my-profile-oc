@@ -158,13 +158,15 @@ export async function POST(request: NextRequest) {
         slug?: string;
         githubUrl?: string | null;
         liveUrl?: string | null;
+        coverImage?: string | null;
+        projectImages?: { url: string; order: number }[];
         translations: Record<string, unknown>[];
       } | null = null;
 
       if (sourceType === "project") {
         entity = await prisma.project.findUnique({
           where: { id: sourceId },
-          include: { translations: true },
+          include: { translations: true, projectImages: { orderBy: { order: "asc" }, take: 1 } },
         });
       } else if (sourceType === "blog") {
         entity = await prisma.blogPost.findUnique({

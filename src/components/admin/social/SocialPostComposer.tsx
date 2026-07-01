@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Sparkles, Send, Loader2, Copy, Check, FileText, FolderOpen } from "lucide-react";
+import { Sparkles, Send, Loader2, Copy, Check, FileText, FolderOpen, Image, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaPicker } from "@/components/admin/MediaPicker";
 
 interface ContentItem {
   id: string;
@@ -29,6 +30,8 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
   const [content, setContent] = useState("");
   const [sourceId, setSourceId] = useState<string | null>(null);
   const [searchTopic, setSearchTopic] = useState("");
+  const [includeImage, setIncludeImage] = useState(true);
+  const [customImageUrl, setCustomImageUrl] = useState("");
 
   const [projects, setProjects] = useState<ContentItem[]>([]);
   const [blogPosts, setBlogPosts] = useState<ContentItem[]>([]);
@@ -41,7 +44,6 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
   const [copied, setCopied] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Fetch content when sourceType changes to project or blog
   useEffect(() => {
     if (sourceType === "custom") return;
 
@@ -71,6 +73,13 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
       item.translations.find((t) => t.locale === locale) ||
       item.translations[0]
     );
+  };
+
+  const getImageUrl = (): string | null => {
+    if (!includeImage) return null;
+    if (sourceType === "custom") return customImageUrl || null;
+    if (!selectedItem) return null;
+    return selectedItem.projectImages?.[0]?.url || selectedItem.coverImage || null;
   };
 
   const handleGenerate = async () => {
@@ -168,10 +177,11 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
     setSuccess("");
 
     try {
+      const imageUrl = getImageUrl();
       const res = await fetch("/api/social/post", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, platform, tone }),
+        body: JSON.stringify({ content, platform, tone, imageUrl }),
       });
 
       const data = await res.json();
@@ -184,6 +194,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
       setSuccess(`Sent to Telegram! Ready to post on ${platform === "linkedin" ? "LinkedIn" : "Facebook"}.`);
       setContent("");
       setSourceId(null);
+      setCustomImageUrl("");
       onPostSent?.();
     } catch {
       setError("Failed to send. Please try again.");
@@ -202,6 +213,8 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
       setError("Failed to copy to clipboard");
     }
   };
+
+  const imageUrl = getImageUrl();
 
   return (
     <Card>
@@ -223,6 +236,7 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
                   setSourceType(value);
                   setContent("");
                   setSourceId(null);
+                  setCustomImageUrl("");
                 }}
               >
                 <Icon className="h-3.5 w-3.5 me-1.5" />
@@ -385,6 +399,79 @@ export function SocialPostComposer({ hasTelegram, onPostSent }: SocialPostCompos
                 )}
               </>
             )}
+          </div>
+        )}
+
+        {/* Image Toggle */}
+        <div>
+          <label className="text-sm font-medium mb-2 block">Attach Image</label>
+          <div className="flex gap-2">
+            <Button
+              variant={includeImage ? "default" : "outline"}
+              size="sm"
+              onClick={() => setIncludeImage(true)}
+            >
+              <Image className="h-3.5 w-3.5 me-1.5" />
+              With Image
+            </Button>
+            <Button
+              variant={!includeImage ? "default" : "outline"}
+              size="sm"
+              onClick={() => { setIncludeImage(false); setCustomImageUrl(""); }}
+            >
+              Without Image
+            </Button>
+          </div>
+        </div>
+
+        {/* Image Picker / Preview */}
+        {includeImage && (
+          <div className="space-y-2">
+            {sourceType === "custom" ? (
+              <div className="flex items-center gap-3">
+                {customImageUrl ? (
+                  <div className="relative">
+                    <img
+                      src={customImageUrl}
+                      alt=""
+                      className="h-20 w-20 rounded object-cover"
+                    />
+                    <button
+                      onClick={() => setCustomImageUrl("")}
+                      className="absolute -top-1.5 -right-1.5 bg-destructive text-white rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <MediaPicker
+                    accept="image"
+                    onSelect={(url) => setCustomImageUrl(url)}
+                    trigger={
+                      <Button variant="outline" size="sm">
+                        <Image className="h-3.5 w-3.5 me-1.5" />
+                        Pick Image from Media
+                      </Button>
+                    }
+                  />
+                )}
+              </div>
+            ) : selectedItem && imageUrl ? (
+              <div className="rounded-lg border p-2 bg-muted/30">
+                <img
+                  src={imageUrl}
+                  alt=""
+                  className="h-32 w-full rounded object-cover"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Image will be attached to Telegram post
+                </p>
+              </div>
+            ) : selectedItem ? (
+              <p className="text-xs text-muted-foreground">
+                No image available for this {sourceType}
+              </p>
+            ) : null}
           </div>
         )}
 

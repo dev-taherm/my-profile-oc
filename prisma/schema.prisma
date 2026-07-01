@@ -217,6 +217,7 @@ model SocialAccount {
 model SocialPost {
   id             String        @id @default(cuid())
   content        String        // The post text
+  imageUrl       String?       // Optional image URL attached to the post
   platform       String        // "linkedin" | "facebook"
   tone           String?       // "professional" | "viral" | "mix"
   status         String        @default("DRAFT") // DRAFT | SENT | FAILED

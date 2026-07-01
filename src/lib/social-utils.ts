@@ -31,6 +31,34 @@ export async function sendToTelegram(
   return { messageId: data.result.message_id };
 }
 
+export async function sendPhotoToTelegram(
+  chatId: string,
+  botToken: string,
+  photoUrl: string,
+  caption: string
+): Promise<{ messageId: number }> {
+  const url = `${TELEGRAM_API}/bot${botToken}/sendPhoto`;
+
+  const formData = new FormData();
+  formData.append("chat_id", chatId);
+  formData.append("photo", photoUrl);
+  formData.append("caption", caption);
+  formData.append("parse_mode", "HTML");
+
+  const res = await fetch(url, {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!data.ok) {
+    throw new Error(data.description || "Telegram sendPhoto failed");
+  }
+
+  return { messageId: data.result.message_id };
+}
+
 export async function testTelegramConnection(
   botToken: string,
   chatId: string

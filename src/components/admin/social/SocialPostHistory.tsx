@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, Clock, Copy, Check } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Copy, Check, Image } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 interface PostHistoryItem {
   id: string;
   content: string;
+  imageUrl: string | null;
   platform: string;
   tone: string | null;
   status: string;
@@ -122,6 +123,12 @@ export function SocialPostHistory() {
                     >
                       {post.status === "SENT" ? "Sent" : post.status}
                     </span>
+                    {post.imageUrl && (
+                      <span className="inline-flex items-center rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                        <Image className="h-2.5 w-2.5 me-0.5" />
+                        img
+                      </span>
+                    )}
                     {post.publishedAt && (
                       <span className="text-xs text-muted-foreground">
                         {new Date(post.publishedAt).toLocaleDateString()}

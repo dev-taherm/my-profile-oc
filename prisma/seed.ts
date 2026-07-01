@@ -20,12 +20,153 @@ async function main() {
     update: {},
     create: {
       email: adminEmail,
-      name: "Taher Mahram",
+      name: "Admin",
       password: hashedPassword,
       role: "ADMIN",
     },
   });
   console.log(`Admin user: ${admin.email}`);
+
+  // Seed default profile
+  const existingProfile = await prisma.siteProfile.findUnique({ where: { id: "default" } });
+  if (!existingProfile) {
+    console.log("Seeding default profile...");
+    await prisma.siteProfile.create({
+      data: {
+        id: "default",
+        name: "Taher Mahram",
+        title: "Software Engineer",
+        description:
+          "Software Engineer specializing in backend and AI systems, with experience designing scalable, microservices-oriented architectures and integrating LLMs into production workflows.",
+        url: "https://taher.pixovagency.com",
+        email: "tahermahram0@gmail.com",
+        phone: "+967 779991263",
+        whatsapp: "+967733918465",
+        location: "Sana'a, Yemen",
+        github: "https://github.com/dev-taherm",
+        linkedin: "https://www.linkedin.com/in/taher-mahram/",
+        instagram: "https://instagram.com/dev_taher",
+        facebook: "https://www.facebook.com/taher.ali.moharam",
+        twitterHandle: "@dev_taher",
+        heroGreeting: "Hello, I'm",
+        heroSubtitle: "Building scalable architectures and integrating LLMs into production workflows.",
+        heroDescription:
+          "I design and build robust backend systems, AI-powered applications, and cloud-native architectures. With over 3 years of experience in Python, Django, and LLM engineering, I help businesses transform ideas into production-ready software that scales.",
+        aboutSummary:
+          "Software Engineer specializing in backend and AI systems, with experience designing scalable, microservices-oriented architectures and integrating LLMs into production workflows. Strong background in Django-based platforms, multi-tenant systems, and audit-safe business processes. Experienced with Agile delivery, cloud-native concepts, and building systems that serve real users with measurable impact.",
+        aboutMission:
+          "My mission is to leverage technology to solve real-world problems, building systems that are not only technically sound but also deliver measurable business value.",
+        resumeSummary:
+          "Software Engineer specializing in backend and AI systems, with experience designing scalable, microservices-oriented architectures and integrating LLMs into production workflows. Strong background in Django-based platforms, multi-tenant systems, and audit-safe business processes. Experienced with Agile delivery, cloud-native concepts, and building systems that serve real users with measurable impact.",
+        statsExperience: "3+",
+        statsProjects: "10+",
+        statsTech: "15+",
+        statsCerts: "3+",
+        experiences: {
+          create: [
+            {
+              company: "Neo Platrix (Hopofy)",
+              role: "Software Engineer",
+              period: "Jan 2024 – Present",
+              highlights: JSON.stringify([
+                "Led the design of the core product backend, building scalable REST APIs (Django/PostgreSQL) that serve 100+ active users with backward-compatible versioning.",
+                "Modeled complex business workflows with strict audit trails and Role-Based Access Control (RBAC), reducing manual processing time by 40%.",
+                "Implemented Django Channels and WebSockets to handle thousands of monthly events and real-time notifications.",
+                "Championed AI-assisted pipelines, including prompt templates, validation guardrails for AI-generated code, and automated suggestion features.",
+                "Introduced structured logging, rate limiting, and standard error-handling patterns to improve system observability and stability under load.",
+              ]),
+              order: 1,
+            },
+            {
+              company: "Pixova Agency",
+              role: "Founder & Software Engineer",
+              period: "Nov 2022 – Dec 2023",
+              highlights: JSON.stringify([
+                "Led end-to-end architecture and delivery for client-facing web products, managing the lifecycle from UI/UX mockups to deployment.",
+                "Delivered custom WordPress solutions and full-stack web applications, owning hosting configurations and SEO optimizations.",
+                "Implemented developer-friendly Git workflows, testing protocols, and CI practices to reduce delivery friction and improve code quality.",
+              ]),
+              order: 2,
+            },
+            {
+              company: "Khebrat Technology",
+              role: "Web Application Developer Intern",
+              period: "Mar 2022 – Aug 2022",
+              highlights: JSON.stringify([
+                "Built workflow management applications to automate internal processes, utilizing Node.js and Firebase for the backend.",
+                "Developed responsive frontends using HTML, CSS, and Bootstrap, ensuring cross-device compatibility.",
+              ]),
+              order: 3,
+            },
+          ],
+        },
+        educations: {
+          create: [
+            {
+              degree: "B.Sc. in Computer Science (Software Development), with Honors",
+              institution: "Universiti Teknikal Malaysia Melaka (UTeM)",
+              location: "Malaysia",
+              period: "2018–2022",
+              order: 1,
+            },
+          ],
+        },
+        skillCategories: {
+          create: [
+            {
+              title: "Backend & Systems",
+              icon: "Code",
+              skills: JSON.stringify(["Python", "Django", "DRF", "FastAPI", "Microservices", "System Design", "DDD", "Multi-tenancy", "RBAC", "REST API"]),
+              order: 1,
+            },
+            {
+              title: "AI & LLM Engineering",
+              icon: "Brain",
+              skills: JSON.stringify(["LangChain", "RAG Pipelines", "Chroma", "FAISS", "OpenAI", "Prompt Engineering", "Guardrails"]),
+              order: 2,
+            },
+            {
+              title: "Cloud & DevOps",
+              icon: "Cloud",
+              skills: JSON.stringify(["AWS", "Docker", "CI/CD", "Celery", "Rate Limiting", "Observability"]),
+              order: 3,
+            },
+            {
+              title: "Frontend & Data",
+              icon: "Palette",
+              skills: JSON.stringify(["PostgreSQL", "MySQL", "Firebase", "React", "Next.js", "HTML5", "CSS3", "Tailwind"]),
+              order: 4,
+            },
+          ],
+        },
+        certifications: {
+          create: [
+            { title: "LLM & AI Systems (Self-study: LangChain, RAG Pipelines)", order: 1 },
+            { title: "Udemy: LLM Engineering & LangChain Courses", issuer: "Udemy", order: 2 },
+          ],
+        },
+        languages: {
+          create: [
+            { name: "Arabic", level: "Native", order: 1 },
+            { name: "English", level: "Professional", order: 2 },
+          ],
+        },
+      },
+    });
+    console.log("Default profile seeded.");
+  } else {
+    console.log("Profile already exists, skipping seed.");
+  }
+
+  // Seed sample data only if SEED_DEMO=true
+  const seedDemo = process.env.SEED_DEMO === "true";
+  if (!seedDemo) {
+    console.log("Skipping demo data (set SEED_DEMO=true to include).");
+    console.log("Seeding complete!");
+    return;
+  }
+
+  console.log("Seeding demo data...");
 
   const backendCategory = await prisma.category.upsert({
     where: { slug: "backend" },
@@ -208,7 +349,7 @@ async function main() {
           title: "تكامل الذكاء الاصطناعي ونماذج اللغة الكبيرة",
           shortDesc: "أنظمة RAG والروبوتات الذكية وهندسة الأوامر وسير عمل الذكاء الاصطناعي للإنتاج.",
           description: "## تكامل الذكاء الاصطناعي ونماذج اللغة الكبيرة\n\nأدمج قدرات الذكاء الاصطناعي المتطورة في سير عمل الإنتاج مع التركيز على السلامة والموثوقية.\n\n## ما أقدمه\n\n- أنظمة RAG (التوليد المعزز بالاسترجاع)\n- تكامل قواعد بيانات المتجهات (Chroma, FAISS)\n- هندسة الأوامر وإصدارها\n- التحقق من المخرجات وتقليل الهلوسة\n- سير عمل الإنسان في حلقة التحكم\n- ميزات الأتمتة بالذكاء الاصطناعي\n\n## التقنيات\n\n- LangChain / LlamaIndex\n- OpenAI / نماذج مفتوحة المصدر\n- Chroma / FAISS\n- Python / Django",
-          features: "تصميم وتنفيذ أنظمة RAG\nتكامل قواعد بيانات المتجهات (Chroma, FAISS)\nهندسة الأوامر وإصدارها\nتقليل الهلوسة والتحقق\nسير عمل الإنسان في حلقة التحكم\nالأتمتة بالذكاء الاصطناعي",
+          features: "تصميم وتنفيذ أنظمة RAG\nتكامل قواعد بيانات المتجهات (Chroma, FAISS)\nهندسة الأوامر وإصدارها\ntaقليل الهلوسة والتحقق\nسير عمل الإنسان في حلقة التحكم\nالأتمتة بالذكاء الاصطناعي",
         },
       ],
     },
@@ -226,10 +367,10 @@ async function main() {
         },
         {
           locale: "ar",
-          "title": "تطبيقات الويب الكاملة",
-          "shortDesc": "تطبيقات ويب متكاملة من الواجهة الأمامية إلى الخلفية.",
-          "description": "## تطبيقات الويب الكاملة\n\nأقدم تطبيقات ويب متكاملة من المفهوم إلى النشر، وأتعامل مع الواجهة الأمامية والخلفية.\n\n## ما أقدمه\n\n- واجهات أمامية حديثة مع React/Next.js\n- العرض من جانب الخ้า والتصنيف الثابت\n- واجهات متجاوبة مع Tailwind CSS\n- إدارة الحالة وجلب البيانات\n- التكامل مع واجهات برمجة الخلفية\n- إعداد النشر والاستضافة\n\n## التقنيات\n\n- React / Next.js\n- TypeScript\n- Tailwind CSS\n- Vercel / AWS",
-          "features": "تطوير واجهات React / Next.js\nالعرض من جانب الخلفية والتصنيف الثابت\nواجهات متجاوبة مع Tailwind CSS\nتكامل TypeScript\nتكامل إدارة الحالة وواجهات البرمجة\nالنشر والاستضافة",
+          title: "تطبيقات الويب الكاملة",
+          shortDesc: "تطبيقات ويب متكاملة من الواجهة الأمامية إلى الخلفية.",
+          description: "## تطبيقات الويب الكاملة\n\nأقدم تطبيقات ويب متكاملة من المفهوم إلى النشر، وأتعامل مع الواجهة الأمامية والخلفية.\n\n## ما أقدمه\n\n- واجهات أمامية حديثة مع React/Next.js\n- العرض من جانب الخادم والتصنيف الثابت\n- واجهات متجاوبة مع Tailwind CSS\n- إدارة الحالة وجلب البيانات\n- التكامل مع واجهات برمجة الخلفية\n- إعداد النشر والاستضافة\n\n## التقنيات\n\n- React / Next.js\n- TypeScript\n- Tailwind CSS\n- Vercel / AWS",
+          features: "تطوير واجهات React / Next.js\nالعرض من جانب الخلفية والتصنيف الثابت\nواجهات متجاوبة مع Tailwind CSS\ntaكامل TypeScript\ntaكامل إدارة الحالة وواجهات البرمجة\nالنشر والاستضافة",
         },
       ],
     },
@@ -268,10 +409,10 @@ async function main() {
         },
         {
           locale: "ar",
-          "title": "الاستشارات التقنية",
-          "shortDesc": "مراجعات الهندسة المعمارية ومراجعة الكود والاستشارات التقنية لفريقك.",
-          "description": "## الاستشارات التقنية\n\nأساعد الفرق في اتخاذ قرارات تقنية أفضل من خلال مراجعات الهندسة المعمارية والاستشارات العملية.\n\n## ما أقدمه\n\n- مراجعة الهندسة المعمارية والتوصيات\n- تدقيقات جودة الكود\n- تحديد عوائق الأداء\n- تقييم التقنيات المستخدمة\n- تدريب الفريق ونقل المعرفة\n- التوثيق التقني\n\n## مناسب لـ\n\n- الشركات الناشئة التي تبني منتجها الأول\n- الفرق التي توسع أنظمتها الحالية\n- المشاريع التي تحتاج منظوراً تقنياً جديداً",
-          "features": "مراجعة الهندسة المعمارية والتوصيات\nتدقيقات جودة الكود\nتحليل عوائق الأداء\nتقييم التقنيات المستخدمة\nتدريب الفريق ونقل المعرفة\nالتوثيق التقني",
+          title: "الاستشارات التقنية",
+          shortDesc: "مراجعات الهندسة المعمارية ومراجعة الكود والاستشارات التقنية لفريقك.",
+          description: "## الاستشارات التقنية\n\nأساعد الفرق في اتخاذ قرارات تقنية أفضل من خلال مراجعات الهندسة المعمارية والاستشارات العملية.\n\n## ما أقدمه\n\n- مراجعة الهندسة المعمارية والتوصيات\n- تدقيقات جودة الكود\n- تحديد عوائق الأداء\n- تقييم التقنيات المستخدمة\n- تدريب الفريق ونقل المعرفة\n- التوثيق التقني\n\n## مناسب لـ\n\n- الشركات الناشئة التي تبني منتجها الأول\n- الفرق التي توسع أنظمتها الحالية\n- المشاريع التي تحتاج منظوراً تقنياً جديداً",
+          features: "مراجعة الهندسة المعمارية والتوصيات\nتدقيقات جودة الكود\nتحليل عوائق الأداء\ntaقييم التقنيات المستخدمة\nتدريب الفريق ونقل المعرفة\nالتوثيق التقني",
         },
       ],
     },

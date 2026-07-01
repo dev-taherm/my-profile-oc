@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { type SiteProfileData } from "@/lib/profile";
+
 interface ResumeViewProps {
   dict: {
     resume: {
@@ -23,32 +25,17 @@ interface ResumeViewProps {
       khebrat: { company: string; role: string; period: string; highlights: string[] };
     };
   };
+  profile: SiteProfileData;
 }
 
-const skillCategories = [
-  {
-    title: "Backend & Systems",
-    icon: Code,
-    skills: ["Python", "Django", "DRF", "FastAPI", "Microservices", "System Design", "DDD", "Multi-tenancy", "RBAC", "REST API"],
-  },
-  {
-    title: "AI & LLM Engineering",
-    icon: Brain,
-    skills: ["LangChain", "RAG Pipelines", "Chroma", "FAISS", "OpenAI", "Prompt Engineering", "Guardrails"],
-  },
-  {
-    title: "Cloud & DevOps",
-    icon: Cloud,
-    skills: ["AWS", "Docker", "CI/CD", "Celery", "Rate Limiting", "Observability"],
-  },
-  {
-    title: "Frontend & Data",
-    icon: Palette,
-    skills: ["PostgreSQL", "MySQL", "Firebase", "React", "Next.js", "HTML5", "CSS3", "Tailwind"],
-  },
-];
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Code,
+  Brain,
+  Cloud,
+  Palette,
+};
 
-export function ResumeView({ dict }: ResumeViewProps) {
+export function ResumeView({ dict, profile }: ResumeViewProps) {
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,11 +64,7 @@ export function ResumeView({ dict }: ResumeViewProps) {
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground leading-relaxed">
-            Software Engineer specializing in backend and AI systems, with experience designing
-            scalable, microservices-oriented architectures and integrating LLMs into production
-            workflows. Strong background in Django-based platforms, multi-tenant systems, and
-            audit-safe business processes. Experienced with Agile delivery, cloud-native concepts,
-            and building systems that serve real users with measurable impact.
+            {profile.resumeSummary || profile.description}
           </p>
         </CardContent>
       </Card>
@@ -95,21 +78,24 @@ export function ResumeView({ dict }: ResumeViewProps) {
         </CardHeader>
         <CardContent>
           <div className="grid sm:grid-cols-2 gap-4">
-            {skillCategories.map((cat) => (
-              <div key={cat.title}>
-                <div className="flex items-center gap-2 mb-2">
-                  <cat.icon className="h-4 w-4 text-primary" />
-                  <span className="font-medium text-sm">{cat.title}</span>
+            {profile.skillCategories.map((cat) => {
+              const IconComponent = iconMap[cat.icon || "Code"] || Code;
+              return (
+                <div key={cat.id}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <IconComponent className="h-4 w-4 text-primary" />
+                    <span className="font-medium text-sm">{cat.title}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {cat.skills.map((skill) => (
+                      <Badge key={skill} variant="secondary" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {cat.skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
@@ -122,26 +108,24 @@ export function ResumeView({ dict }: ResumeViewProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {[dict.experience.neoPlatrix, dict.experience.pixova, dict.experience.khebrat].map(
-            (exp, index) => (
-              <div key={index}>
-                {index > 0 && <Separator className="mb-6" />}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
-                  <h2 className="font-bold text-lg">{exp.role}</h2>
-                  <Badge variant="outline">{exp.period}</Badge>
-                </div>
-                <p className="text-primary text-sm mb-2">{exp.company}</p>
-                <ul className="space-y-1">
-                  {exp.highlights.map((h, i) => (
-                    <li key={i} className="text-sm text-muted-foreground flex gap-2">
-                      <span className="text-primary mt-0.5 shrink-0">•</span>
-                      {h}
-                    </li>
-                  ))}
-                </ul>
+          {profile.experiences.map((exp, index) => (
+            <div key={exp.id}>
+              {index > 0 && <Separator className="mb-6" />}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-2">
+                <h2 className="font-bold text-lg">{exp.role}</h2>
+                <Badge variant="outline">{exp.period}</Badge>
               </div>
-            )
-          )}
+              <p className="text-primary text-sm mb-2">{exp.company}</p>
+              <ul className="space-y-1">
+                {exp.highlights.map((h, i) => (
+                  <li key={i} className="text-sm text-muted-foreground flex gap-2">
+                    <span className="text-primary mt-0.5 shrink-0">•</span>
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
@@ -153,9 +137,13 @@ export function ResumeView({ dict }: ResumeViewProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <h2 className="font-bold text-lg">B.Sc. in Computer Science (Software Development), with Honors</h2>
-          <p className="text-primary text-sm">Universiti Teknikal Malaysia Melaka (UTeM)</p>
-          <p className="text-sm text-muted-foreground">Malaysia · 2018–2022</p>
+          {profile.educations.map((edu) => (
+            <div key={edu.id}>
+              <h2 className="font-bold text-lg">{edu.degree}</h2>
+              <p className="text-primary text-sm">{edu.institution}</p>
+              <p className="text-sm text-muted-foreground">{edu.location ? `${edu.location} · ` : ""}{edu.period}</p>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
@@ -168,8 +156,9 @@ export function ResumeView({ dict }: ResumeViewProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p className="text-sm">LLM & AI Systems (Self-study: LangChain, RAG Pipelines)</p>
-            <p className="text-sm">Udemy: LLM Engineering & LangChain Courses</p>
+            {profile.certifications.map((cert) => (
+              <p key={cert.id} className="text-sm">{cert.title}</p>
+            ))}
           </CardContent>
         </Card>
 
@@ -181,14 +170,12 @@ export function ResumeView({ dict }: ResumeViewProps) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Arabic</span>
-              <Badge variant="outline">Native</Badge>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span>English</span>
-              <Badge variant="outline">Professional</Badge>
-            </div>
+            {profile.languages.map((lang) => (
+              <div key={lang.id} className="flex justify-between text-sm">
+                <span>{lang.name}</span>
+                <Badge variant="outline">{lang.level}</Badge>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>

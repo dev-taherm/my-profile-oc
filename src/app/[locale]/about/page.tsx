@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getDictionary } from "@/i18n/get-dictionary";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { getSiteProfile } from "@/lib/profile";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -16,7 +17,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
-  const baseUrl = siteConfig.url;
+  const profile = await getSiteProfile();
+  const baseUrl = profile.url;
 
   const titles: Record<Locale, string> = {
     en: "About Taher Mahram — Software Engineer Profile",
@@ -63,29 +65,11 @@ export default async function AboutPage({
   const { locale: rawLocale } = await params;
   const locale = rawLocale as Locale;
   const dict = await getDictionary(locale);
+  const profile = await getSiteProfile();
 
-  const experiences = [
-    {
-      company: dict.experience.neoPlatrix.company,
-      role: dict.experience.neoPlatrix.role,
-      period: dict.experience.neoPlatrix.period,
-      highlights: dict.experience.neoPlatrix.highlights,
-    },
-    {
-      company: dict.experience.pixova.company,
-      role: dict.experience.pixova.role,
-      period: dict.experience.pixova.period,
-      highlights: dict.experience.pixova.highlights,
-    },
-    {
-      company: dict.experience.khebrat.company,
-      role: dict.experience.khebrat.role,
-      period: dict.experience.khebrat.period,
-      highlights: dict.experience.khebrat.highlights,
-    },
-  ];
+  const experiences = profile.experiences;
 
-  const baseUrl = siteConfig.url;
+  const baseUrl = profile.url;
   const descriptions: Record<Locale, string> = {
     en: "Learn about Taher Mahram's experience, education, and skills as a software engineer specializing in backend systems, AI, and scalable architectures.",
     ar: "تعرّف على خبرات طاهر محرم وتعليماته ومهاراته كمهندس برمجيات متخصص في الأنظمة الخلفية والذكاء الاصطناعي والهندسة المعمارية القابلة للتوسع.",
@@ -121,24 +105,19 @@ export default async function AboutPage({
     url: `${baseUrl}/${locale}/about`,
     mainEntity: {
       "@type": "Person",
-      name: siteConfig.name,
-      jobTitle: "Software Engineer",
-      hasOccupation: [
-        {
-          "@type": "Occupation",
-          name: "Software Engineer",
-          occupationLocation: {
-            "@type": "Country",
-            name: "Yemen",
-          },
-          skills: "Python, Django, FastAPI, PostgreSQL, Docker, LangChain, React, Next.js",
-        },
-      ],
-      alumniOf: {
+      name: profile.name,
+      jobTitle: profile.title,
+      hasOccupation: profile.experiences.map((exp) => ({
+        "@type": "Occupation",
+        name: exp.role,
+        occupationLocation: { "@type": "Organization", name: exp.company },
+      })),
+      knowsAbout: profile.skillCategories.flatMap((sc) => sc.skills),
+      alumniOf: profile.educations.map((edu) => ({
         "@type": "CollegeOrUniversity",
-        name: "Universiti Teknikal Malaysia Melaka (UTeM)",
-        educationalCredentialAward: "B.Sc. in Computer Science (Software Development), with Honors",
-      },
+        name: edu.institution,
+        educationalCredentialAward: edu.degree,
+      })),
     },
   };
 
@@ -177,8 +156,8 @@ export default async function AboutPage({
           <div className="max-w-3xl mx-auto space-y-16">
             <AnimatedSection>
               <div className="prose prose-lg dark:prose-invert max-w-none">
-                <p className="text-lg leading-relaxed">{dict.about.summary}</p>
-                <p className="text-muted-foreground">{dict.about.mission}</p>
+                <p className="text-lg leading-relaxed">{profile.aboutSummary || dict.about.summary}</p>
+                <p className="text-muted-foreground">{profile.aboutMission || dict.about.mission}</p>
               </div>
             </AnimatedSection>
 
@@ -188,8 +167,8 @@ export default async function AboutPage({
                 <h2 className="text-2xl font-bold">{dict.about.experience}</h2>
               </div>
               <div className="space-y-8 relative before:absolute before:inset-0 before:ms-6 before:ms-0 before:w-px before:bg-border">
-                {experiences.map((exp, index) => (
-                  <div key={index} className="relative ps-12">
+                {experiences.map((exp) => (
+                  <div key={exp.id} className="relative ps-12">
                     <div className="absolute start-0 w-3 h-3 rounded-full bg-primary border-2 border-background top-1.5" />
                     <div className="p-6 rounded-xl border bg-card">
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3">
@@ -235,12 +214,14 @@ export default async function AboutPage({
                 <GraduationCap className="h-6 w-6 text-primary" />
                 <h2 className="text-2xl font-bold">{dict.about.education}</h2>
               </div>
-              <div className="p-6 rounded-xl border bg-card">
-                <h3 className="font-bold text-lg">
-                  B.Sc. in Computer Science (Software Development), with Honors
-                </h3>
-                <p className="text-primary font-medium">Universiti Teknikal Malaysia Melaka (UTeM)</p>
-                <p className="text-sm text-muted-foreground mt-1">Malaysia · 2018–2022</p>
+              <div className="space-y-4">
+                {profile.educations.map((edu) => (
+                  <div key={edu.id} className="p-6 rounded-xl border bg-card">
+                    <h3 className="font-bold text-lg">{edu.degree}</h3>
+                    <p className="text-primary font-medium">{edu.institution}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{edu.location ? `${edu.location} · ` : ""}{edu.period}</p>
+                  </div>
+                ))}
               </div>
             </AnimatedSection>
 
@@ -250,12 +231,12 @@ export default async function AboutPage({
                 <h2 className="text-2xl font-bold">{dict.about.certifications}</h2>
               </div>
               <div className="space-y-3">
-                <div className="p-4 rounded-xl border bg-card">
-                  <p className="font-medium">LLM & AI Systems (Self-study: LangChain, RAG Pipelines)</p>
-                </div>
-                <div className="p-4 rounded-xl border bg-card">
-                  <p className="font-medium">Udemy: LLM Engineering & LangChain Courses</p>
-                </div>
+                {profile.certifications.map((cert) => (
+                  <div key={cert.id} className="p-4 rounded-xl border bg-card">
+                    <p className="font-medium">{cert.title}</p>
+                    {cert.issuer && <p className="text-sm text-muted-foreground">{cert.issuer}{cert.year ? ` · ${cert.year}` : ""}</p>}
+                  </div>
+                ))}
               </div>
             </AnimatedSection>
 
@@ -265,8 +246,9 @@ export default async function AboutPage({
                 <h2 className="text-2xl font-bold">Languages</h2>
               </div>
               <div className="flex gap-3">
-                <Badge variant="outline" className="text-base py-1.5 px-4">Arabic — Native</Badge>
-                <Badge variant="outline" className="text-base py-1.5 px-4">English — Professional</Badge>
+                {profile.languages.map((lang) => (
+                  <Badge key={lang.id} variant="outline" className="text-base py-1.5 px-4">{lang.name} — {lang.level}</Badge>
+                ))}
               </div>
             </AnimatedSection>
 
@@ -290,7 +272,7 @@ export default async function AboutPage({
           </div>
         </div>
       </main>
-      <Footer locale={locale} dict={dict} />
+      <Footer locale={locale} dict={dict} profile={profile} />
     </>
   );
 }

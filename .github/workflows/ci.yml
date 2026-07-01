@@ -79,5 +79,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Setup database types
+        run: pnpm db:generate
+
       - name: Run TypeScript compiler
         run: pnpm tsc --noEmit

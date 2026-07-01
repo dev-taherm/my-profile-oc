@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { type SiteProfileData } from "@/lib/profile";
 
 interface ServiceDetailProps {
   service: {
@@ -23,9 +24,10 @@ interface ServiceDetailProps {
       getInTouch: string;
     };
   };
+  profile: SiteProfileData;
 }
 
-export function ServiceDetail({ service, locale, dict }: ServiceDetailProps) {
+export function ServiceDetail({ service, locale, dict, profile }: ServiceDetailProps) {
   const t = service.translation;
   const features = t.features ? t.features.split("\n").filter((f) => f.trim()) : [];
 
@@ -78,7 +80,7 @@ export function ServiceDetail({ service, locale, dict }: ServiceDetailProps) {
       )}
 
       <div className="mt-8">
-        <Button render={<a href={`https://wa.me/${siteConfig.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" />}>
+        <Button render={<a href={`https://wa.me/${profile.whatsapp?.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" />}>
           {dict.services.getInTouch}
         </Button>
       </div>

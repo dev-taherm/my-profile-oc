@@ -2,19 +2,21 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { type SiteProfileData } from "@/lib/profile";
 
 interface ProfileImageProps {
   className?: string;
   priority?: boolean;
+  profile?: SiteProfileData;
 }
 
-export function ProfileImage({ className, priority }: ProfileImageProps) {
+export function ProfileImage({ className, priority, profile }: ProfileImageProps) {
   const [imgSrc, setImgSrc] = useState("/images/profile.jpg");
 
   return (
     <Image
       src={imgSrc}
-      alt="Taher Mahram"
+      alt={profile?.name || "Taher Mahram"}
       fill
       className={className}
       priority={priority}

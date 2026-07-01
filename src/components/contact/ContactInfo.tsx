@@ -3,7 +3,7 @@
 import { Mail, MapPin, CheckCircle } from "lucide-react";
 import { GithubIcon, LinkedinIcon, InstagramIcon, FacebookIcon, WhatsappIcon } from "@/components/shared/Icons";
 import { Card, CardContent } from "@/components/ui/card";
-import { siteConfig } from "@/lib/constants";
+import { type SiteProfileData } from "@/lib/profile";
 
 interface ContactInfoProps {
   dict: {
@@ -16,9 +16,10 @@ interface ContactInfoProps {
       };
     };
   };
+  profile: SiteProfileData;
 }
 
-export function ContactInfo({ dict }: ContactInfoProps) {
+export function ContactInfo({ dict, profile }: ContactInfoProps) {
   return (
     <div className="space-y-4">
       <Card>
@@ -29,8 +30,8 @@ export function ContactInfo({ dict }: ContactInfoProps) {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{dict.contact.info.email}</p>
-              <a href={`mailto:${siteConfig.email}`} className="font-medium hover:text-primary transition-colors">
-                {siteConfig.email}
+              <a href={`mailto:${profile.email}`} className="font-medium hover:text-primary transition-colors">
+                {profile.email}
               </a>
             </div>
           </div>
@@ -42,12 +43,12 @@ export function ContactInfo({ dict }: ContactInfoProps) {
             <div>
               <p className="text-sm text-muted-foreground">{dict.contact.info.phone}</p>
               <a
-                href={`https://wa.me/${siteConfig.whatsapp.replace(/[^0-9]/g, "")}`}
+                href={`https://wa.me/${profile.whatsapp?.replace(/[^0-9]/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium hover:text-primary transition-colors"
               >
-                {siteConfig.whatsapp}
+                {profile.whatsapp}
               </a>
             </div>
           </div>
@@ -58,7 +59,7 @@ export function ContactInfo({ dict }: ContactInfoProps) {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">{dict.contact.info.location}</p>
-              <p className="font-medium">{siteConfig.location}</p>
+              <p className="font-medium">{profile.location}</p>
             </div>
           </div>
         </CardContent>
@@ -72,7 +73,7 @@ export function ContactInfo({ dict }: ContactInfoProps) {
           </div>
           <div className="flex gap-3">
             <a
-              href={siteConfig.github}
+              href={profile.github || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg border hover:bg-muted transition-colors"
@@ -80,7 +81,7 @@ export function ContactInfo({ dict }: ContactInfoProps) {
               <GithubIcon className="h-5 w-5" />
             </a>
             <a
-              href={siteConfig.linkedin}
+              href={profile.linkedin || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg border hover:bg-muted transition-colors"
@@ -88,7 +89,7 @@ export function ContactInfo({ dict }: ContactInfoProps) {
               <LinkedinIcon className="h-5 w-5" />
             </a>
             <a
-              href={siteConfig.instagram}
+              href={profile.instagram || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg border hover:bg-muted transition-colors"
@@ -96,7 +97,7 @@ export function ContactInfo({ dict }: ContactInfoProps) {
               <InstagramIcon className="h-5 w-5" />
             </a>
             <a
-              href={siteConfig.facebook}
+              href={profile.facebook || "#"}
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 rounded-lg border hover:bg-muted transition-colors"
@@ -104,7 +105,7 @@ export function ContactInfo({ dict }: ContactInfoProps) {
               <FacebookIcon className="h-5 w-5" />
             </a>
             <a
-              href={`mailto:${siteConfig.email}`}
+              href={`mailto:${profile.email}`}
               className="p-2 rounded-lg border hover:bg-muted transition-colors"
             >
               <Mail className="h-5 w-5" />

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { LayoutDashboard, FolderOpen, FileText, Tags, Tag, Layers, Settings, LogOut, Menu, ImageIcon, Bot, Share2 } from "lucide-react";
+import { LayoutDashboard, FolderOpen, FileText, Tags, Tag, Layers, Settings, LogOut, Menu, ImageIcon, Bot, Share2, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -18,6 +18,7 @@ const sidebarItems = [
   { label: "Media", href: "/admin/media", icon: ImageIcon },
   { label: "Categories", href: "/admin/categories", icon: Tags },
   { label: "Tags", href: "/admin/tags", icon: Tag },
+  { label: "Profile", href: "/admin/profile", icon: User },
   { label: "Social Media", href: "/admin/social", icon: Share2 },
   { label: "AI Settings", href: "/admin/ai-settings", icon: Bot },
   { label: "Settings", href: "/admin/settings", icon: Settings },

@@ -288,12 +288,24 @@ ${bodyContent ? `Full content:\n${bodyContent.substring(0, 2000)}` : ""}`;
             buffer = lines.pop() || "";
 
             for (const line of lines) {
-              if (line.startsWith("data: ")) {
-                const data = line.slice(6).trim();
-                if (data === "[DONE]") continue;
+              const trimmed = line.trim();
+              if (!trimmed) continue;
 
+              let jsonStr = "";
+
+              if (trimmed.startsWith("data: ")) {
+                // SSE format (OpenAI, Claude, Google)
+                const data = trimmed.slice(6).trim();
+                if (data === "[DONE]") continue;
+                jsonStr = data;
+              } else if (trimmed.startsWith("{")) {
+                // NDJSON format (Ollama)
+                jsonStr = trimmed;
+              }
+
+              if (jsonStr) {
                 try {
-                  const parsed = JSON.parse(data);
+                  const parsed = JSON.parse(jsonStr);
                   let chunk = "";
 
                   if (parsed.choices?.[0]?.delta?.content) {

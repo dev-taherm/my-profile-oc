@@ -6,7 +6,8 @@ import { motion } from "framer-motion";
 import { ArrowRight, Mail } from "lucide-react";
 import { GithubIcon, LinkedinIcon, InstagramIcon, FacebookIcon, WhatsappIcon } from "@/components/shared/Icons";
 import { Button } from "@/components/ui/button";
-import { type Locale, siteConfig } from "@/lib/constants";
+import { type Locale } from "@/lib/constants";
+import { type SiteProfileData } from "@/lib/profile";
 
 interface HeroProps {
   locale: Locale;
@@ -22,9 +23,10 @@ interface HeroProps {
       cta_resume: string;
     };
   };
+  profile: SiteProfileData;
 }
 
-export function Hero({ locale, dict }: HeroProps) {
+export function Hero({ locale, dict, profile }: HeroProps) {
   const dir = locale === "ar" ? -1 : 1;
 
   return (
@@ -91,7 +93,7 @@ export function Hero({ locale, dict }: HeroProps) {
                 variant="outline"
                 size="lg"
                 render={
-                  <a href={`https://wa.me/${siteConfig.whatsapp.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" />
+                  <a href={`https://wa.me/${profile.whatsapp?.replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" />
                 }
               >
                 {dict.hero.cta_contact}
@@ -106,7 +108,7 @@ export function Hero({ locale, dict }: HeroProps) {
               className="flex items-center gap-3 mt-8 justify-center md:justify-start"
             >
               <Link
-                href={siteConfig.github}
+                href={profile.github || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -114,7 +116,7 @@ export function Hero({ locale, dict }: HeroProps) {
                 <GithubIcon className="h-5 w-5" />
               </Link>
               <Link
-                href={siteConfig.linkedin}
+                href={profile.linkedin || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -122,7 +124,7 @@ export function Hero({ locale, dict }: HeroProps) {
                 <LinkedinIcon className="h-5 w-5" />
               </Link>
               <Link
-                href={siteConfig.instagram}
+                href={profile.instagram || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -130,7 +132,7 @@ export function Hero({ locale, dict }: HeroProps) {
                 <InstagramIcon className="h-5 w-5" />
               </Link>
               <Link
-                href={siteConfig.facebook}
+                href={profile.facebook || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 text-muted-foreground hover:text-foreground transition-colors"
@@ -138,7 +140,7 @@ export function Hero({ locale, dict }: HeroProps) {
                 <FacebookIcon className="h-5 w-5" />
               </Link>
               <Link
-                href={`mailto:${siteConfig.email}`}
+                href={`mailto:${profile.email}`}
                 className="p-2 text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Mail className="h-5 w-5" />

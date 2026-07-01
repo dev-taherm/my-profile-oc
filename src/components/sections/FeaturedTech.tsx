@@ -1,6 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { type SiteProfileData } from "@/lib/profile";
+
 interface FeaturedTechProps {
   dict: {
     featuredTech: {
@@ -8,24 +10,31 @@ interface FeaturedTechProps {
       subtitle: string;
     };
   };
+  profile: SiteProfileData;
 }
 
-const technologies = [
-  { name: "Python", color: "#3776AB" },
-  { name: "Django", color: "#092E20" },
-  { name: "FastAPI", color: "#009688" },
-  { name: "PostgreSQL", color: "#4169E1" },
-  { name: "Docker", color: "#2496ED" },
-  { name: "AWS", color: "#FF9900" },
-  { name: "React", color: "#61DAFB" },
-  { name: "Next.js", color: "#000000" },
-  { name: "LangChain", color: "#1C3C3C" },
-  { name: "TypeScript", color: "#3178C6" },
-  { name: "Tailwind", color: "#06B6D4" },
-  { name: "Git", color: "#F05032" },
-];
+const techColors: Record<string, string> = {
+  Python: "#3776AB",
+  Django: "#092E20",
+  FastAPI: "#009688",
+  PostgreSQL: "#4169E1",
+  Docker: "#2496ED",
+  AWS: "#FF9900",
+  React: "#61DAFB",
+  "Next.js": "#000000",
+  LangChain: "#1C3C3C",
+  TypeScript: "#3178C6",
+  Tailwind: "#06B6D4",
+  Git: "#F05032",
+};
 
-export function FeaturedTech({ dict }: FeaturedTechProps) {
+export function FeaturedTech({ dict, profile }: FeaturedTechProps) {
+  const technologies = profile.skillCategories.flatMap((cat) =>
+    cat.skills.map((skill) => ({
+      name: skill,
+      color: techColors[skill] || "#666666",
+    }))
+  );
   return (
     <section className="py-16">
       <div className="container mx-auto px-4">

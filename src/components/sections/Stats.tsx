@@ -2,6 +2,8 @@
 
 import { motion } from "framer-motion";
 import { Briefcase, FolderOpen, Code, Award } from "lucide-react";
+import { type SiteProfileData } from "@/lib/profile";
+
 interface StatsProps {
   dict: {
     stats: {
@@ -11,16 +13,16 @@ interface StatsProps {
       certifications: string;
     };
   };
+  profile: SiteProfileData;
 }
 
-const stats = [
-  { key: "experience", value: "3+", icon: Briefcase },
-  { key: "projects", value: "10+", icon: FolderOpen },
-  { key: "technologies", value: "15+", icon: Code },
-  { key: "certifications", value: "3+", icon: Award },
-];
-
-export function Stats({ dict }: StatsProps) {
+export function Stats({ dict, profile }: StatsProps) {
+  const stats = [
+    { key: "experience", value: profile.statsExperience || "3+", icon: Briefcase },
+    { key: "projects", value: profile.statsProjects || "10+", icon: FolderOpen },
+    { key: "technologies", value: profile.statsTech || "15+", icon: Code },
+    { key: "certifications", value: profile.statsCerts || "3+", icon: Award },
+  ];
   return (
     <section className="py-16 bg-muted/30">
       <div className="container mx-auto px-4">

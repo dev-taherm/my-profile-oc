@@ -1,0 +1,66 @@
+# Label rules for auto-labeling PRs
+# Docs: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+area/admin:
+  - src/components/admin/**
+  - src/app/admin/**
+
+area/blog:
+  - src/components/blog/**
+  - src/app/[locale]/blog/**
+
+area/projects:
+  - src/components/projects/**
+  - src/app/[locale]/projects/**
+
+area/services:
+  - src/components/services/**
+  - src/app/[locale]/services/**
+
+area/api:
+  - src/app/api/**
+
+area/auth:
+  - src/app/api/auth/**
+  - src/types/next-auth.d.ts
+
+area/i18n:
+  - src/i18n/**
+  - src/proxy.ts
+
+area/database:
+  - prisma/**
+
+area/docker:
+  - Dockerfile
+  - docker-compose.yml
+  - docker-entrypoint.sh
+
+area/docs:
+  - "**/*.md"
+  - docs/**
+
+area/ui:
+  - src/components/ui/**
+  - src/components/shared/**
+  - src/app/globals.css
+
+area/seo:
+  - src/app/sitemap.ts
+  - src/app/robots.ts
+  - src/app/api/og/**
+  - src/app/llms.txt/**
+  - src/app/rss.xml/**
+
+area/analytics:
+  - src/app/api/analytics/**
+  - src/app/admin/analytics/**
+
+area/media:
+  - src/app/api/media/**
+  - src/app/admin/media/**
+
+area/ai:
+  - src/components/admin/AiChatPanel.tsx
+  - src/app/api/ai/**
+  - src/lib/ai-providers.ts
